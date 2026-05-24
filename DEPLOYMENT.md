@@ -1,26 +1,28 @@
-# CMS — Step-by-step free deployment guide
+# CMS — Step-by-step free deployment guide (no credit card required)
 
-This walks through deploying the entire app to a **$0/month** stack:
+This walks through deploying the app to a fully-free, no-card stack:
 
-| Piece     | Host                          | Free tier limits                                  |
-|-----------|-------------------------------|---------------------------------------------------|
-| Database  | Azure SQL Database (Free)     | 32 GB storage, 100,000 vCore-seconds / month      |
-| Backend   | Azure App Service (F1 Free)   | 60 CPU minutes / day, 1 GB RAM, sleeps when idle  |
-| Frontend  | Vercel                        | 100 GB bandwidth / month, unlimited static sites  |
+| Piece     | Host                       | Free tier                                       |
+|-----------|----------------------------|-------------------------------------------------|
+| Database  | Supabase (PostgreSQL)      | 500 MB database, 1 GB file storage, 2 projects  |
+| Backend   | Render.com web service     | 512 MB RAM, sleeps after 15 min idle, 750 hrs/mo|
+| Frontend  | Vercel                     | 100 GB bandwidth / month, unlimited static sites|
 
-**Time budget:** about 45–60 minutes if it's your first time.
+**Time budget:** about 45–60 minutes for a first-time run.
+
+> **Note on the database switch.** Earlier versions of this project targeted Microsoft SQL Server on Azure. The free SQL Server hosting path effectively requires an Azure subscription, which needs a credit card that Azure will accept for verification (Nepali, Indian Rupay, and some prepaid cards are routinely rejected). The codebase has been moved to PostgreSQL via the Npgsql EF Core provider so we can use no-card hosts. The C# code didn't change beyond one line in `Program.cs`; EF Core handles the dialect differences for us.
 
 ---
 
 ## Table of contents
 
 - [Phase 0 — Prerequisites](#phase-0--prerequisites)
-- [Phase 1 — Push code to GitHub](#phase-1--push-code-to-github)
-- [Phase 2 — Create the Azure SQL Database](#phase-2--create-the-azure-sql-database)
-- [Phase 3 — Create the User table](#phase-3--create-the-user-table)
-- [Phase 4 — Get the SQL connection string](#phase-4--get-the-sql-connection-string)
-- [Phase 5 — Create the App Service for the backend](#phase-5--create-the-app-service-for-the-backend)
-- [Phase 6 — Fix the GitHub Actions workflow](#phase-6--fix-the-github-actions-workflow)
+- [Phase 1 — Run the new stack locally (optional but recommended)](#phase-1--run-the-new-stack-locally-optional-but-recommended)
+- [Phase 2 — Push code to GitHub](#phase-2--push-code-to-github)
+- [Phase 3 — Create the Supabase project](#phase-3--create-the-supabase-project)
+- [Phase 4 — Create the Users table](#phase-4--create-the-users-table)
+- [Phase 5 — Get the Supabase connection string](#phase-5--get-the-supabase-connection-string)
+- [Phase 6 — Deploy the backend to Render](#phase-6--deploy-the-backend-to-render)
 - [Phase 7 — Configure backend environment variables](#phase-7--configure-backend-environment-variables)
 - [Phase 8 — Verify the backend](#phase-8--verify-the-backend)
 - [Phase 9 — Deploy the frontend to Vercel](#phase-9--deploy-the-frontend-to-vercel)
@@ -33,39 +35,95 @@ This walks through deploying the entire app to a **$0/month** stack:
 
 ## Phase 0 — Prerequisites
 
-You'll need:
+1. **GitHub account** — https://github.com/signup. No card needed.
+2. **Supabase account** — https://supabase.com → *Start your project* → sign in with GitHub. No card needed for the free tier.
+3. **Render account** — https://render.com → *Get Started* → sign in with GitHub. No card needed for the free tier.
+4. **Vercel account** — https://vercel.com → sign in with GitHub. No card needed.
+5. **Git installed** — `git --version` in a terminal should report 2.x or higher.
+6. *(Optional, for local dev)* **PostgreSQL or Docker** to run the database locally. See Phase 1.
 
-1. **A GitHub account** — https://github.com/signup if you don't have one.
-2. **An Azure account** — https://azure.microsoft.com/free. Sign up requires a credit card for identity verification, but **none of the resources in this guide will charge you** as long as you follow the steps exactly.
-3. **A Vercel account** — https://vercel.com/signup. Sign in with your GitHub account; that links them so deploys are one-click.
-4. **Git installed locally** — verify with `git --version` in a terminal.
-5. *(Optional but recommended)* A password generator. You'll need to invent two strong passwords during this guide: one for the SQL admin, one for the JWT signing key.
+You should already have **.NET 8 SDK** and **Node.js 18+** installed from the earlier local-dev sections of `README.md`.
 
 ---
 
-## Phase 1 — Push code to GitHub
+## Phase 1 — Run the new stack locally (optional but recommended)
 
-If your code is already on GitHub, skip to Phase 2.
+The backend now talks to PostgreSQL instead of SQL Server. If you want to keep using the app locally while developing, you'll need a Postgres database. Two paths:
 
-### 1.1 Initialize the repo locally
-
-Open a terminal in `D:\CMS\CMS` (the folder that contains `backend/`, `frontend/`, `database/`, `README.md`, `DEPLOYMENT.md`):
+### Option A — Docker (easiest)
 
 ```bash
+docker run -d --name cms-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=cms \
+  -p 5432:5432 \
+  postgres:16
+```
+
+The default `appsettings.json` connection string already points at this:
+
+```
+Host=localhost;Port=5432;Database=cms;Username=postgres;Password=postgres
+```
+
+### Option B — Install Postgres natively
+
+Windows installer: https://www.postgresql.org/download/windows/. During setup, set the postgres user password to `postgres` (or update the connection string to whatever you choose). Then create a `cms` database via pgAdmin or psql.
+
+### Apply the schema
+
+Either way, once Postgres is running, run the setup script. Using psql:
+
+```bash
+psql -h localhost -U postgres -d cms -f database/supabase_setup.sql
+```
+
+Or paste the contents of `database/supabase_setup.sql` into pgAdmin's Query Tool.
+
+### Run the backend
+
+```bash
+cd backend/CMS.Api
+dotnet restore
+dotnet run
+```
+
+API listens on http://localhost:5080. You should see `{"service":"CMS.Api","status":"running"}` at the root.
+
+### Run the frontend
+
+```bash
+cd frontend
+npm install   # if you haven't already
+npm run dev
+```
+
+Open http://localhost:5173. Register an account to confirm everything works against Postgres.
+
+---
+
+## Phase 2 — Push code to GitHub
+
+Skip if your code is already on GitHub.
+
+### 2.1 Initialize and commit
+
+```bash
+cd D:\CMS\CMS
 git init
 git add .
 git commit -m "Initial commit"
 ```
 
-### 1.2 Create the GitHub repo
+### 2.2 Create the GitHub repo
 
 1. Open https://github.com/new.
-2. **Repository name**: `cms` (or anything you like).
-3. **Visibility**: Public or Private — both work with Vercel and Azure.
-4. **Do not** check "Add a README" / "Add .gitignore" / "Choose a license" — your folder already has them.
+2. Repository name: `cms` (or anything).
+3. Visibility: Public or Private — both work with Render and Vercel.
+4. **Do not** check "Add a README" or any other initialization options.
 5. Click **Create repository**.
 
-GitHub shows you a "…push an existing repository from the command line" block. Copy the three commands and run them locally. They look like:
+GitHub gives you the push commands. Run them locally:
 
 ```bash
 git remote add origin https://github.com/YOUR_USERNAME/cms.git
@@ -73,327 +131,204 @@ git branch -M main
 git push -u origin main
 ```
 
-### 1.3 Verify
+### 2.3 Verify
 
-Refresh the GitHub page — you should see `backend/`, `frontend/`, `database/`, `DEPLOYMENT.md`, `README.md`.
-
----
-
-## Phase 2 — Create the Azure SQL Database
-
-### 2.1 Open the Azure Portal
-
-1. Go to https://portal.azure.com.
-2. Sign in.
-3. If this is a brand-new account you may see a "Get started" tour — close it.
-
-### 2.2 Start the "SQL databases" wizard
-
-1. In the top search bar, type **SQL databases** and click the matching service.
-2. On the **SQL databases** page, click **+ Create** (top-left).
-
-### 2.3 Fill in the Basics tab
-
-| Field                    | Value                                                                 |
-|--------------------------|-----------------------------------------------------------------------|
-| Subscription             | Your free subscription (usually "Azure subscription 1")               |
-| Resource group           | Click **Create new** → `cms-rg` → OK                                  |
-| Database name            | `CMS`                                                                 |
-| Server                   | Click **Create new** → fill in the form below                         |
-| Want to use SQL elastic pool? | **No**                                                           |
-| Workload environment     | **Development**                                                       |
-
-**Server form (opens as a side blade):**
-
-| Field                  | Value                                                                                                |
-|------------------------|------------------------------------------------------------------------------------------------------|
-| Server name            | Globally unique, e.g. `cms-yourname-2026`. Becomes `<name>.database.windows.net`                     |
-| Location               | Pick the region closest to you (e.g. *UK South*, *East US*). **Remember this** — App Service uses the same region |
-| Authentication method  | **Use SQL authentication**                                                                           |
-| Server admin login     | e.g. `cmsadmin` (don't use `admin` — Azure blocks it)                                                |
-| Password               | Strong password (12+ chars, mixed case, digit, symbol). **Write this down.**                         |
-| Confirm password       | Repeat                                                                                               |
-
-Click **OK** to close the server blade.
-
-### 2.4 Configure the free compute tier (this is the critical step)
-
-1. Still on the Basics tab, scroll to **Compute + storage** and click **Configure database**.
-2. The "Configure" blade opens.
-3. At the top there's a banner: **"Apply offer for free Azure SQL Database"**. **Tick the checkbox.** This is the always-free 100k vCore-seconds offer; missing it means you'll pay.
-4. The tier auto-switches to **General Purpose — Serverless, Standard-series (Gen5)** with the free limits applied.
-5. **Auto-pause delay**: leave at 1 hour (default). This is what makes serverless free — the DB pauses when idle.
-6. Click **Apply**.
-
-### 2.5 Skip to Networking
-
-Click **Next: Networking >** at the bottom.
-
-| Field                                                       | Value                                |
-|-------------------------------------------------------------|--------------------------------------|
-| Network connectivity                                        | **Public endpoint**                  |
-| Allow Azure services and resources to access this server    | **Yes** ← required for App Service   |
-| Add current client IPv4 address                             | **Yes** ← required so you can run the setup script from the Query Editor |
-| Connection policy                                           | Default                              |
-| Encrypted connections / TLS                                 | Default                              |
-
-### 2.6 Skip the remaining tabs and create
-
-Click **Review + create** at the bottom (you can skip Security, Additional settings, Tags). The validation should pass and show an estimated cost of **$0** if you applied the free offer.
-
-Click **Create**. Wait ~3 minutes — Azure provisions the SQL server + database.
-
-### 2.7 Verify
-
-When you see "Your deployment is complete", click **Go to resource**. You should land on the `CMS` database overview page. The breadcrumb at the top should read something like `cms-yourname-2026 (server) > CMS (database)`.
+Refresh the GitHub page. You should see `backend/`, `frontend/`, `database/`, `DEPLOYMENT.md`, `README.md`.
 
 ---
 
-## Phase 3 — Create the User table
+## Phase 3 — Create the Supabase project
 
-### 3.1 Open the Query Editor
+### 3.1 Sign in and create a project
 
-1. On the `CMS` database page, in the left nav scroll down to **Query editor (preview)** and click it.
-2. A login prompt appears. Use:
-   - **SQL server authentication**
-   - Login: the admin login from Phase 2.3 (e.g. `cmsadmin`)
-   - Password: the admin password.
-3. Click **OK**.
+1. https://supabase.com/dashboard.
+2. If this is your first time, you may need to create an *organization* first (use the default name).
+3. Click **New project**.
+4. Fill in:
+   - **Project name**: `cms`
+   - **Database password**: click *Generate a password* and **copy it** — Supabase shows it only once. This is your `postgres` user password.
+   - **Region**: pick the one closest to you (e.g. *Southeast Asia (Singapore)* for Nepal).
+   - **Pricing plan**: **Free**.
+5. Click **Create new project**. Provisioning takes ~2 minutes.
 
-**If you see "Cannot open server requested by the login":** your client IP wasn't whitelisted (you skipped or said No to step 2.5). Go to the SQL **server** (not database) → **Networking** → **Public access** → **Add your client IPv4 address** → **Save**. Try Query Editor again.
+### 3.2 Wait for the project to finish setting up
 
-### 3.2 Run the setup script
+You'll see a progress indicator. When the project's home page loads with sections like "API URL", "Project URL", etc., you're done.
 
-1. Open the `azure_setup.sql` file from your repo in a text editor: [database/azure_setup.sql](database/azure_setup.sql).
-2. Copy its entire contents.
-3. Paste into the Azure Query Editor.
-4. Click **▶ Run** (the green play button at the top).
-5. Below the editor, you should see:
-   ```
-   Creating table dbo.Users...
-   Azure SQL setup complete.
-   Query succeeded
-   ```
+---
 
-### 3.3 Verify
+## Phase 4 — Create the Users table
 
-In the Query Editor, paste and run:
+### 4.1 Open the SQL Editor
+
+1. In the Supabase project, left nav → **SQL Editor** (icon looks like `</>`).
+2. Click **+ New query** (or the existing "Welcome" query is fine to overwrite).
+
+### 4.2 Run the setup script
+
+1. Open `database/supabase_setup.sql` from your repo in a text editor.
+2. Copy the entire contents.
+3. Paste into the Supabase SQL Editor.
+4. Click **Run** (bottom-right, or `Ctrl+Enter`).
+5. You should see "Success. No rows returned."
+
+### 4.3 Verify
+
+Paste and run:
 
 ```sql
-SELECT name FROM sys.tables;
+SELECT table_name FROM information_schema.tables WHERE table_schema='public';
 ```
 
-You should see a single row: `Users`.
+You should see one row: `Users`. Done.
 
 ---
 
-## Phase 4 — Get the SQL connection string
+## Phase 5 — Get the Supabase connection string
 
-1. Still on the `CMS` database page, in the left nav click **Settings → Connection strings**.
-2. The **ADO.NET (SQL authentication)** string is shown. It looks like:
+### 5.1 Find the connection string
+
+1. Left nav → **Project Settings** (the gear icon at the bottom).
+2. **Database** → scroll to **Connection string**.
+3. Two tabs: **URI** and **PSQL**. We want **URI**.
+4. Look at the dropdown showing connection modes. Use **Transaction Pooler** (also labeled "Session pooler" on some accounts — pick the one labeled for **pooler** on port `6543`, not the direct `5432`). Render runs your service on a shared IP that may not be IPv6-capable, and the Supabase pooler is reliably IPv4-friendly.
+
+   The string looks like:
 
    ```
-   Server=tcp:cms-yourname-2026.database.windows.net,1433;Initial Catalog=CMS;Persist Security Info=False;User ID={your_username};Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+   postgresql://postgres.xxxxxxxx:[YOUR-PASSWORD]@aws-0-region.pooler.supabase.com:6543/postgres
    ```
 
-3. Copy it. Open Notepad (or any text editor) and paste.
-4. Replace `{your_username}` with the admin login (e.g. `cmsadmin`).
-5. Replace `{your_password}` with the admin password.
-6. **Save this somewhere safe** — you'll paste it into App Service in Phase 7. **Do not commit it to git.**
+5. Click the **Copy** button.
+
+### 5.2 Convert to Npgsql format
+
+Npgsql doesn't accept the `postgresql://` URI format directly in `appsettings.json`/env vars. Convert to key-value form.
+
+If your URI is:
+
+```
+postgresql://postgres.abcdefgh:MyPassword!@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+```
+
+The Npgsql equivalent is:
+
+```
+Host=aws-0-ap-southeast-1.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.abcdefgh;Password=MyPassword!;SSL Mode=Require;Trust Server Certificate=true
+```
+
+Save this in a text file — you'll paste it into Render in Phase 7.
+
+> **Important fields:**
+> - `SSL Mode=Require` — Supabase enforces TLS.
+> - `Trust Server Certificate=true` — easiest way to avoid CA-chain validation noise from inside Docker.
+> - The username is `postgres.xxxxxxxx`, not just `postgres`. That's deliberate — Supabase uses this format for the pooler.
 
 ---
 
-## Phase 5 — Create the App Service for the backend
+## Phase 6 — Deploy the backend to Render
 
-### 5.1 Start the Web App wizard
+### 6.1 Start a new web service
 
-1. In the Azure Portal search bar, type **App services** and click the matching service.
-2. Click **+ Create** → **Web App**.
+1. https://dashboard.render.com.
+2. Top-right → **+ New** → **Web Service**.
+3. Connect your GitHub account if you haven't already (Render asks for repo access).
+4. Find `cms` in the list and click **Connect**.
 
-### 5.2 Basics tab
+### 6.2 Configure the service
 
-| Field             | Value                                                                                                       |
-|-------------------|-------------------------------------------------------------------------------------------------------------|
-| Subscription      | Same as the database                                                                                        |
-| Resource group    | `cms-rg`                                                                                                    |
-| Name              | Globally unique, e.g. `cms-api-yourname-2026`. The URL becomes `https://<name>.azurewebsites.net`           |
-| Publish           | **Code**                                                                                                    |
-| Runtime stack     | **.NET 8 (LTS)**                                                                                            |
-| Operating System  | **Linux**                                                                                                   |
-| Region            | **Same region as the database**                                                                             |
+| Field             | Value                                       |
+|-------------------|---------------------------------------------|
+| Name              | `cms-api` (this becomes `cms-api.onrender.com`) |
+| Region            | Pick the closest to Supabase region        |
+| Branch            | `main`                                      |
+| Root Directory    | `backend/CMS.Api`                           |
+| Environment       | **Docker** (auto-detected from Dockerfile)  |
+| Dockerfile Path   | `./Dockerfile` (default once Root Directory is set) |
+| Instance Type     | **Free**                                    |
 
-### 5.3 Pick the F1 Free pricing plan
+Scroll down. Leave **Auto-Deploy** on (deploys on every push to `main`).
 
-This step is easy to miss. Azure defaults to a **paid** plan (Premium V3).
+Don't click Create yet — set env vars first.
 
-1. Under **Pricing plan**, click **Explore pricing plans**.
-2. A panel slides in. Tabs along the top: *Production*, *Dev/Test*. Click **Dev/Test**.
-3. Find the **F1 Free** card (1 GB memory, 60 CPU minutes/day, no SLA). Click **Select**.
+### 6.3 Add environment variables
 
-Back on the Basics page, the plan should now show **F1 Free**.
+Scroll to **Environment Variables**. Click **Add Environment Variable** for each:
 
-> If "F1" doesn't appear, switch the **Operating System** to Linux (some regions only show F1 on Linux), or try a different Region.
+| Name                                       | Value                                                                          |
+|--------------------------------------------|--------------------------------------------------------------------------------|
+| `ConnectionStrings__DefaultConnection`     | The Npgsql connection string from Phase 5.2                                    |
+| `Jwt__Key`                                 | A long random secret. Paste 64+ random characters                              |
+| `Jwt__Issuer`                              | `CMS.Api`                                                                      |
+| `Jwt__Audience`                            | `CMS.Client`                                                                   |
+| `Jwt__ExpiresInMinutes`                    | `120`                                                                          |
+| `Cors__AllowedOrigins`                     | Leave empty for now — we'll fill in the Vercel URL in Phase 10                 |
+| `ASPNETCORE_ENVIRONMENT`                   | `Production`                                                                   |
 
-### 5.4 Deployment tab — connect GitHub
+Don't set `PORT` — Render injects it automatically and `Program.cs` reads it.
 
-Click **Next: Database >** (skip — we already have one) → **Next: Deployment >**.
+### 6.4 Create the service
 
-| Field                       | Value                                                       |
-|-----------------------------|-------------------------------------------------------------|
-| Continuous deployment       | **Enable**                                                  |
-| Basic authentication        | Default (Enable)                                            |
-| GitHub account              | Click **Sign in** and authorize Azure                       |
-| Organization                | Your GitHub username                                        |
-| Repository                  | `cms` (the repo from Phase 1)                               |
-| Branch                      | `main`                                                      |
-| Authentication type         | **User-assigned identity** if available, else Basic         |
+Click **Create Web Service** at the bottom.
 
-### 5.5 Skip the rest
+Render starts building the Docker image. You'll see live logs:
 
-Click **Review + create** → wait for validation → **Create**. Wait ~2 minutes.
-
-When done, click **Go to resource**. You should see the App Service overview with the URL `https://cms-api-yourname-2026.azurewebsites.net`.
-
-### 5.6 Watch the first deploy (it will fail — that's expected)
-
-Open a new tab to your GitHub repo → **Actions**. You should see a workflow run started by Azure (something like "Build and deploy ASP.Net Core app"). Click into it.
-
-It will likely **fail on the build step** with an error like:
 ```
-The project file could not be found.
-Could not find any project in `/home/runner/work/cms/cms`.
+==> Building...
+[+] Building 0.3s (5/5) FINISHED
+...
+==> Deploying...
+==> Your service is live 🎉
 ```
 
-That's because the workflow defaults to building from the repo root, but our `.csproj` lives in `backend/CMS.Api`. Fix it next.
+The first build takes 4–7 minutes (downloading .NET SDK + restoring NuGet packages). Subsequent builds are faster thanks to Docker layer caching.
 
----
+### 6.5 Verify the deploy
 
-## Phase 6 — Fix the GitHub Actions workflow
+When you see "Your service is live", click the URL at the top (e.g. `https://cms-api.onrender.com`).
 
-### 6.1 Pull the new workflow file
+Expected: `{"service":"CMS.Api","status":"running"}`
 
-Azure has committed a workflow file to your repo. Pull it down:
-
-```bash
-git pull
-```
-
-You should now have a new file at `.github/workflows/main_cms-api-yourname-2026.yml` (the name includes your app's name).
-
-### 6.2 Edit the workflow
-
-Open that YAML file. Look for the build job and find these lines (or similar):
-
-```yaml
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
-```
-
-Replace **both** with:
-
-```yaml
-      - name: Build with dotnet
-        working-directory: backend/CMS.Api
-        run: dotnet build --configuration Release
-
-      - name: dotnet publish
-        working-directory: backend/CMS.Api
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
-```
-
-Save.
-
-### 6.3 Commit and push
-
-```bash
-git add .github/workflows
-git commit -m "Point workflow at backend/CMS.Api"
-git push
-```
-
-### 6.4 Watch the new deploy
-
-Back on GitHub → Actions. A new run starts automatically. It should now succeed within ~3–5 minutes. You'll see:
-
-- ✓ Build
-- ✓ deploy
-
-### 6.5 Verify the raw deploy
-
-Open `https://cms-api-yourname-2026.azurewebsites.net/` in a browser. You should see **either**:
-
-- `{"service":"CMS.Api","status":"running"}` — **success!**
-- Or a 500 error / "An error occurred" — that's because env vars are missing. Continue to Phase 7.
-- The first request might also take **20–40 seconds** (F1 cold start). Refresh once if it times out.
+If the first request takes 30+ seconds, that's the Render free-tier cold start. Subsequent requests within 15 minutes are instant; after that the service sleeps.
 
 ---
 
 ## Phase 7 — Configure backend environment variables
 
-The app reads connection string, JWT key, and CORS origins from configuration. In production these come from App Service env vars.
+Already done in Phase 6.3. If you missed one or want to change a value:
 
-### 7.1 Open the env-var blade
-
-1. Azure Portal → your App Service.
-2. Left nav → **Settings → Environment variables** (or **Configuration** in older UIs).
-3. Default tab is **App settings**.
-
-### 7.2 Add each setting
-
-Click **+ Add** for each row. Set Name and Value, leave "Deployment slot setting" unchecked.
-
-| Name                                       | Value                                                                                                         |
-|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| `ConnectionStrings__DefaultConnection`     | The full ADO.NET string from Phase 4 (with username + password filled in)                                     |
-| `Jwt__Key`                                 | A long random secret. Paste 64+ characters from a password generator. Example: `8h7sLZ2pK!9vXqR3...`          |
-| `Jwt__Issuer`                              | `CMS.Api`                                                                                                     |
-| `Jwt__Audience`                            | `CMS.Client`                                                                                                  |
-| `Jwt__ExpiresInMinutes`                    | `120`                                                                                                         |
-| `Cors__AllowedOrigins`                     | Leave blank for now — we add the Vercel URL in Phase 10                                                       |
-| `ASPNETCORE_ENVIRONMENT`                   | `Production`                                                                                                  |
-
-> The `__` (double underscore) is how App Service maps env-var names to nested config keys. `Jwt__Key` becomes `Jwt:Key` in the app.
-
-### 7.3 Save and restart
-
-Click **Apply** at the bottom → **Confirm**. App Service restarts automatically (~30 seconds).
+1. Render dashboard → your service → **Environment** in the left nav.
+2. **Add Environment Variable** or click the **⋯** on an existing one to edit.
+3. **Save Changes** at the bottom.
+4. Render re-deploys automatically (~2 min).
 
 ---
 
 ## Phase 8 — Verify the backend
 
-### 8.1 Hit the root
+### 8.1 Root endpoint
 
-Browse to `https://cms-api-yourname-2026.azurewebsites.net/`.
+Open `https://cms-api.onrender.com/` (or whatever your Render URL is).
 
 Expected: `{"service":"CMS.Api","status":"running"}`
 
-### 8.2 Hit Swagger (Development-only — should NOT exist in Production)
-
-Browse to `https://cms-api-yourname-2026.azurewebsites.net/swagger`.
-
-Expected: **404 Not Found**. That's correct — Swagger is gated to Development.
-
-### 8.3 Try an auth call
-
-Open a terminal and run:
+### 8.2 Register through curl
 
 ```bash
-curl -i -X POST https://cms-api-yourname-2026.azurewebsites.net/api/auth/register ^
+curl -i -X POST https://cms-api.onrender.com/api/auth/register ^
   -H "Content-Type: application/json" ^
   -d "{\"username\":\"smoketest\",\"email\":\"smoke@test.com\",\"password\":\"Test1234!\"}"
 ```
 
-*(Linux/Mac: replace `^` with `\` and use single quotes.)*
+*(Mac/Linux: replace `^` with `\`.)*
 
 Expected:
-- `HTTP/2 200` with a JSON body containing a `token`.
-- **First call might take 60 seconds** if both the App Service and the SQL DB are warming up.
+- `HTTP/2 200` with a JSON body containing `token`, `expiresAt`, and `user`.
+- First call may take 30–60 seconds due to Render + Supabase cold starts.
 
-If you get this far, the backend + database are fully working.
+### 8.3 Confirm the user landed in Supabase
+
+In the Supabase dashboard → **Table Editor** → `Users`. You should see one row with `Username = smoketest`. Refresh if needed.
 
 ---
 
@@ -401,166 +336,152 @@ If you get this far, the backend + database are fully working.
 
 ### 9.1 Import the repo
 
-1. Go to https://vercel.com/new.
-2. The page lists your GitHub repos. Find `cms` and click **Import**.
-3. (If `cms` isn't listed: click **Adjust GitHub App Permissions** and grant Vercel access to the repo.)
+1. https://vercel.com/new.
+2. Pick `cms` from your GitHub repos and click **Import**.
+   (If you don't see it: **Adjust GitHub App Permissions** → grant access.)
 
-### 9.2 Configure the project
-
-This page has several sections. **The Root Directory step is critical.**
+### 9.2 Configure
 
 | Section                  | Setting                                                                  |
 |--------------------------|--------------------------------------------------------------------------|
 | Project Name             | `cms` (or anything)                                                      |
-| Framework Preset         | Should auto-detect **Vite** once you set Root Directory                   |
-| **Root Directory**       | Click **Edit**, navigate into `frontend`, click **Continue**. Required.   |
-| Build and Output Settings| Leave defaults: build = `npm run build`, output = `dist`                  |
-| Install Command          | Leave default                                                            |
-
-### 9.3 Add the env var
+| Framework Preset         | **Vite** (auto-detected once Root Directory is set)                      |
+| **Root Directory**       | Click **Edit** → navigate into `frontend` → **Continue**. Required.       |
+| Build / Output           | Leave defaults: `npm run build`, output `dist`                            |
 
 Expand **Environment Variables**:
 
 | Name                | Value                                                  |
 |---------------------|--------------------------------------------------------|
-| `VITE_API_BASE_URL` | `https://cms-api-yourname-2026.azurewebsites.net`      |
+| `VITE_API_BASE_URL` | `https://cms-api.onrender.com` (no trailing slash)     |
 
-**No trailing slash.** This URL is prepended to every `/api/...` call. If you include a trailing slash you'll get `//api/...` and 404s.
+### 9.3 Deploy
 
-### 9.4 Deploy
+Click **Deploy**. Vercel runs `npm install && npm run build`. ~60–90 seconds.
 
-Click **Deploy** at the bottom. Vercel runs `npm install && npm run build`. Expect ~1 minute.
+When done, click **Visit**. You should see the Login page.
 
-When done you'll see "Congratulations!" with a screenshot of your site and a URL like `https://cms-xyz123.vercel.app`. Click **Visit**.
-
-### 9.5 Expected state
-
-The page should load and you should see the **Login** screen. **You cannot log in yet** — the next phase wires CORS so the browser is allowed to call the backend.
+You can't log in yet — CORS is still locked to localhost. Next phase fixes that.
 
 ---
 
 ## Phase 10 — Wire the Vercel URL into CORS
 
-### 10.1 Get the Vercel URL
+### 10.1 Get the Vercel production URL
 
-In Vercel, on the project page, copy the **Production** URL. It's something like `https://cms-xyz123.vercel.app`. (Vercel also gives each branch its own preview URL; we only need the production one.)
+In Vercel → your project → top of page shows the production URL, e.g. `https://cms-abc123.vercel.app`. Copy it.
 
-### 10.2 Add it to App Service
+### 10.2 Add it to Render
 
-1. Azure Portal → your App Service → **Settings → Environment variables**.
-2. Find `Cors__AllowedOrigins` and click it.
-3. Set the value to your Vercel URL (no trailing slash):
+1. Render dashboard → your service → **Environment**.
+2. Click the **⋯** on `Cors__AllowedOrigins` → **Edit**.
+3. Paste the Vercel URL (no trailing slash):
    ```
-   https://cms-xyz123.vercel.app
+   https://cms-abc123.vercel.app
    ```
-4. Save → **Apply** → **Confirm**.
+4. **Save Changes**. Render redeploys automatically (~2 min).
 
-If you want both the Vercel preview and a custom domain later, comma-separate:
+To support multiple origins later (a custom domain, preview URLs, etc.), comma-separate:
 ```
-https://cms-xyz123.vercel.app,https://www.example.com
+https://cms-abc123.vercel.app,https://www.example.com
 ```
-
-### 10.3 Wait for restart
-
-App Service restarts (~30 seconds). The browser will get the new CORS headers on its next preflight.
 
 ---
 
 ## Phase 11 — End-to-end smoke test
 
 1. Open your Vercel URL in a fresh browser tab.
-2. Click **Register**. Use:
-   - Username: `admin`
-   - Email: anything
-   - Password: must satisfy the policy — try `Admin123!`
+2. Click **Register**. Use a password matching the policy (8+ chars, upper, lower, digit, special — e.g. `Admin123!`).
 3. Submit. Expect the dashboard to load with your name in the top-right.
-4. Click the avatar → **Change password** → set a new one.
-5. Sidebar → **Users**. Click **+ Add user**. Create a second account.
-6. In the new row, click the **pencil** icon. Edit the first name and save.
-7. Hover the **trash** on a different row (not your own) → confirm delete.
-8. Sign out from the avatar dropdown, then sign back in with the new password.
+4. Click the avatar → **Change password** → set a new password.
+5. Sidebar → **Users** → **+ Add user**. Create a second account.
+6. Click the pencil to edit, the trash to delete (not your own row).
+7. Sign out via the avatar menu, then sign back in with the new password.
 
-If all of that works, you're done. **Total monthly cost: $0.**
+If everything works: **deployment is complete and your bill is $0/month**.
 
 ---
 
 ## Operating notes & gotchas
 
 ### Cold starts
-- **App Service F1** sleeps after ~20 minutes idle. First request post-sleep takes 20–40 seconds. There's no "Always On" toggle on F1 (it's a paid feature on Basic+).
-- **Azure SQL serverless free** also auto-pauses. First connect after pause adds another 30–60 seconds.
-- A user hitting the app after both have slept can wait 60–90 seconds for the first response. After that, it's instant.
+- **Render free tier** sleeps after 15 minutes idle. First request post-sleep takes 30–60 seconds while the Docker container restarts.
+- **Supabase free** doesn't auto-pause the database, but inactive projects get **paused after 1 week of no activity**. You'll get an email; just visit the dashboard or hit a query to unpause.
 
-### How to keep them warm (cheaply)
-- Hit `https://<your-app>.azurewebsites.net/` every 15 minutes from a cron service (e.g. https://cron-job.org free tier). The endpoint returns `{ status: "running" }` and that's enough to keep the App Service warm. The DB will still pause unless your endpoint actually queries it.
-- Inside the 60 CPU min/day budget, you can hit it every 5 min without exhausting the quota.
+### Keep-warm (optional)
+Hit `https://cms-api.onrender.com/` every 10–14 minutes from a free cron service (https://cron-job.org has a free tier). Stay under the 750 hours/month budget if you want it warm 24/7 — actually 750 hours is more than a month, so a single always-warm service is well within the limit.
 
 ### Pushing updates
-- **Backend**: `git push origin main` → GitHub Actions builds and deploys automatically. Watch the run on the Actions tab. Deploy time ~2–3 min.
-- **Frontend**: same — Vercel auto-deploys on push to `main`. Other branches get preview URLs.
+- **Backend**: `git push origin main` → Render rebuilds and redeploys (~3–5 min). Watch logs in the Render dashboard.
+- **Frontend**: same — Vercel auto-deploys on push. Other branches get preview URLs.
 
-### Rotating the JWT key
-- Updating `Jwt__Key` in App Service invalidates every existing token. Users will be forced to sign in again. Not a problem in production, but heads-up.
+### Updating secrets
+- Changing `Jwt__Key` in Render invalidates every existing JWT. Users get logged out.
+- Changing `Cors__AllowedOrigins` does not invalidate sessions; it just refreshes the allowed-origin header on the next request.
 
 ### Adding a custom domain
-- **Vercel** custom domain → Project → Settings → Domains. Free for any domain you own; Vercel manages the TLS cert.
-- After adding the custom domain, also append it to App Service `Cors__AllowedOrigins`.
+- **Vercel**: Project → Settings → Domains. Free for any domain you own; Vercel manages the TLS cert.
+- After adding the custom domain, append it to `Cors__AllowedOrigins` in Render.
 
-### Migrating off Azure SQL later
-- If you want to leave Azure for cheaper non-Azure hosting (Postgres on Supabase / Neon / Fly), swap `Microsoft.EntityFrameworkCore.SqlServer` for `Npgsql.EntityFrameworkCore.PostgreSQL` and rewrite `database/*.sql`. The C# code itself doesn't change thanks to EF Core's provider abstraction.
+### Supabase pooler vs. direct connection
+- We used the **pooler** (port 6543) because Render IPs aren't IPv6-capable and the direct Supabase IP can be IPv6-only depending on region.
+- The pooler runs PgBouncer in *transaction mode*; it works fine for EF Core with a small caveat: avoid long-running transactions and prepared statements that depend on session state.
+
+### Migrating data
+- The `Users` table is the only table for now. If you want to move data from a local Postgres to Supabase, use `pg_dump`:
+  ```bash
+  pg_dump -h localhost -U postgres -d cms -t Users --data-only > users.sql
+  ```
+  Then run `users.sql` in the Supabase SQL editor.
 
 ---
 
 ## Troubleshooting
 
-### Backend: 500 errors on every call
-Most likely a missing or wrong env var. App Service → **Log stream** (left nav) → watch the live logs as you hit the API. The exception message names the missing config.
+### Backend: deploy logs show "Could not load file or assembly 'Microsoft.EntityFrameworkCore.SqlServer'"
+Did you `git push` the new `CMS.Api.csproj`? Render builds from the latest commit on `main`; check the Render build log for the commit SHA it's building.
 
-### Backend: "Could not open a connection to SQL Server"
-Two common causes:
+### Backend: 500 on every call, log shows "Npgsql.NpgsqlException: connection refused"
+Likely connection-string issue. Common causes:
 
-1. **"Allow Azure services to access this server" is OFF.** Fix: SQL server → Networking → set it to Yes → Save.
-2. **Connection string username/password placeholders not replaced.** The string still says `{your_password}` literally. Re-paste with real values.
+1. **Wrong port** — Supabase pooler is `6543`, not `5432`.
+2. **Missing `SSL Mode=Require`** — Supabase rejects unencrypted connections.
+3. **Username copied as just `postgres`** — the pooler username is `postgres.<project_ref>`.
 
-### Backend: "Login failed for user 'cmsadmin'"
-The connection string username/password don't match what you set in Phase 2.3. Reset the password via SQL server → "Reset password" if you've forgotten it.
+### Backend: log shows "FATAL: Tenant or user not found"
+The connection-string username is wrong. In Supabase → Settings → Database → Connection string, copy the URI mode carefully; the username includes a dot and the project reference.
 
-### Backend: deploys succeed but `/` still returns the default Azure landing page
-The deployment didn't actually update the site. Symptoms: GitHub Actions shows green but `/` shows "Your Azure App Service app is up and running". Usually means the publish output is in the wrong path. Re-check the `working-directory` lines in `.github/workflows/main_*.yml`.
+### Backend: log shows "Cannot write DateTime with Kind=Local"
+Make sure you're saving UTC timestamps (`DateTime.UtcNow`, not `DateTime.Now`). The codebase already does this everywhere; this error would only show if you added new code that uses `DateTime.Now`.
 
-### Frontend: blank white page
-Open browser DevTools → Console. Two common causes:
+### Frontend: `Failed to fetch` errors
+Open browser DevTools → Network tab. If the call goes to `localhost:5080`, it means `VITE_API_BASE_URL` wasn't set at build time. Vercel bakes env vars in during build, so after adding/changing it you must **redeploy**: Vercel → Deployments → ⋯ → Redeploy.
 
-1. **`Failed to fetch`** with no Network call shown — usually the `VITE_API_BASE_URL` env var was empty at build time. Vercel injects env vars at build time, not runtime, so you need to **redeploy** after adding it. In Vercel → Deployments → ⋯ → Redeploy.
-2. **CORS error**: `Access to fetch at 'https://...' from origin 'https://...' has been blocked`. Means `Cors__AllowedOrigins` in App Service doesn't include the Vercel URL exactly. Common mistakes:
-   - Missing `https://` scheme.
-   - Trailing slash on the value (`https://cms.vercel.app/` is treated as a different origin from `https://cms.vercel.app`).
-   - The URL changed because Vercel re-assigned a preview to production — use the canonical production URL.
+### Frontend: CORS errors
+The browser shows `Access to fetch at '...' from origin '...' has been blocked`. Means `Cors__AllowedOrigins` in Render doesn't match your Vercel origin exactly. Common mistakes:
+
+- Missing `https://` scheme.
+- Trailing slash on the value.
+- The URL is a preview deploy URL (`cms-git-feature-username.vercel.app`) but you only whitelisted the production URL.
 
 ### Frontend: 401 on every authenticated call
-Open DevTools → Application → Local storage → check `cms.token` exists. If it does and you still get 401:
+- `Jwt__Key` env var changed between login and now → log out and back in.
+- Or Render restarted with new env vars but the JWT is still issued by the old config → log out and back in.
 
-- Your `Jwt__Key` env var changed between when you logged in and now → log out and back in.
-- Or the App Service has multiple Linux instances and one has stale config → restart the app.
+### Render: "Your free tier hours are exhausted"
+Render free tier is 750 hours per month per workspace. One service running 24/7 ≈ 730 hours, so a single service is fine. If you have multiple free services they share the budget.
 
-### "F1 Free" doesn't appear in the pricing plan picker
-- Try a different region (some new regions launch without F1 first).
-- Make sure you're on the **Dev/Test** tab, not Production.
-- Make sure Operating System is Linux (F1 on Windows exists too but is sometimes hidden).
-
-### Quota exhausted on F1
-F1 gives 60 CPU minutes/day. If your app is constantly hammered, it'll be throttled. The "Quota" blade on App Service shows current usage. Either reduce hits or upgrade to B1 ($13/mo) if it becomes a real product.
-
-### Free SQL DB hit the 100k vCore-seconds limit
-The DB stops serving queries until the next month. Solutions: optimize queries, reduce auto-pause delay so it pauses sooner, or upgrade to S0 Standard (~$15/mo).
+### Supabase: project paused
+Free projects pause after 7 days of inactivity. Reactivate from the Supabase dashboard — just clicking into the project usually does it.
 
 ---
 
 ## File reference
 
-- `database/create_database.sql` — local SQL Server (creates DB + table).
-- `database/azure_setup.sql` — Azure SQL (table only; DB created via portal).
-- `backend/CMS.Api/appsettings.json` — local + placeholder values; **never commit real secrets** here.
-- `backend/CMS.Api/Program.cs` — reads `Jwt:Key`, `ConnectionStrings:DefaultConnection`, and `Cors:AllowedOrigins` from any IConfiguration source (env vars take precedence).
-- `frontend/src/services/api.ts` — uses `VITE_API_BASE_URL` (empty for local dev → Vite proxy; absolute URL in prod → App Service).
-- `.github/workflows/main_*.yml` — auto-created by Azure during App Service setup; edited in Phase 6 to point at `backend/CMS.Api`.
+- `database/supabase_setup.sql` — PostgreSQL schema for Supabase / Neon / any Postgres.
+- `database/create_database.sql` — **legacy** SQL Server script (kept for reference; not used by the current code).
+- `database/azure_setup.sql` — **legacy** Azure SQL script (same reason).
+- `backend/CMS.Api/Dockerfile` — multi-stage build used by Render.
+- `backend/CMS.Api/Program.cs` — reads `Jwt:Key`, `ConnectionStrings:DefaultConnection`, `Cors:AllowedOrigins`, and `PORT` from any IConfiguration source. Env vars take precedence.
+- `backend/CMS.Api/appsettings.json` — local + placeholder values; **never commit real secrets**.
+- `frontend/src/services/api.ts` — uses `VITE_API_BASE_URL`. Empty → relative paths (Vite proxy in dev). Absolute → production API host.

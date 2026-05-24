@@ -8,6 +8,15 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Render and most PaaS hosts inject the port to bind on as the PORT env var.
+// ASP.NET Core only reads ASPNETCORE_URLS, so translate here. Locally PORT
+// is unset and we fall back to launchSettings.json.
+var renderPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(renderPort))
+{
+    builder.WebHost.UseUrls($"http://+:{renderPort}");
+}
+
 // -----------------------------------------------------------------
 // Configuration
 // -----------------------------------------------------------------
@@ -38,7 +47,7 @@ else
 // Services
 // -----------------------------------------------------------------
 builder.Services.AddDbContext<AppDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
