@@ -25,21 +25,28 @@ var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key i
 var jwtIssuer = jwtSection["Issuer"];
 var jwtAudience = jwtSection["Audience"];
 
-// CORS origins can be supplied two ways:
-//   1) JSON array under "Cors:AllowedOrigins"  (works well in appsettings.json)
-//   2) Comma-separated string under "Cors:AllowedOrigins"
-//      (works well as a single env var on App Service / Vercel / etc.)
+// CORS origins resolution. Two supported shapes:
+//   1) Comma-separated string under "Cors:AllowedOrigins"
+//      (typical for a single env var on Render / App Service / etc.)
+//   2) JSON array under "Cors:AllowedOrigins"
+//      (typical inside appsettings.json)
+//
+// Important: check the raw string FIRST. Env vars on PaaS hosts use shape (1),
+// while appsettings.json uses shape (2). If you check the array first, the
+// appsettings.json default ["http://localhost:5173"] silently wins over the
+// production env var because they live under different config keys
+// (`Cors:AllowedOrigins:0` for the array vs `Cors:AllowedOrigins` for the env var).
 string[] allowedOrigins;
-var corsArray = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-if (corsArray is { Length: > 0 })
+var corsRaw = builder.Configuration["Cors:AllowedOrigins"];
+if (!string.IsNullOrWhiteSpace(corsRaw))
 {
-    allowedOrigins = corsArray;
+    allowedOrigins = corsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
 else
 {
-    var corsRaw = builder.Configuration["Cors:AllowedOrigins"];
-    allowedOrigins = !string.IsNullOrWhiteSpace(corsRaw)
-        ? corsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    var corsArray = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+    allowedOrigins = corsArray is { Length: > 0 }
+        ? corsArray
         : new[] { "http://localhost:5173" };
 }
 
