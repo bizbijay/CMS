@@ -50,6 +50,8 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const drivers = users.filter((u) => u.roleName?.toLowerCase() === "driver");
+
   // Derive vehicle from the selected user — no separate state needed.
   const selectedUser = users.find((u) => u.id === transportedById);
   const assignedVehicleId = selectedUser?.vehicleId ?? null;
@@ -87,9 +89,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             setProjectOther(t.projectOther ?? "");
           }
         } else {
+          const driverList = u.filter((x) => x.roleName?.toLowerCase() === "driver");
           const stored = getStoredUser();
-          const match = u.find((x) => x.id === stored?.id);
-          setTransportedById(match?.id ?? u[0]?.id ?? 0);
+          const match = driverList.find((x) => x.id === stored?.id);
+          setTransportedById(match?.id ?? driverList[0]?.id ?? 0);
           setMaterialId(null);
           setVendorSel(v[0] ? String(v[0].id) : OTHER);
           setVendorOther("");
@@ -188,7 +191,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                 required
                 className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {users.map((u) => (
+                {drivers.map((u) => (
                   <option key={u.id} value={u.id}>{displayName(u)}</option>
                 ))}
               </select>
