@@ -225,7 +225,12 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
         <Field label="Role">
           <select
             value={roleId ?? ""}
-            onChange={(e) => setRoleId(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => {
+              const newId = e.target.value ? Number(e.target.value) : null;
+              setRoleId(newId);
+              const roleName = roles.find((r) => r.id === newId)?.name ?? "";
+              if (roleName.toLowerCase() === "admin") setVehicleId(null);
+            }}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">— No role —</option>
@@ -237,20 +242,22 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           </select>
         </Field>
 
-        <Field label="Assigned vehicle">
-          <select
-            value={vehicleId ?? ""}
-            onChange={(e) => setVehicleId(e.target.value ? Number(e.target.value) : null)}
-            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">— None / Unassigned —</option>
-            {vehicles.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name} ({v.numberPlate})
-              </option>
-            ))}
-          </select>
-        </Field>
+        {roles.find((r) => r.id === roleId)?.name?.toLowerCase() !== "admin" && (
+          <Field label="Assigned vehicle">
+            <select
+              value={vehicleId ?? ""}
+              onChange={(e) => setVehicleId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">— None / Unassigned —</option>
+              {vehicles.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} ({v.numberPlate})
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input

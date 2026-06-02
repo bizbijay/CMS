@@ -4,6 +4,8 @@ export interface TransportationListItem {
   transportedByName: string;
   vehicleId?: number | null;
   vehicleName?: string | null;
+  materialId?: number | null;
+  materialName?: string | null;
   vendorId?: number | null;
   vendorName: string;
   vendorOther?: string | null;
@@ -20,6 +22,7 @@ export interface TransportationListItem {
 export interface CreateTransportationRequest {
   transportedById: number;
   vehicleId?: number | null;
+  materialId?: number | null;
   vendorId?: number | null;
   vendorOther?: string | null;
   projectId?: number | null;
@@ -30,6 +33,7 @@ export interface CreateTransportationRequest {
 export interface UpdateTransportationRequest {
   transportedById: number;
   vehicleId?: number | null;
+  materialId?: number | null;
   vendorId?: number | null;
   vendorOther?: string | null;
   projectId?: number | null;

@@ -9,6 +9,8 @@ public class TransportationListItemDto
     public string TransportedByName { get; set; } = string.Empty;
     public int? VehicleId { get; set; }
     public string? VehicleName { get; set; }
+    public int? MaterialId { get; set; }
+    public string? MaterialName { get; set; }
     public int? VendorId { get; set; }
     public string VendorName { get; set; } = string.Empty;
     public string? VendorOther { get; set; }
@@ -28,6 +30,8 @@ public class CreateTransportationRequest
     public int TransportedById { get; set; }
 
     public int? VehicleId { get; set; }
+
+    public int? MaterialId { get; set; }
 
     public int? VendorId { get; set; }
 
@@ -49,6 +53,8 @@ public class UpdateTransportationRequest
     public int TransportedById { get; set; }
 
     public int? VehicleId { get; set; }
+
+    public int? MaterialId { get; set; }
 
     public int? VendorId { get; set; }
 

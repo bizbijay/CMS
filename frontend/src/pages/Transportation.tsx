@@ -86,6 +86,7 @@ export default function Transportation() {
               <tr>
                 <Th>Transported by</Th>
                 <Th>Vehicle</Th>
+                <Th>Material</Th>
                 <Th>Vendor</Th>
                 <Th>Project</Th>
                 <Th>Date</Th>
@@ -102,6 +103,7 @@ export default function Transportation() {
                   <tr key={t.id} className="hover:bg-slate-50">
                     <Td><span className="font-medium text-slate-800">{t.transportedByName}</span></Td>
                     <Td>{t.vehicleName ?? <span className="text-slate-400">—</span>}</Td>
+                    <Td>{t.materialName ?? <span className="text-slate-400">—</span>}</Td>
                     <Td>{t.vendorName}</Td>
                     <Td>{t.projectName}</Td>
                     <Td>{formatDate(t.date)}</Td>

@@ -16,6 +16,9 @@ public class Transportation
     public int? VehicleId { get; set; }
     public Vehicle? Vehicle { get; set; }
 
+    public int? MaterialId { get; set; }
+    public Material? Material { get; set; }
+
     // Either VendorId (FK) or VendorOther (free text) must be set
     public int? VendorId { get; set; }
     public Vendor? Vendor { get; set; }

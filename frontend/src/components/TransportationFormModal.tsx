@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useState } from "react";
-import { transportationsApi, usersApi, vendorsApi, projectsApi, getStoredUser } from "../services/api";
+import { transportationsApi, usersApi, vendorsApi, projectsApi, materialsApi, getStoredUser } from "../services/api";
 import type { TransportationListItem } from "../types/transportation";
 import type { UserListItem } from "../types/users";
 import type { VendorListItem } from "../types/vendors";
 import type { ProjectListItem } from "../types/projects";
+import type { MaterialListItem } from "../types/materials";
 
 export type TransportationFormMode =
   | { kind: "add" }
@@ -33,6 +34,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [transportedById, setTransportedById] = useState<number>(0);
@@ -42,6 +44,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
 
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
+  const [materialId, setMaterialId] = useState<number | null>(null);
 
   const [date, setDate] = useState(todayIso());
   const [error, setError] = useState<string | null>(null);
@@ -55,16 +58,18 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.list(), vendorsApi.list(), projectsApi.list()])
-      .then(([u, v, p]) => {
+    Promise.all([usersApi.list(), vendorsApi.list(), projectsApi.list(), materialsApi.list()])
+      .then(([u, v, p, m]) => {
         setUsers(u);
         setVendors(v);
         setProjects(p);
+        setMaterials(m);
 
         if (mode.kind === "edit") {
           const t = mode.transportation;
           setTransportedById(t.transportedById);
           setDate(t.date.slice(0, 10));
+          setMaterialId(t.materialId ?? null);
 
           if (t.vendorId) {
             setVendorSel(String(t.vendorId));
@@ -85,6 +90,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           const stored = getStoredUser();
           const match = u.find((x) => x.id === stored?.id);
           setTransportedById(match?.id ?? u[0]?.id ?? 0);
+          setMaterialId(null);
           setVendorSel(v[0] ? String(v[0].id) : OTHER);
           setVendorOther("");
           setProjectSel(p[0] ? String(p[0].id) : OTHER);
@@ -120,6 +126,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     const body = {
       transportedById,
       vehicleId: assignedVehicleId,
+      materialId,
       vendorId: vendorSel !== OTHER ? Number(vendorSel) : null,
       vendorOther: vendorSel === OTHER ? vendorOther.trim() : null,
       projectId: projectSel !== OTHER ? Number(projectSel) : null,
@@ -194,6 +201,19 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                 disabled
                 className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
               />
+            </Field>
+
+            <Field label="Material">
+              <select
+                value={materialId ?? ""}
+                onChange={(e) => setMaterialId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">— None —</option>
+                {materials.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
             </Field>
 
             <Field label="Vendor" required>

@@ -1,0 +1,2 @@
+ALTER TABLE "Transportations"
+    ADD COLUMN IF NOT EXISTS "MaterialId" INT REFERENCES "Materials"("Id") ON DELETE SET NULL;

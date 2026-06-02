@@ -14,6 +14,8 @@ export default function FuelLog() {
   const [modalMode, setModalMode] = useState<FuelLogFormMode | null>(null);
   const [pendingDelete, setPendingDelete] = useState<FuelLogListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [driverFilter, setDriverFilter] = useState("");
+  const [vehicleFilter, setVehicleFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,6 +57,14 @@ export default function FuelLog() {
     }
   }
 
+  const drivers = Array.from(new Set(items.map((l) => l.driverName))).sort();
+  const vehicles = Array.from(new Set(items.map((l) => l.vehicleName))).sort();
+  const filtered = items.filter(
+    (l) =>
+      (driverFilter === "" || l.driverName === driverFilter) &&
+      (vehicleFilter === "" || l.vehicleName === vehicleFilter),
+  );
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -73,6 +83,37 @@ export default function FuelLog() {
             Add fuel log
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={driverFilter}
+          onChange={(e) => setDriverFilter(e.target.value)}
+          className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All drivers</option>
+          {drivers.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+        <select
+          value={vehicleFilter}
+          onChange={(e) => setVehicleFilter(e.target.value)}
+          className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All vehicles</option>
+          {vehicles.map((v) => (
+            <option key={v} value={v}>{v}</option>
+          ))}
+        </select>
+        {(driverFilter || vehicleFilter) && (
+          <button
+            onClick={() => { setDriverFilter(""); setVehicleFilter(""); }}
+            className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {error && (
@@ -97,10 +138,12 @@ export default function FuelLog() {
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr><td colSpan={10} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-6 text-center text-slate-500">No fuel logs yet. Click "Add fuel log" to log one.</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={10} className="px-4 py-6 text-center text-slate-500">
+                  {items.length === 0 ? `No fuel logs yet. Click "Add fuel log" to log one.` : "No logs match the selected filters."}
+                </td></tr>
               ) : (
-                items.map((l) => (
+                filtered.map((l) => (
                   <tr key={l.id} className="hover:bg-slate-50">
                     <Td><span className="font-medium text-slate-800">{l.driverName}</span></Td>
                     <Td>{l.vehicleName}</Td>

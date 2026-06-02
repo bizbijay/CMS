@@ -136,6 +136,7 @@ CREATE TABLE "Transportations" (
     "Id"               SERIAL       PRIMARY KEY,
     "TransportedById"  INT          NOT NULL REFERENCES "Users"("Id")    ON DELETE RESTRICT,
     "VehicleId"        INT          REFERENCES "Vehicles"("Id")          ON DELETE SET NULL,
+    "MaterialId"       INT          REFERENCES "Materials"("Id")         ON DELETE SET NULL,
     "VendorId"         INT          REFERENCES "Vendors"("Id")           ON DELETE SET NULL,
     "VendorOther"      VARCHAR(200),
     "ProjectId"        INT          REFERENCES "Projects"("Id")          ON DELETE SET NULL,
