@@ -140,12 +140,6 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
   return <td className={`px-4 py-3 text-slate-700 ${className ?? ""}`}>{children}</td>;
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
-}
-
 function PencilIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">

@@ -210,12 +210,6 @@ function Td({
   return <td className={`px-4 py-3 text-slate-700 ${className ?? ""}`}>{children}</td>;
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
-}
-
 function PencilIcon() {
   return (
     <svg
