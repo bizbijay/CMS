@@ -1,8 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
-import { fuelLogsApi, usersApi, vehiclesApi, fuelsApi, getStoredUser } from "../services/api";
+import { fuelLogsApi, usersApi, fuelsApi, getStoredUser } from "../services/api";
 import type { FuelLogListItem } from "../types/fuelLog";
 import type { UserListItem } from "../types/users";
-import type { VehicleListItem } from "../types/vehicles";
 import type { FuelListItem } from "../types/fuels";
 
 export type FuelLogFormMode =
@@ -29,12 +28,10 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   const isEdit = mode.kind === "edit";
 
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
-  const [vehicles, setVehicles] = useState<VehicleListItem[]>([]);
   const [fuelTypes, setFuelTypes] = useState<FuelListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [driverId, setDriverId] = useState<number>(0);
-  const [vehicleId, setVehicleId] = useState<number>(0);
   const [fuelTypeId, setFuelTypeId] = useState<number>(0);
   const [quantity, setQuantity] = useState<string>("");
   const [price, setPrice] = useState<string>("");
@@ -46,16 +43,14 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.list(), vehiclesApi.list(), fuelsApi.list()])
-      .then(([users, v, f]) => {
-        const driverList = users;
+    Promise.all([usersApi.list(), fuelsApi.list()])
+      .then(([users, f]) => {
+        const driverList = users.filter((u) => u.roleName?.toLowerCase() === "driver");
         setDrivers(driverList);
-        setVehicles(v);
         setFuelTypes(f);
 
         if (mode.kind === "edit") {
           setDriverId(mode.log.driverId);
-          setVehicleId(mode.log.vehicleId);
           setFuelTypeId(mode.log.fuelTypeId);
           setQuantity(String(mode.log.quantity));
           setPrice(String(mode.log.price));
@@ -64,7 +59,6 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           const stored = getStoredUser();
           const match = driverList.find((u) => u.id === stored?.id);
           setDriverId(match?.id ?? driverList[0]?.id ?? 0);
-          setVehicleId(v[0]?.id ?? 0);
           setFuelTypeId(f[0]?.id ?? 0);
           setQuantity("");
           setPrice("");
@@ -83,16 +77,20 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
     onClose();
   }
 
+  const selectedDriver = drivers.find((u) => u.id === driverId);
+  const assignedVehicleId = selectedDriver?.vehicleId ?? null;
+  const assignedVehicleName = selectedDriver?.assignedVehicleName ?? null;
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     if (!driverId) { setError("Please select a driver."); return; }
-    if (!vehicleId) { setError("Please select a vehicle."); return; }
+    if (!assignedVehicleId) { setError("Selected driver has no assigned vehicle."); return; }
     if (!fuelTypeId) { setError("Please select a fuel type."); return; }
     if (!quantity || Number(quantity) <= 0) { setError("Please enter a valid quantity."); return; }
     if (!price || Number(price) <= 0) { setError("Please enter a valid price."); return; }
 
-    const body = { driverId, vehicleId, fuelTypeId, quantity: Number(quantity), price: Number(price), date };
+    const body = { driverId, vehicleId: assignedVehicleId, fuelTypeId, quantity: Number(quantity), price: Number(price), date };
     setSaving(true);
     try {
       if (mode.kind === "add") {
@@ -142,7 +140,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           <>
             <Field label="Driver" required>
               {drivers.length === 0 ? (
-                <p className="text-sm text-amber-600 py-1">No users found. Add a user first.</p>
+                <p className="text-sm text-amber-600 py-1">No drivers found. Add a driver user first.</p>
               ) : (
                 <select
                   value={driverId}
@@ -157,21 +155,13 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
               )}
             </Field>
 
-            <Field label="Vehicle" required>
-              {vehicles.length === 0 ? (
-                <p className="text-sm text-amber-600 py-1">No vehicles found. Add a vehicle first.</p>
-              ) : (
-                <select
-                  value={vehicleId}
-                  onChange={(e) => setVehicleId(Number(e.target.value))}
-                  required
-                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name} ({v.numberPlate})</option>
-                  ))}
-                </select>
-              )}
+            <Field label="Vehicle">
+              <input
+                type="text"
+                value={assignedVehicleName ?? "— No vehicle assigned —"}
+                disabled
+                className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
+              />
             </Field>
 
             <Field label="Fuel type" required>
