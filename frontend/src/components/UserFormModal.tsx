@@ -1,8 +1,14 @@
 import { FormEvent, useEffect, useState } from "react";
-import { usersApi } from "../services/api";
-import type { UserListItem } from "../types/users";
+import { usersApi, vehiclesApi } from "../services/api";
+import type { UserListItem, UserType } from "../types/users";
+import type { VehicleListItem } from "../types/vehicles";
 import { isPasswordValid } from "../services/passwordPolicy";
 import PasswordRequirements from "./PasswordRequirements";
+
+const USER_TYPES: { value: UserType; label: string }[] = [
+  { value: "admin", label: "Admin" },
+  { value: "driver", label: "Driver" },
+];
 
 export type UserFormMode =
   | { kind: "add" }
@@ -24,8 +30,15 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [type, setType] = useState<UserType>("admin");
+  const [vehicleId, setVehicleId] = useState<number | null>(null);
+  const [vehicles, setVehicles] = useState<VehicleListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    vehiclesApi.list().then(setVehicles).catch(() => {});
+  }, []);
 
   // Sync form state when the modal opens or the target user changes.
   useEffect(() => {
@@ -38,6 +51,8 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
       setLastName(u.lastName ?? "");
       setPassword("");
       setIsActive(u.isActive);
+      setType(u.type);
+      setVehicleId(u.vehicleId ?? null);
     } else {
       setUsername("");
       setEmail("");
@@ -45,6 +60,8 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
       setLastName("");
       setPassword("");
       setIsActive(true);
+      setType("admin");
+      setVehicleId(null);
     }
     setError(null);
   }, [open, mode]);
@@ -82,6 +99,8 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           isActive,
+          type,
+          vehicleId: type === "driver" ? vehicleId : null,
         });
         onSaved(created, "add");
       } else {
@@ -91,6 +110,8 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           isActive,
+          type,
+          vehicleId: type === "driver" ? vehicleId : null,
           password: password ? password : undefined,
         });
         onSaved(updated, "edit");
@@ -207,6 +228,41 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
             className="mt-2"
           />
         </Field>
+
+        <Field label="User type" required>
+          <select
+            value={type}
+            onChange={(e) => {
+              const t = e.target.value as UserType;
+              setType(t);
+              if (t !== "driver") setVehicleId(null);
+            }}
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {USER_TYPES.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {type === "driver" && (
+          <Field label="Assigned vehicle">
+            <select
+              value={vehicleId ?? ""}
+              onChange={(e) => setVehicleId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">— None / Unassigned —</option>
+              {vehicles.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} ({v.numberPlate})
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input

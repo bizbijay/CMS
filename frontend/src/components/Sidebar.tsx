@@ -1,50 +1,79 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
-const menu = [
+interface Props {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+const topMenu = [
   { to: "/", label: "Dashboard", icon: DashboardIcon },
   { to: "/users", label: "Users", icon: UsersIcon },
+  { to: "/transportation", label: "Transportation", icon: TransportationIcon },
+  { to: "/fuel-log", label: "Fuel Log", icon: FuelLogIcon },
 ];
 
-export default function Sidebar() {
+const settingsMenu = [
+  { to: "/vehicles", label: "Vehicles", icon: VehiclesIcon },
+  { to: "/materials", label: "Materials", icon: MaterialsIcon },
+  { to: "/vendors", label: "Vendors", icon: VendorsIcon },
+  { to: "/projects", label: "Projects", icon: ProjectsIcon },
+  { to: "/fuels", label: "Fuel Types", icon: FuelIcon },
+];
+
+const settingsPaths = settingsMenu.map((m) => m.to);
+
+export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+  const isInSettings = settingsPaths.some((p) => location.pathname === p);
+  const [settingsOpen, setSettingsOpen] = useState(isInSettings);
   const width = collapsed ? "w-16" : "w-60";
 
-  return (
-    <aside
-      className={`hidden md:flex md:flex-col ${width} bg-slate-900 text-slate-100 min-h-screen transition-all duration-200`}
-    >
+  const navContent = (isMobile = false) => (
+    <>
       <div
-        className={`flex items-center border-b border-slate-800 ${collapsed ? "justify-center px-2" : "justify-between px-6"} py-4`}
+        className={`flex items-center border-b border-slate-800 ${
+          collapsed && !isMobile ? "justify-center px-2" : "justify-between px-6"
+        } py-4`}
       >
-        {!collapsed && (
-          <div>
-            <h1 className="text-xl font-semibold tracking-wide">CMS</h1>
-            <p className="text-xs text-slate-400">Admin console</p>
-          </div>
+        <div>
+          <h1 className="text-xl font-semibold tracking-wide">CMS</h1>
+          <p className="text-xs text-slate-400">Admin console</p>
+        </div>
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={onMobileClose}
+            className="w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
+            aria-label="Close menu"
+          >
+            <XIcon />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            className="w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <ChevronIcon direction={collapsed ? "right" : "left"} />
+          </button>
         )}
-        <button
-          type="button"
-          onClick={() => setCollapsed((c) => !c)}
-          className="w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <ChevronIcon direction={collapsed ? "right" : "left"} />
-        </button>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {menu.map(({ to, label, icon: Icon }) => (
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {topMenu.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             end={to === "/"}
-            title={collapsed ? label : undefined}
+            onClick={isMobile ? onMobileClose : undefined}
+            title={collapsed && !isMobile ? label : undefined}
             className={({ isActive }) =>
               [
                 "flex items-center gap-3 rounded text-sm",
-                collapsed ? "justify-center px-0 py-2" : "px-3 py-2",
+                collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
                 isActive
                   ? "bg-slate-800 text-white"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white",
@@ -52,21 +81,95 @@ export default function Sidebar() {
             }
           >
             <Icon className="w-5 h-5 shrink-0" />
-            {!collapsed && <span>{label}</span>}
+            {(!collapsed || isMobile) && <span>{label}</span>}
           </NavLink>
         ))}
+
+        {/* Settings group */}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen((o) => !o)}
+          title={collapsed && !isMobile ? "Settings" : undefined}
+          className={[
+            "w-full flex items-center gap-3 rounded text-sm",
+            collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
+            isInSettings
+              ? "text-white"
+              : "text-slate-300 hover:bg-slate-800 hover:text-white",
+          ].join(" ")}
+        >
+          <SettingsIcon className="w-5 h-5 shrink-0" />
+          {(!collapsed || isMobile) && (
+            <>
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronIcon direction={settingsOpen ? "down" : "right"} />
+            </>
+          )}
+        </button>
+
+        {(settingsOpen || (collapsed && !isMobile)) && (
+          <div className={collapsed && !isMobile ? "space-y-1" : "ml-3 border-l border-slate-700 pl-2 space-y-1"}>
+            {settingsMenu.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={isMobile ? onMobileClose : undefined}
+                title={collapsed && !isMobile ? label : undefined}
+                className={({ isActive }) =>
+                  [
+                    "flex items-center gap-3 rounded text-sm",
+                    collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
+                    isActive
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white",
+                  ].join(" ")
+                }
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {(!collapsed || isMobile) && <span>{label}</span>}
+              </NavLink>
+            ))}
+          </div>
+        )}
       </nav>
 
-      {!collapsed && (
-        <div className="px-6 py-4 border-t border-slate-800 text-xs text-slate-500">
-          v0.1.0
-        </div>
+      <div className="px-6 py-4 border-t border-slate-800 text-xs text-slate-500">
+        v0.1.0
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside
+        className={`hidden md:flex md:flex-col ${width} bg-slate-900 text-slate-100 min-h-screen transition-all duration-200 shrink-0`}
+      >
+        {navContent(false)}
+      </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/60 md:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
       )}
-    </aside>
+
+      {/* Mobile drawer */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-slate-900 text-slate-100 transition-transform duration-200 md:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {navContent(true)}
+      </aside>
+    </>
   );
 }
 
-function ChevronIcon({ direction }: { direction: "left" | "right" }) {
+function XIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -78,11 +181,36 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
       strokeLinejoin="round"
       className="w-4 h-4"
     >
-      {direction === "left" ? (
-        <polyline points="15 6 9 12 15 18" />
-      ) : (
-        <polyline points="9 6 15 12 9 18" />
-      )}
+      <path d="M6 6l12 12M6 18L18 6" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ direction }: { direction: "left" | "right" | "down" }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-3.5 h-3.5"
+    >
+      {direction === "left" && <polyline points="15 6 9 12 15 18" />}
+      {direction === "right" && <polyline points="9 6 15 12 9 18" />}
+      {direction === "down" && <polyline points="6 9 12 15 18 9" />}
+    </svg>
+  );
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
@@ -123,6 +251,103 @@ function UsersIcon({ className }: { className?: string }) {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function FuelLogIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <line x1="10" y1="9" x2="8" y2="9" />
+    </svg>
+  );
+}
+
+function FuelIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 22V8l6-6h6l2 2v2h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2v7" />
+      <path d="M3 22h12" />
+      <path d="M9 2v6H3" />
+      <rect x="6" y="13" width="6" height="5" rx="1" />
+    </svg>
+  );
+}
+
+function TransportationIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M1 3h15v13H1z" />
+      <path d="M16 8h4l3 3v5h-7V8z" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
+    </svg>
+  );
+}
+
+function VendorsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 22V12h6v10" />
+      <circle cx="12" cy="7" r="1" />
+    </svg>
+  );
+}
+
+function ProjectsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="7" width="20" height="14" rx="2" />
+      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+      <line x1="12" y1="12" x2="12" y2="16" />
+      <line x1="10" y1="14" x2="14" y2="14" />
+    </svg>
+  );
+}
+
+function MaterialsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+function VehiclesIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-3h10l2 3h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
+      <circle cx="7.5" cy="17.5" r="2.5" />
+      <circle cx="16.5" cy="17.5" r="2.5" />
     </svg>
   );
 }

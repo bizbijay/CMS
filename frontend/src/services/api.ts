@@ -10,6 +10,17 @@ import type {
   UpdateUserRequest,
   UserListItem,
 } from "../types/users";
+import type {
+  CreateVehicleRequest,
+  UpdateVehicleRequest,
+  VehicleListItem,
+} from "../types/vehicles";
+import type { CreateMaterialRequest, UpdateMaterialRequest, MaterialListItem } from "../types/materials";
+import type { CreateFuelRequest, UpdateFuelRequest, FuelListItem } from "../types/fuels";
+import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from "../types/fuelLog";
+import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
+import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
+import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem } from "../types/projects";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -47,6 +58,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      clearAuth();
+      window.dispatchEvent(new CustomEvent("cms:unauthorized"));
+      return undefined as T;
+    }
+
     let message = `Request failed with status ${res.status}`;
     try {
       const data = await res.json();
@@ -101,4 +118,87 @@ export const usersApi = {
 
   remove: (id: number) =>
     request<void>(`/api/users/${id}`, { method: "DELETE" }),
+};
+
+export const fuelLogsApi = {
+  list: () => request<FuelLogListItem[]>("/api/fuellogs", { method: "GET" }),
+  create: (body: CreateFuelLogRequest) =>
+    request<FuelLogListItem>("/api/fuellogs", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateFuelLogRequest) =>
+    request<FuelLogListItem>(`/api/fuellogs/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/fuellogs/${id}`, { method: "DELETE" }),
+};
+
+export const fuelsApi = {
+  list: () => request<FuelListItem[]>("/api/fuels", { method: "GET" }),
+  create: (body: CreateFuelRequest) =>
+    request<FuelListItem>("/api/fuels", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateFuelRequest) =>
+    request<FuelListItem>(`/api/fuels/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/fuels/${id}`, { method: "DELETE" }),
+};
+
+export const transportationsApi = {
+  list: () => request<TransportationListItem[]>("/api/transportations", { method: "GET" }),
+  create: (body: CreateTransportationRequest) =>
+    request<TransportationListItem>("/api/transportations", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateTransportationRequest) =>
+    request<TransportationListItem>(`/api/transportations/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/transportations/${id}`, { method: "DELETE" }),
+};
+
+export const vendorsApi = {
+  list: () => request<VendorListItem[]>("/api/vendors", { method: "GET" }),
+  create: (body: CreateVendorRequest) =>
+    request<VendorListItem>("/api/vendors", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateVendorRequest) =>
+    request<VendorListItem>(`/api/vendors/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/vendors/${id}`, { method: "DELETE" }),
+};
+
+export const projectsApi = {
+  list: () => request<ProjectListItem[]>("/api/projects", { method: "GET" }),
+  create: (body: CreateProjectRequest) =>
+    request<ProjectListItem>("/api/projects", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateProjectRequest) =>
+    request<ProjectListItem>(`/api/projects/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/projects/${id}`, { method: "DELETE" }),
+};
+
+export const materialsApi = {
+  list: () => request<MaterialListItem[]>("/api/materials", { method: "GET" }),
+
+  create: (body: CreateMaterialRequest) =>
+    request<MaterialListItem>("/api/materials", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  update: (id: number, body: UpdateMaterialRequest) =>
+    request<MaterialListItem>(`/api/materials/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  remove: (id: number) =>
+    request<void>(`/api/materials/${id}`, { method: "DELETE" }),
+};
+
+export const vehiclesApi = {
+  list: () => request<VehicleListItem[]>("/api/vehicles", { method: "GET" }),
+
+  create: (body: CreateVehicleRequest) =>
+    request<VehicleListItem>("/api/vehicles", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  update: (id: number, body: UpdateVehicleRequest) =>
+    request<VehicleListItem>(`/api/vehicles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  remove: (id: number) =>
+    request<void>(`/api/vehicles/${id}`, { method: "DELETE" }),
 };

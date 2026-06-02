@@ -6,8 +6,10 @@ import UserFormModal, {
 } from "../components/UserFormModal";
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { useToast } from "../components/Toaster";
 
 export default function Users() {
+  const { addToast } = useToast();
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +18,7 @@ export default function Users() {
   const [deleting, setDeleting] = useState(false);
 
   const currentUserId = getStoredUser()?.id;
+  const [typeFilter, setTypeFilter] = useState<"all" | "admin" | "driver">("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,21 +40,23 @@ export default function Users() {
   function onSaved(user: UserListItem, kind: UserFormMode["kind"]) {
     if (kind === "add") {
       setUsers((prev) => [user, ...prev]);
+      addToast("User added successfully.", "success");
     } else {
       setUsers((prev) => prev.map((u) => (u.id === user.id ? user : u)));
+      addToast("User updated successfully.", "success");
     }
   }
 
   async function confirmDelete() {
     if (!pendingDelete) return;
     setDeleting(true);
-    setError(null);
     try {
       await usersApi.remove(pendingDelete.id);
       setUsers((prev) => prev.filter((u) => u.id !== pendingDelete.id));
       setPendingDelete(null);
+      addToast("User deleted.", "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed.");
+      addToast(err instanceof Error ? err.message : "Delete failed.", "error");
     } finally {
       setDeleting(false);
     }
@@ -62,11 +67,24 @@ export default function Users() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-slate-800">Users</h2>
-          <p className="text-sm text-slate-500">
-            {users.length} {users.length === 1 ? "user" : "users"} total
-          </p>
         </div>
         <div className="flex gap-2">
+          <div className="flex rounded border border-slate-300 overflow-hidden text-sm">
+            {(["all", "admin", "driver"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTypeFilter(t)}
+                className={`px-3 py-2 capitalize ${
+                  typeFilter === t
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {t === "all" ? "All" : t === "admin" ? "Admin" : "Driver"}
+              </button>
+            ))}
+          </div>
           <button
             onClick={load}
             className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
@@ -106,6 +124,8 @@ export default function Users() {
                 <Th>Username</Th>
                 <Th>Email</Th>
                 <Th>Name</Th>
+                <Th>Type</Th>
+                <Th className="whitespace-nowrap">Assigned vehicle</Th>
                 <Th className="whitespace-nowrap">Status</Th>
                 <Th className="whitespace-nowrap">Created</Th>
                 <Th className="whitespace-nowrap">Last login</Th>
@@ -115,18 +135,18 @@ export default function Users() {
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                  <td colSpan={9} className="px-4 py-6 text-center text-slate-500">
                     Loading...
                   </td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : users.filter((u) => typeFilter === "all" || u.type === typeFilter).length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                    No users yet. Click "Add user" to create one.
+                  <td colSpan={9} className="px-4 py-6 text-center text-slate-500">
+                    {typeFilter === "all" ? 'No users yet. Click "Add user" to create one.' : `No ${typeFilter} users found.`}
                   </td>
                 </tr>
               ) : (
-                users.map((u) => {
+                users.filter((u) => typeFilter === "all" || u.type === typeFilter).map((u) => {
                   const isSelf = u.id === currentUserId;
                   return (
                     <tr key={u.id} className="hover:bg-slate-50">
@@ -138,6 +158,16 @@ export default function Users() {
                         {[u.firstName, u.lastName].filter(Boolean).join(" ") || (
                           <span className="text-slate-400">—</span>
                         )}
+                      </Td>
+                      <Td>
+                        <Badge color={u.type === "admin" ? "blue" : "slate"}>
+                          {u.type === "admin" ? "Admin" : "Driver"}
+                        </Badge>
+                      </Td>
+                      <Td>
+                        {u.type === "driver" && u.assignedVehicleName
+                          ? u.assignedVehicleName
+                          : <span className="text-slate-400">—</span>}
                       </Td>
                       <Td>
                         {u.isActive ? (
@@ -237,11 +267,12 @@ function Badge({
   color,
 }: {
   children: React.ReactNode;
-  color: "green" | "slate";
+  color: "green" | "slate" | "blue";
 }) {
   const styles: Record<string, string> = {
     green: "bg-green-100 text-green-700",
     slate: "bg-slate-100 text-slate-600",
+    blue: "bg-blue-100 text-blue-700",
   };
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[color]}`}>

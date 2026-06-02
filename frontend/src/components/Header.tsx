@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../services/api";
 import ChangePasswordModal from "./ChangePasswordModal";
 
-export default function Header() {
+interface Props {
+  onMenuOpen: () => void;
+}
+
+export default function Header({ onMenuOpen }: Props) {
   const navigate = useNavigate();
   const user = getStoredUser();
   const [changePwOpen, setChangePwOpen] = useState(false);
@@ -23,8 +27,17 @@ export default function Header() {
       : user?.username ?? "";
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
-      <div className="text-sm text-slate-500">Welcome back</div>
+    <header className="h-14 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={onMenuOpen}
+        className="md:hidden w-9 h-9 inline-flex items-center justify-center rounded text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+        aria-label="Open menu"
+      >
+        <HamburgerIcon />
+      </button>
+      <div className="text-sm text-slate-500 hidden md:block">Welcome back</div>
+      <div className="flex-1 md:hidden" />
 
       {/* Avatar with hover-revealed dropdown */}
       <div className="relative group">
@@ -76,6 +89,25 @@ export default function Header() {
         onClose={() => setChangePwOpen(false)}
       />
     </header>
+  );
+}
+
+function HamburgerIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
   );
 }
 

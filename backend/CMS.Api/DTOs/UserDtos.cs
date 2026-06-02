@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CMS.Api.Models;
 
 namespace CMS.Api.DTOs;
 
@@ -10,6 +11,11 @@ public class UserListItemDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public bool IsActive { get; set; }
+    public UserType Type { get; set; }
+    public int? VehicleId { get; set; }
+    public string? AssignedVehicleName { get; set; }
+    public string? CreatedBy { get; set; }
+    public string? UpdatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 }
@@ -33,6 +39,10 @@ public class CreateUserRequest
     public string? LastName { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public UserType Type { get; set; } = UserType.Admin;
+
+    public int? VehicleId { get; set; }
 }
 
 public class UpdateUserRequest
@@ -50,6 +60,10 @@ public class UpdateUserRequest
     public string? LastName { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public UserType Type { get; set; } = UserType.Admin;
+
+    public int? VehicleId { get; set; }
 
     // Optional. When null or empty, the existing password is kept.
     // When provided, strength is enforced server-side by PasswordPolicy.

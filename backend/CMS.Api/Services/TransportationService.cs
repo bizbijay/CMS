@@ -1,0 +1,161 @@
+using CMS.Api.Data;
+using CMS.Api.DTOs;
+using CMS.Api.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace CMS.Api.Services;
+
+public class TransportationService : ITransportationService
+{
+    private readonly AppDbContext _db;
+    public TransportationService(AppDbContext db) => _db = db;
+
+    public async Task<IEnumerable<TransportationListItemDto>> GetAllAsync()
+    {
+        var items = await _db.Transportations
+            .Include(t => t.TransportedBy)
+            .Include(t => t.Vendor)
+            .Include(t => t.Project)
+            .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.CreatedAt)
+            .ToListAsync();
+        return items.Select(ToDto);
+    }
+
+    public async Task<TransportationListItemDto?> GetByIdAsync(int id)
+    {
+        var item = await _db.Transportations
+            .Include(t => t.TransportedBy)
+            .Include(t => t.Vendor)
+            .Include(t => t.Project)
+            .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
+            .FirstOrDefaultAsync(t => t.Id == id);
+        return item is null ? null : ToDto(item);
+    }
+
+    public async Task<(TransportationListItemDto? Item, string? Error)> CreateAsync(CreateTransportationRequest request, int createdById)
+    {
+        var error = await ValidateRequest(request.TransportedById, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        if (error is not null) return (null, error);
+
+        var item = new Transportation
+        {
+            TransportedById = request.TransportedById,
+            VendorId = request.VendorId,
+            VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null,
+            ProjectId = request.ProjectId,
+            ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
+            Date = request.Date,
+            CreatedById = createdById,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Transportations.Add(item);
+        await _db.SaveChangesAsync();
+
+        await _db.Entry(item).Reference(t => t.TransportedBy).LoadAsync();
+        if (item.VendorId.HasValue) await _db.Entry(item).Reference(t => t.Vendor).LoadAsync();
+        if (item.ProjectId.HasValue) await _db.Entry(item).Reference(t => t.Project).LoadAsync();
+        await _db.Entry(item).Reference(t => t.CreatedBy).LoadAsync();
+
+        return (ToDto(item), null);
+    }
+
+    public async Task<(TransportationListItemDto? Item, string? Error)> UpdateAsync(int id, UpdateTransportationRequest request, int updatedById)
+    {
+        var item = await _db.Transportations
+            .Include(t => t.TransportedBy)
+            .Include(t => t.Vendor)
+            .Include(t => t.Project)
+            .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (item is null) return (null, null);
+
+        var error = await ValidateRequest(request.TransportedById, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        if (error is not null) return (null, error);
+
+        item.TransportedById = request.TransportedById;
+        item.VendorId = request.VendorId;
+        item.VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null;
+        item.ProjectId = request.ProjectId;
+        item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
+        item.Date = request.Date;
+        item.UpdatedById = updatedById;
+        item.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        await _db.Entry(item).Reference(t => t.TransportedBy).LoadAsync();
+        if (item.VendorId.HasValue) await _db.Entry(item).Reference(t => t.Vendor).LoadAsync();
+        if (item.ProjectId.HasValue) await _db.Entry(item).Reference(t => t.Project).LoadAsync();
+        await _db.Entry(item).Reference(t => t.UpdatedBy).LoadAsync();
+
+        return (ToDto(item), null);
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var item = await _db.Transportations.FindAsync(id);
+        if (item is null) return false;
+        _db.Transportations.Remove(item);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    private async Task<string?> ValidateRequest(int transportedById, int? vendorId, string? vendorOther, int? projectId, string? projectOther)
+    {
+        if (!await _db.Users.AnyAsync(u => u.Id == transportedById))
+            return "Selected user does not exist.";
+
+        if (vendorId.HasValue)
+        {
+            if (!await _db.Vendors.AnyAsync(v => v.Id == vendorId.Value))
+                return "Selected vendor does not exist.";
+        }
+        else if (string.IsNullOrWhiteSpace(vendorOther))
+        {
+            return "Vendor is required.";
+        }
+
+        if (projectId.HasValue)
+        {
+            if (!await _db.Projects.AnyAsync(p => p.Id == projectId.Value))
+                return "Selected project does not exist.";
+        }
+        else if (string.IsNullOrWhiteSpace(projectOther))
+        {
+            return "Project is required.";
+        }
+
+        return null;
+    }
+
+    private static string UserDisplayName(User? u) =>
+        u is null ? "—" :
+        string.IsNullOrWhiteSpace($"{u.FirstName} {u.LastName}".Trim())
+            ? u.Username
+            : $"{u.FirstName} {u.LastName}".Trim();
+
+    private static TransportationListItemDto ToDto(Transportation t) => new()
+    {
+        Id = t.Id,
+        TransportedById = t.TransportedById,
+        TransportedByName = UserDisplayName(t.TransportedBy),
+        VendorId = t.VendorId,
+        VendorName = t.Vendor?.Name ?? t.VendorOther ?? string.Empty,
+        VendorOther = t.VendorOther,
+        ProjectId = t.ProjectId,
+        ProjectName = t.Project?.Name ?? t.ProjectOther ?? string.Empty,
+        ProjectOther = t.ProjectOther,
+        Date = t.Date,
+        CreatedBy = t.CreatedBy?.Username,
+        UpdatedBy = t.UpdatedBy?.Username,
+        CreatedAt = t.CreatedAt,
+        UpdatedAt = t.UpdatedAt
+    };
+}
