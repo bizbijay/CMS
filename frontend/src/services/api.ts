@@ -60,12 +60,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     if (res.status === 401) {
+      const hadToken = !!getToken();
       clearAuth();
-      window.dispatchEvent(new CustomEvent("cms:unauthorized"));
-      return undefined as T;
+      if (hadToken) {
+        window.dispatchEvent(new CustomEvent("cms:unauthorized"));
+        return undefined as T;
+      }
+      throw new Error("Invalid username or password.");
     }
 
-    let message = `Request failed with status ${res.status}`;
+    let message = `Request failed (${res.status})`;
     try {
       const data = await res.json();
       if (data?.message) message = data.message;

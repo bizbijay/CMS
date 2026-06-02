@@ -18,7 +18,11 @@ export default function Login() {
       saveAuth(res);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      if (err instanceof TypeError) {
+        setError("Unable to reach the server. Please check your connection and try again.");
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
