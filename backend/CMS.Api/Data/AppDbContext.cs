@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Transportation> Transportations => Set<Transportation>();
     public DbSet<Fuel> Fuels => Set<Fuel>();
     public DbSet<FuelLog> FuelLogs => Set<FuelLog>();
+    public DbSet<Role> Roles => Set<Role>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,7 +25,12 @@ public class AppDbContext : DbContext
         {
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();
-            entity.Property(u => u.Type).HasConversion<string>();
+
+            entity.HasOne(u => u.Role)
+                  .WithMany()
+                  .HasForeignKey(u => u.RoleId)
+                  .IsRequired(false)
+                  .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(u => u.AssignedVehicle)
                   .WithMany()
@@ -61,6 +67,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Transportation>(entity =>
         {
             entity.HasOne(t => t.TransportedBy).WithMany().HasForeignKey(t => t.TransportedById).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(t => t.Vehicle).WithMany().HasForeignKey(t => t.VehicleId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.Vendor).WithMany().HasForeignKey(t => t.VendorId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.Project).WithMany().HasForeignKey(t => t.ProjectId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.CreatedBy).WithMany().HasForeignKey(t => t.CreatedById).OnDelete(DeleteBehavior.SetNull);
@@ -90,6 +97,12 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(m => m.UpdatedById)
                   .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasOne(r => r.CreatedBy).WithMany().HasForeignKey(r => r.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(r => r.UpdatedBy).WithMany().HasForeignKey(r => r.UpdatedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Vehicle>(entity =>

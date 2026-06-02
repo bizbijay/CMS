@@ -18,7 +18,6 @@ export default function Users() {
   const [deleting, setDeleting] = useState(false);
 
   const currentUserId = getStoredUser()?.id;
-  const [typeFilter, setTypeFilter] = useState<"all" | "admin" | "driver">("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,26 +64,8 @@ export default function Users() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-800">Users</h2>
-        </div>
+        <h2 className="text-2xl font-semibold text-slate-800">Users</h2>
         <div className="flex gap-2">
-          <div className="flex rounded border border-slate-300 overflow-hidden text-sm">
-            {(["all", "admin", "driver"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTypeFilter(t)}
-                className={`px-3 py-2 capitalize ${
-                  typeFilter === t
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {t === "all" ? "All" : t === "admin" ? "Admin" : "Driver"}
-              </button>
-            ))}
-          </div>
           <button
             onClick={load}
             className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
@@ -124,7 +105,7 @@ export default function Users() {
                 <Th>Username</Th>
                 <Th>Email</Th>
                 <Th>Name</Th>
-                <Th>Type</Th>
+                <Th>Role</Th>
                 <Th className="whitespace-nowrap">Assigned vehicle</Th>
                 <Th className="whitespace-nowrap">Status</Th>
                 <Th className="whitespace-nowrap">Created</Th>
@@ -139,14 +120,14 @@ export default function Users() {
                     Loading...
                   </td>
                 </tr>
-              ) : users.filter((u) => typeFilter === "all" || u.type === typeFilter).length === 0 ? (
+              ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-6 text-center text-slate-500">
-                    {typeFilter === "all" ? 'No users yet. Click "Add user" to create one.' : `No ${typeFilter} users found.`}
+                    No users yet. Click "Add user" to create one.
                   </td>
                 </tr>
               ) : (
-                users.filter((u) => typeFilter === "all" || u.type === typeFilter).map((u) => {
+                users.map((u) => {
                   const isSelf = u.id === currentUserId;
                   return (
                     <tr key={u.id} className="hover:bg-slate-50">
@@ -160,14 +141,18 @@ export default function Users() {
                         )}
                       </Td>
                       <Td>
-                        <Badge color={u.type === "admin" ? "blue" : "slate"}>
-                          {u.type === "admin" ? "Admin" : "Driver"}
-                        </Badge>
+                        {u.roleName ? (
+                          <Badge color="blue">{u.roleName}</Badge>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </Td>
                       <Td>
-                        {u.type === "driver" && u.assignedVehicleName
-                          ? u.assignedVehicleName
-                          : <span className="text-slate-400">—</span>}
+                        {u.assignedVehicleName ? (
+                          u.assignedVehicleName
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </Td>
                       <Td>
                         {u.isActive ? (
@@ -189,9 +174,7 @@ export default function Users() {
                           <IconButton
                             tooltip="Edit user"
                             icon={<PencilIcon />}
-                            onClick={() =>
-                              setModalMode({ kind: "edit", user: u })
-                            }
+                            onClick={() => setModalMode({ kind: "edit", user: u })}
                           />
                           <IconButton
                             tooltip={isSelf ? "Can't delete yourself" : "Delete user"}

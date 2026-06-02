@@ -17,6 +17,7 @@ public class UserService : IUserService
     public async Task<IEnumerable<UserListItemDto>> GetAllAsync()
     {
         var users = await _db.Users
+            .Include(u => u.Role)
             .Include(u => u.AssignedVehicle)
             .Include(u => u.CreatedBy)
             .Include(u => u.UpdatedBy)
@@ -28,6 +29,7 @@ public class UserService : IUserService
     public async Task<UserListItemDto?> GetByIdAsync(int id)
     {
         var user = await _db.Users
+            .Include(u => u.Role)
             .Include(u => u.AssignedVehicle)
             .Include(u => u.CreatedBy)
             .Include(u => u.UpdatedBy)
@@ -48,8 +50,10 @@ public class UserService : IUserService
         if (exists)
             return (null, "A user with that username or email already exists.");
 
-        var vehicleId = request.Type == UserType.Driver ? request.VehicleId : null;
-        if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
+        if (request.RoleId.HasValue && !await _db.Roles.AnyAsync(r => r.Id == request.RoleId.Value))
+            return (null, "Selected role does not exist.");
+
+        if (request.VehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == request.VehicleId.Value))
             return (null, "Selected vehicle does not exist.");
 
         var user = new User
@@ -60,8 +64,8 @@ public class UserService : IUserService
             FirstName = request.FirstName?.Trim(),
             LastName = request.LastName?.Trim(),
             IsActive = request.IsActive,
-            Type = request.Type,
-            VehicleId = vehicleId,
+            RoleId = request.RoleId,
+            VehicleId = request.VehicleId,
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
         };
@@ -69,6 +73,7 @@ public class UserService : IUserService
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
+        await _db.Entry(user).Reference(u => u.Role).LoadAsync();
         await _db.Entry(user).Reference(u => u.AssignedVehicle).LoadAsync();
         await _db.Entry(user).Reference(u => u.CreatedBy).LoadAsync();
 
@@ -78,6 +83,7 @@ public class UserService : IUserService
     public async Task<(UserListItemDto? User, string? Error)> UpdateAsync(int id, UpdateUserRequest request, int updatedById)
     {
         var user = await _db.Users
+            .Include(u => u.Role)
             .Include(u => u.AssignedVehicle)
             .Include(u => u.CreatedBy)
             .Include(u => u.UpdatedBy)
@@ -92,8 +98,10 @@ public class UserService : IUserService
         if (conflict)
             return (null, "Another user already has that username or email.");
 
-        var vehicleId = request.Type == UserType.Driver ? request.VehicleId : null;
-        if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
+        if (request.RoleId.HasValue && !await _db.Roles.AnyAsync(r => r.Id == request.RoleId.Value))
+            return (null, "Selected role does not exist.");
+
+        if (request.VehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == request.VehicleId.Value))
             return (null, "Selected vehicle does not exist.");
 
         user.Username = username;
@@ -101,8 +109,8 @@ public class UserService : IUserService
         user.FirstName = request.FirstName?.Trim();
         user.LastName = request.LastName?.Trim();
         user.IsActive = request.IsActive;
-        user.Type = request.Type;
-        user.VehicleId = vehicleId;
+        user.RoleId = request.RoleId;
+        user.VehicleId = request.VehicleId;
         user.UpdatedById = updatedById;
         user.UpdatedAt = DateTime.UtcNow;
 
@@ -117,6 +125,7 @@ public class UserService : IUserService
 
         await _db.SaveChangesAsync();
 
+        await _db.Entry(user).Reference(u => u.Role).LoadAsync();
         await _db.Entry(user).Reference(u => u.AssignedVehicle).LoadAsync();
         await _db.Entry(user).Reference(u => u.UpdatedBy).LoadAsync();
 
@@ -144,7 +153,8 @@ public class UserService : IUserService
         FirstName = u.FirstName,
         LastName = u.LastName,
         IsActive = u.IsActive,
-        Type = u.Type,
+        RoleId = u.RoleId,
+        RoleName = u.Role?.Name,
         VehicleId = u.VehicleId,
         AssignedVehicleName = u.AssignedVehicle is null ? null
             : $"{u.AssignedVehicle.Name} ({u.AssignedVehicle.NumberPlate})",

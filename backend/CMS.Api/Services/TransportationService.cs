@@ -14,6 +14,7 @@ public class TransportationService : ITransportationService
     {
         var items = await _db.Transportations
             .Include(t => t.TransportedBy)
+            .Include(t => t.Vehicle)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
             .Include(t => t.CreatedBy)
@@ -28,6 +29,7 @@ public class TransportationService : ITransportationService
     {
         var item = await _db.Transportations
             .Include(t => t.TransportedBy)
+            .Include(t => t.Vehicle)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
             .Include(t => t.CreatedBy)
@@ -38,12 +40,13 @@ public class TransportationService : ITransportationService
 
     public async Task<(TransportationListItemDto? Item, string? Error)> CreateAsync(CreateTransportationRequest request, int createdById)
     {
-        var error = await ValidateRequest(request.TransportedById, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.TransportedById, request.VehicleId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
         if (error is not null) return (null, error);
 
         var item = new Transportation
         {
             TransportedById = request.TransportedById,
+            VehicleId = request.VehicleId,
             VendorId = request.VendorId,
             VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null,
             ProjectId = request.ProjectId,
@@ -57,6 +60,7 @@ public class TransportationService : ITransportationService
         await _db.SaveChangesAsync();
 
         await _db.Entry(item).Reference(t => t.TransportedBy).LoadAsync();
+        if (item.VehicleId.HasValue) await _db.Entry(item).Reference(t => t.Vehicle).LoadAsync();
         if (item.VendorId.HasValue) await _db.Entry(item).Reference(t => t.Vendor).LoadAsync();
         if (item.ProjectId.HasValue) await _db.Entry(item).Reference(t => t.Project).LoadAsync();
         await _db.Entry(item).Reference(t => t.CreatedBy).LoadAsync();
@@ -68,6 +72,7 @@ public class TransportationService : ITransportationService
     {
         var item = await _db.Transportations
             .Include(t => t.TransportedBy)
+            .Include(t => t.Vehicle)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
             .Include(t => t.CreatedBy)
@@ -76,10 +81,11 @@ public class TransportationService : ITransportationService
 
         if (item is null) return (null, null);
 
-        var error = await ValidateRequest(request.TransportedById, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.TransportedById, request.VehicleId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
         if (error is not null) return (null, error);
 
         item.TransportedById = request.TransportedById;
+        item.VehicleId = request.VehicleId;
         item.VendorId = request.VendorId;
         item.VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null;
         item.ProjectId = request.ProjectId;
@@ -91,6 +97,7 @@ public class TransportationService : ITransportationService
         await _db.SaveChangesAsync();
 
         await _db.Entry(item).Reference(t => t.TransportedBy).LoadAsync();
+        if (item.VehicleId.HasValue) await _db.Entry(item).Reference(t => t.Vehicle).LoadAsync();
         if (item.VendorId.HasValue) await _db.Entry(item).Reference(t => t.Vendor).LoadAsync();
         if (item.ProjectId.HasValue) await _db.Entry(item).Reference(t => t.Project).LoadAsync();
         await _db.Entry(item).Reference(t => t.UpdatedBy).LoadAsync();
@@ -107,10 +114,13 @@ public class TransportationService : ITransportationService
         return true;
     }
 
-    private async Task<string?> ValidateRequest(int transportedById, int? vendorId, string? vendorOther, int? projectId, string? projectOther)
+    private async Task<string?> ValidateRequest(int transportedById, int? vehicleId, int? vendorId, string? vendorOther, int? projectId, string? projectOther)
     {
         if (!await _db.Users.AnyAsync(u => u.Id == transportedById))
             return "Selected user does not exist.";
+
+        if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
+            return "Selected vehicle does not exist.";
 
         if (vendorId.HasValue)
         {
@@ -146,6 +156,8 @@ public class TransportationService : ITransportationService
         Id = t.Id,
         TransportedById = t.TransportedById,
         TransportedByName = UserDisplayName(t.TransportedBy),
+        VehicleId = t.VehicleId,
+        VehicleName = t.Vehicle is null ? null : $"{t.Vehicle.Name} ({t.Vehicle.NumberPlate})",
         VendorId = t.VendorId,
         VendorName = t.Vendor?.Name ?? t.VendorOther ?? string.Empty,
         VendorOther = t.VendorOther,

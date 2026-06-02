@@ -1,14 +1,10 @@
 import { FormEvent, useEffect, useState } from "react";
-import { usersApi, vehiclesApi } from "../services/api";
-import type { UserListItem, UserType } from "../types/users";
+import { usersApi, vehiclesApi, rolesApi } from "../services/api";
+import type { UserListItem } from "../types/users";
 import type { VehicleListItem } from "../types/vehicles";
+import type { RoleListItem } from "../types/roles";
 import { isPasswordValid } from "../services/passwordPolicy";
 import PasswordRequirements from "./PasswordRequirements";
-
-const USER_TYPES: { value: UserType; label: string }[] = [
-  { value: "admin", label: "Admin" },
-  { value: "driver", label: "Driver" },
-];
 
 export type UserFormMode =
   | { kind: "add" }
@@ -30,17 +26,18 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [type, setType] = useState<UserType>("admin");
+  const [roleId, setRoleId] = useState<number | null>(null);
   const [vehicleId, setVehicleId] = useState<number | null>(null);
   const [vehicles, setVehicles] = useState<VehicleListItem[]>([]);
+  const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     vehiclesApi.list().then(setVehicles).catch(() => {});
+    rolesApi.list().then(setRoles).catch(() => {});
   }, []);
 
-  // Sync form state when the modal opens or the target user changes.
   useEffect(() => {
     if (!open) return;
     if (mode.kind === "edit") {
@@ -51,7 +48,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
       setLastName(u.lastName ?? "");
       setPassword("");
       setIsActive(u.isActive);
-      setType(u.type);
+      setRoleId(u.roleId ?? null);
       setVehicleId(u.vehicleId ?? null);
     } else {
       setUsername("");
@@ -60,7 +57,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
       setLastName("");
       setPassword("");
       setIsActive(true);
-      setType("admin");
+      setRoleId(null);
       setVehicleId(null);
     }
     setError(null);
@@ -73,8 +70,6 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
     onClose();
   }
 
-  // In add mode the password is required; in edit mode a non-empty value must
-  // satisfy the policy, but an empty value keeps the existing password.
   const passwordOk =
     mode.kind === "add"
       ? isPasswordValid(password)
@@ -99,8 +94,8 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           isActive,
-          type,
-          vehicleId: type === "driver" ? vehicleId : null,
+          roleId,
+          vehicleId,
         });
         onSaved(created, "add");
       } else {
@@ -110,8 +105,8 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           isActive,
-          type,
-          vehicleId: type === "driver" ? vehicleId : null,
+          roleId,
+          vehicleId,
           password: password ? password : undefined,
         });
         onSaved(updated, "edit");
@@ -220,8 +215,6 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
             placeholder={isEdit ? "Leave blank to keep current password" : ""}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {/* Show the checklist for new users always, and for edits only when
-              the admin is actually entering a new password. */}
           <PasswordRequirements
             value={password}
             hideWhenEmpty={isEdit}
@@ -229,40 +222,35 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           />
         </Field>
 
-        <Field label="User type" required>
+        <Field label="Role">
           <select
-            value={type}
-            onChange={(e) => {
-              const t = e.target.value as UserType;
-              setType(t);
-              if (t !== "driver") setVehicleId(null);
-            }}
+            value={roleId ?? ""}
+            onChange={(e) => setRoleId(e.target.value ? Number(e.target.value) : null)}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {USER_TYPES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            <option value="">— No role —</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
               </option>
             ))}
           </select>
         </Field>
 
-        {type === "driver" && (
-          <Field label="Assigned vehicle">
-            <select
-              value={vehicleId ?? ""}
-              onChange={(e) => setVehicleId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">— None / Unassigned —</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} ({v.numberPlate})
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
+        <Field label="Assigned vehicle">
+          <select
+            value={vehicleId ?? ""}
+            onChange={(e) => setVehicleId(e.target.value ? Number(e.target.value) : null)}
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">— None / Unassigned —</option>
+            {vehicles.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name} ({v.numberPlate})
+              </option>
+            ))}
+          </select>
+        </Field>
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input

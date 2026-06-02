@@ -1,5 +1,3 @@
-export type UserType = "admin" | "driver";
-
 export interface UserListItem {
   id: number;
   username: string;
@@ -7,7 +5,8 @@ export interface UserListItem {
   firstName?: string | null;
   lastName?: string | null;
   isActive: boolean;
-  type: UserType;
+  roleId?: number | null;
+  roleName?: string | null;
   vehicleId?: number | null;
   assignedVehicleName?: string | null;
   createdBy?: string | null;
@@ -23,7 +22,7 @@ export interface CreateUserRequest {
   firstName?: string;
   lastName?: string;
   isActive: boolean;
-  type: UserType;
+  roleId?: number | null;
   vehicleId?: number | null;
 }
 
@@ -33,7 +32,7 @@ export interface UpdateUserRequest {
   firstName?: string;
   lastName?: string;
   isActive: boolean;
-  type: UserType;
+  roleId?: number | null;
   vehicleId?: number | null;
   password?: string;
 }

@@ -1,28 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
-import { transportationsApi } from "../services/api";
-import type { TransportationListItem } from "../types/transportation";
-import TransportationFormModal, { type TransportationFormMode } from "../components/TransportationFormModal";
+import { rolesApi } from "../services/api";
+import type { RoleListItem } from "../types/roles";
+import RoleFormModal, { type RoleFormMode } from "../components/RoleFormModal";
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 
-export default function Transportation() {
+export default function Roles() {
   const { addToast } = useToast();
-  const [items, setItems] = useState<TransportationListItem[]>([]);
+  const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modalMode, setModalMode] = useState<TransportationFormMode | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<TransportationListItem | null>(null);
+  const [modalMode, setModalMode] = useState<RoleFormMode | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<RoleListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const rows = await transportationsApi.list();
-      setItems(rows);
+      const rows = await rolesApi.list();
+      setRoles(rows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load transportation records.");
+      setError(err instanceof Error ? err.message : "Failed to load roles.");
     } finally {
       setLoading(false);
     }
@@ -30,13 +30,13 @@ export default function Transportation() {
 
   useEffect(() => { load(); }, [load]);
 
-  function onSaved(item: TransportationListItem, kind: TransportationFormMode["kind"]) {
+  function onSaved(role: RoleListItem, kind: RoleFormMode["kind"]) {
     if (kind === "add") {
-      setItems((prev) => [item, ...prev]);
-      addToast("Transportation added successfully.", "success");
+      setRoles((prev) => [role, ...prev]);
+      addToast("Role added successfully.", "success");
     } else {
-      setItems((prev) => prev.map((t) => (t.id === item.id ? item : t)));
-      addToast("Transportation updated successfully.", "success");
+      setRoles((prev) => prev.map((r) => (r.id === role.id ? role : r)));
+      addToast("Role updated successfully.", "success");
     }
   }
 
@@ -44,10 +44,10 @@ export default function Transportation() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      await transportationsApi.remove(pendingDelete.id);
-      setItems((prev) => prev.filter((t) => t.id !== pendingDelete.id));
+      await rolesApi.remove(pendingDelete.id);
+      setRoles((prev) => prev.filter((r) => r.id !== pendingDelete.id));
       setPendingDelete(null);
-      addToast("Transportation deleted.", "success");
+      addToast("Role deleted.", "success");
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Delete failed.", "error");
     } finally {
@@ -58,7 +58,7 @@ export default function Transportation() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Transportation</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">Roles</h2>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
             Refresh
@@ -70,45 +70,35 @@ export default function Transportation() {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
-            Add transportation
+            Add role
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>
-      )}
+      {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Transported by</Th>
-                <Th>Vehicle</Th>
-                <Th>Vendor</Th>
-                <Th>Project</Th>
-                <Th>Date</Th>
+                <Th>Role name</Th>
                 <Th className="text-right whitespace-nowrap">Actions</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={9} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-6 text-center text-slate-500">No records yet. Click "Add transportation" to log one.</td></tr>
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+              ) : roles.length === 0 ? (
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">No roles yet. Click "Add role" to create one.</td></tr>
               ) : (
-                items.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50">
-                    <Td><span className="font-medium text-slate-800">{t.transportedByName}</span></Td>
-                    <Td>{t.vehicleName ?? <span className="text-slate-400">—</span>}</Td>
-                    <Td>{t.vendorName}</Td>
-                    <Td>{t.projectName}</Td>
-                    <Td>{formatDate(t.date)}</Td>
+                roles.map((r) => (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <Td><span className="font-medium text-slate-800">{r.name}</span></Td>
                     <Td className="text-right">
                       <div className="inline-flex gap-1.5">
-                        <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", transportation: t })} />
-                        <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(t)} />
+                        <IconButton tooltip="Edit role" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", role: r })} />
+                        <IconButton tooltip="Delete role" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(r)} />
                       </div>
                     </Td>
                   </tr>
@@ -119,7 +109,7 @@ export default function Transportation() {
         </div>
       </div>
 
-      <TransportationFormModal
+      <RoleFormModal
         open={modalMode !== null}
         mode={modalMode ?? { kind: "add" }}
         onClose={() => setModalMode(null)}
@@ -128,8 +118,8 @@ export default function Transportation() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete transportation"
-        message={pendingDelete ? `Are you sure you want to delete this transportation record? This action cannot be undone.` : ""}
+        title="Delete role"
+        message={pendingDelete ? `Are you sure you want to delete "${pendingDelete.name}"? This action cannot be undone.` : ""}
         confirmLabel="Delete"
         tone="danger"
         busy={deleting}
@@ -149,12 +139,6 @@ function Td({ children, className }: { children: React.ReactNode; className?: st
 }
 
 function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString();
-}
-
-function formatDateTime(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString();

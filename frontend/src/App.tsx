@@ -10,6 +10,7 @@ import Vendors from "./pages/Vendors";
 import Projects from "./pages/Projects";
 import Transportation from "./pages/Transportation";
 import Fuels from "./pages/Fuels";
+import Roles from "./pages/Roles";
 import FuelLog from "./pages/FuelLog";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/transportation" element={<Transportation />} />
         <Route path="/fuels" element={<Fuels />} />
+        <Route path="/roles" element={<Roles />} />
         <Route path="/fuel-log" element={<FuelLog />} />
       </Route>
     </Routes>

@@ -17,6 +17,7 @@ import type {
 } from "../types/vehicles";
 import type { CreateMaterialRequest, UpdateMaterialRequest, MaterialListItem } from "../types/materials";
 import type { CreateFuelRequest, UpdateFuelRequest, FuelListItem } from "../types/fuels";
+import type { CreateRoleRequest, UpdateRoleRequest, RoleListItem } from "../types/roles";
 import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from "../types/fuelLog";
 import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
 import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
@@ -127,6 +128,15 @@ export const fuelLogsApi = {
   update: (id: number, body: UpdateFuelLogRequest) =>
     request<FuelLogListItem>(`/api/fuellogs/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/fuellogs/${id}`, { method: "DELETE" }),
+};
+
+export const rolesApi = {
+  list: () => request<RoleListItem[]>("/api/roles", { method: "GET" }),
+  create: (body: CreateRoleRequest) =>
+    request<RoleListItem>("/api/roles", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateRoleRequest) =>
+    request<RoleListItem>(`/api/roles/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/roles/${id}`, { method: "DELETE" }),
 };
 
 export const fuelsApi = {

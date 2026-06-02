@@ -37,15 +37,20 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
 
   const [transportedById, setTransportedById] = useState<number>(0);
 
-  const [vendorSel, setVendorSel] = useState<string>("");   // numeric id or "other"
+  const [vendorSel, setVendorSel] = useState<string>("");
   const [vendorOther, setVendorOther] = useState("");
 
-  const [projectSel, setProjectSel] = useState<string>(""); // numeric id or "other"
+  const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
 
   const [date, setDate] = useState(todayIso());
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Derive vehicle from the selected user — no separate state needed.
+  const selectedUser = users.find((u) => u.id === transportedById);
+  const assignedVehicleId = selectedUser?.vehicleId ?? null;
+  const assignedVehicleName = selectedUser?.assignedVehicleName ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -114,6 +119,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
 
     const body = {
       transportedById,
+      vehicleId: assignedVehicleId,
       vendorId: vendorSel !== OTHER ? Number(vendorSel) : null,
       vendorOther: vendorSel === OTHER ? vendorOther.trim() : null,
       projectId: projectSel !== OTHER ? Number(projectSel) : null,
@@ -179,6 +185,15 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                   <option key={u.id} value={u.id}>{displayName(u)}</option>
                 ))}
               </select>
+            </Field>
+
+            <Field label="Vehicle">
+              <input
+                type="text"
+                value={assignedVehicleName ?? "— No vehicle assigned —"}
+                disabled
+                className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
+              />
             </Field>
 
             <Field label="Vendor" required>

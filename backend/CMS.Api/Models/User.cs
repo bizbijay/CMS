@@ -3,12 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CMS.Api.Models;
 
-public enum UserType
-{
-    Admin,
-    Driver
-}
-
 [Table("Users")]
 public class User
 {
@@ -32,7 +26,8 @@ public class User
 
     public bool IsActive { get; set; } = true;
 
-    public UserType Type { get; set; } = UserType.Admin;
+    public int? RoleId { get; set; }
+    public Role? Role { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

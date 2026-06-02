@@ -48,7 +48,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
     setLoadingOptions(true);
     Promise.all([usersApi.list(), vehiclesApi.list(), fuelsApi.list()])
       .then(([users, v, f]) => {
-        const driverList = users.filter((u) => u.type === "driver");
+        const driverList = users;
         setDrivers(driverList);
         setVehicles(v);
         setFuelTypes(f);
@@ -142,7 +142,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           <>
             <Field label="Driver" required>
               {drivers.length === 0 ? (
-                <p className="text-sm text-amber-600 py-1">No drivers found. Add a user with type "Driver" first.</p>
+                <p className="text-sm text-amber-600 py-1">No users found. Add a user first.</p>
               ) : (
                 <select
                   value={driverId}

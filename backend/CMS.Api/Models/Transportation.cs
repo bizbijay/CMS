@@ -13,6 +13,9 @@ public class Transportation
     public int TransportedById { get; set; }
     public User? TransportedBy { get; set; }
 
+    public int? VehicleId { get; set; }
+    public Vehicle? Vehicle { get; set; }
+
     // Either VendorId (FK) or VendorOther (free text) must be set
     public int? VendorId { get; set; }
     public Vendor? Vendor { get; set; }

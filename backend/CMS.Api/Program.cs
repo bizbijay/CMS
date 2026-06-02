@@ -65,6 +65,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITransportationService, TransportationService>();
 builder.Services.AddScoped<IFuelService, FuelService>();
 builder.Services.AddScoped<IFuelLogService, FuelLogService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
