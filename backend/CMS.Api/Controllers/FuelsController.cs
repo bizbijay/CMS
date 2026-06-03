@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class FuelsController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class FuelsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "fuel_types.view")]
     public async Task<ActionResult<IEnumerable<FuelListItemDto>>> GetAll() =>
         Ok(await _fuels.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "fuel_types.view")]
     public async Task<ActionResult<FuelListItemDto>> GetById(int id)
     {
         var fuel = await _fuels.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class FuelsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "fuel_types.add")]
     public async Task<ActionResult<FuelListItemDto>> Create([FromBody] CreateFuelRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -37,6 +39,7 @@ public class FuelsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "fuel_types.edit")]
     public async Task<ActionResult<FuelListItemDto>> Update(int id, [FromBody] UpdateFuelRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,6 +50,7 @@ public class FuelsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "fuel_types.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _fuels.DeleteAsync(id);

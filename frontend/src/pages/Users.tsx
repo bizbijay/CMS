@@ -7,6 +7,7 @@ import UserFormModal, {
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
+import Can from "../components/Can";
 
 export default function Users() {
   const { addToast } = useToast();
@@ -72,22 +73,24 @@ export default function Users() {
           >
             Refresh
           </button>
-          <button
-            onClick={() => setModalMode({ kind: "add" })}
-            className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.2}
-              className="w-4 h-4"
+          <Can do="users.add">
+            <button
+              onClick={() => setModalMode({ kind: "add" })}
+              className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
             >
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add user
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                className="w-4 h-4"
+              >
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add user
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -171,18 +174,22 @@ export default function Users() {
                       </Td>
                       <Td className="text-right">
                         <div className="inline-flex gap-1.5">
-                          <IconButton
-                            tooltip="Edit user"
-                            icon={<PencilIcon />}
-                            onClick={() => setModalMode({ kind: "edit", user: u })}
-                          />
-                          <IconButton
-                            tooltip={isSelf ? "Can't delete yourself" : "Delete user"}
-                            tone="danger"
-                            disabled={isSelf}
-                            icon={<TrashIcon />}
-                            onClick={() => setPendingDelete(u)}
-                          />
+                          <Can do="users.edit">
+                            <IconButton
+                              tooltip="Edit user"
+                              icon={<PencilIcon />}
+                              onClick={() => setModalMode({ kind: "edit", user: u })}
+                            />
+                          </Can>
+                          <Can do="users.delete">
+                            <IconButton
+                              tooltip={isSelf ? "Can't delete yourself" : "Delete user"}
+                              tone="danger"
+                              disabled={isSelf}
+                              icon={<TrashIcon />}
+                              onClick={() => setPendingDelete(u)}
+                            />
+                          </Can>
                         </div>
                       </Td>
                     </tr>

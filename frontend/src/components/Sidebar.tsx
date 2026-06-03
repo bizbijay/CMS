@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 interface Props {
   mobileOpen: boolean;
@@ -8,20 +9,20 @@ interface Props {
 
 const topMenu = [
   { to: "/", label: "Dashboard", icon: DashboardIcon },
-  { to: "/users", label: "Users", icon: UsersIcon },
-  { to: "/transportation", label: "Transportation", icon: TransportationIcon },
-  { to: "/fuel-log", label: "Fuel Log", icon: FuelLogIcon },
+  { to: "/users", label: "Users", icon: UsersIcon, policy: "users.view" },
+  { to: "/transportation", label: "Transportation", icon: TransportationIcon, policy: "transportation.view" },
+  { to: "/fuel-log", label: "Fuel Log", icon: FuelLogIcon, policy: "fuel_log.view" },
 ];
 
 const settingsMenu = [
-  { to: "/vehicles", label: "Vehicles", icon: VehiclesIcon },
-  { to: "/materials", label: "Materials", icon: MaterialsIcon },
-  { to: "/vendors", label: "Vendors", icon: VendorsIcon },
-  { to: "/projects", label: "Projects", icon: ProjectsIcon },
-  { to: "/fuels", label: "Fuel Types", icon: FuelIcon },
-  { to: "/roles", label: "Roles", icon: RolesIcon },
-  { to: "/permissions", label: "Permissions", icon: PermissionsIcon },
-  { to: "/role-permissions", label: "Role Permissions", icon: RolePermissionsIcon },
+  { to: "/vehicles", label: "Vehicles", icon: VehiclesIcon, policy: "vehicles.view" },
+  { to: "/materials", label: "Materials", icon: MaterialsIcon, policy: "materials.view" },
+  { to: "/vendors", label: "Vendors", icon: VendorsIcon, policy: "vendors.view" },
+  { to: "/projects", label: "Projects", icon: ProjectsIcon, policy: "projects.view" },
+  { to: "/fuels", label: "Fuel Types", icon: FuelIcon, policy: "fuel_types.view" },
+  { to: "/roles", label: "Roles", icon: RolesIcon, policy: "roles.view" },
+  { to: "/permissions", label: "Permissions", icon: PermissionsIcon, policy: "permissions.view" },
+  { to: "/role-permissions", label: "Role Permissions", icon: RolePermissionsIcon, policy: "role_permissions.view" },
 ];
 
 const settingsPaths = settingsMenu.map((m) => m.to);
@@ -29,6 +30,11 @@ const settingsPaths = settingsMenu.map((m) => m.to);
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { can } = useAuth();
+
+  const visibleTopMenu = topMenu.filter((m) => !m.policy || can(m.policy));
+  const visibleSettingsMenu = settingsMenu.filter((m) => !m.policy || can(m.policy));
+
   const isInSettings = settingsPaths.some((p) => location.pathname === p);
   const [settingsOpen, setSettingsOpen] = useState(isInSettings);
   const width = collapsed ? "w-16" : "w-60";
@@ -66,7 +72,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {topMenu.map(({ to, label, icon: Icon }) => (
+        {visibleTopMenu.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -88,7 +94,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
           </NavLink>
         ))}
 
-        {/* Settings group */}
+        {/* Settings group — hidden entirely when user has no access to any submenu item */}
+        {visibleSettingsMenu.length > 0 && (
+        <>
         <button
           type="button"
           onClick={() => setSettingsOpen((o) => !o)}
@@ -112,7 +120,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
 
         {(settingsOpen || (collapsed && !isMobile)) && (
           <div className={collapsed && !isMobile ? "space-y-1" : "ml-3 border-l border-slate-700 pl-2 space-y-1"}>
-            {settingsMenu.map(({ to, label, icon: Icon }) => (
+            {visibleSettingsMenu.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -133,6 +141,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
               </NavLink>
             ))}
           </div>
+        )}
+        </>
         )}
       </nav>
 

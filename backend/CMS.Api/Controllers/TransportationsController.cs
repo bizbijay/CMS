@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class TransportationsController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class TransportationsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "transportation.view")]
     public async Task<ActionResult<IEnumerable<TransportationListItemDto>>> GetAll() =>
         Ok(await _service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "transportation.view")]
     public async Task<ActionResult<TransportationListItemDto>> GetById(int id)
     {
         var item = await _service.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class TransportationsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "transportation.add")]
     public async Task<ActionResult<TransportationListItemDto>> Create([FromBody] CreateTransportationRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -38,6 +40,7 @@ public class TransportationsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "transportation.edit")]
     public async Task<ActionResult<TransportationListItemDto>> Update(int id, [FromBody] UpdateTransportationRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -48,6 +51,7 @@ public class TransportationsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "transportation.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

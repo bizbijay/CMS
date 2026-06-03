@@ -5,6 +5,7 @@ import TransportationFormModal, { type TransportationFormMode } from "../compone
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
+import Can from "../components/Can";
 
 export default function Transportation() {
   const { addToast } = useToast();
@@ -63,15 +64,17 @@ export default function Transportation() {
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
             Refresh
           </button>
-          <button
-            onClick={() => setModalMode({ kind: "add" })}
-            className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add transportation
-          </button>
+          <Can do="transportation.add">
+            <button
+              onClick={() => setModalMode({ kind: "add" })}
+              className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add transportation
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -109,8 +112,12 @@ export default function Transportation() {
                     <Td>{formatDate(t.date)}</Td>
                     <Td className="text-right">
                       <div className="inline-flex gap-1.5">
-                        <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", transportation: t })} />
-                        <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(t)} />
+                        <Can do="transportation.edit">
+                          <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", transportation: t })} />
+                        </Can>
+                        <Can do="transportation.delete">
+                          <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(t)} />
+                        </Can>
                       </div>
                     </Td>
                   </tr>

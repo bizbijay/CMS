@@ -1,8 +1,11 @@
 using System.Text;
+using CMS.Api.Authorization;
 using CMS.Api.Data;
 using CMS.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -69,6 +72,9 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -86,7 +92,40 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    string[] permissions =
+    [
+        "dashboard.view",
+
+        "users.view",    "users.add",    "users.edit",    "users.delete",
+
+        "transportation.view", "transportation.add", "transportation.edit", "transportation.delete",
+
+        "fuel_log.view", "fuel_log.add", "fuel_log.edit", "fuel_log.delete",
+
+        "vehicles.view", "vehicles.add", "vehicles.edit", "vehicles.delete",
+
+        "materials.view", "materials.add", "materials.edit", "materials.delete",
+
+        "vendors.view",  "vendors.add",  "vendors.edit",  "vendors.delete",
+
+        "projects.view", "projects.add", "projects.edit", "projects.delete",
+
+        "fuel_types.view", "fuel_types.add", "fuel_types.edit", "fuel_types.delete",
+
+        "roles.view",    "roles.add",    "roles.edit",    "roles.delete",
+
+        "permissions.view", "permissions.add", "permissions.edit", "permissions.delete",
+
+        "role_permissions.view", "role_permissions.edit",
+    ];
+
+    foreach (var perm in permissions)
+        options.AddPolicy(perm, policy => policy
+            .RequireAuthenticatedUser()
+            .AddRequirements(new PermissionRequirement(perm)));
+});
 
 builder.Services.AddCors(options =>
 {

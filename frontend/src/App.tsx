@@ -17,6 +17,7 @@ import FuelLog from "./pages/FuelLog";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
+import { AuthProvider } from "./context/AuthContext";
 import { useUnauthorizedHandler } from "./hooks/useUnauthorizedHandler";
 
 function AppRoutes() {
@@ -35,17 +36,94 @@ function AppRoutes() {
         }
       >
         <Route path="/" element={<Dashboard />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/vehicles" element={<Vehicles />} />
-        <Route path="/materials" element={<Materials />} />
-        <Route path="/vendors" element={<Vendors />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/transportation" element={<Transportation />} />
-        <Route path="/fuels" element={<Fuels />} />
-        <Route path="/roles" element={<Roles />} />
-        <Route path="/permissions" element={<Permissions />} />
-        <Route path="/role-permissions" element={<RolePermissions />} />
-        <Route path="/fuel-log" element={<FuelLog />} />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute policy="users.view">
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transportation"
+          element={
+            <ProtectedRoute policy="transportation.view">
+              <Transportation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel-log"
+          element={
+            <ProtectedRoute policy="fuel_log.view">
+              <FuelLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vehicles"
+          element={
+            <ProtectedRoute policy="vehicles.view">
+              <Vehicles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/materials"
+          element={
+            <ProtectedRoute policy="materials.view">
+              <Materials />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendors"
+          element={
+            <ProtectedRoute policy="vendors.view">
+              <Vendors />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute policy="projects.view">
+              <Projects />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuels"
+          element={
+            <ProtectedRoute policy="fuel_types.view">
+              <Fuels />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/roles"
+          element={
+            <ProtectedRoute policy="roles.view">
+              <Roles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/permissions"
+          element={
+            <ProtectedRoute policy="permissions.view">
+              <Permissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/role-permissions"
+          element={
+            <ProtectedRoute policy="role_permissions.view">
+              <RolePermissions />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );
@@ -54,7 +132,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <ToastProvider>
-      <AppRoutes />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </ToastProvider>
   );
 }

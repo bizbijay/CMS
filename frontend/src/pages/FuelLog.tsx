@@ -5,6 +5,7 @@ import FuelLogFormModal, { type FuelLogFormMode } from "../components/FuelLogFor
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
+import Can from "../components/Can";
 
 export default function FuelLog() {
   const { addToast } = useToast();
@@ -73,15 +74,17 @@ export default function FuelLog() {
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
             Refresh
           </button>
-          <button
-            onClick={() => setModalMode({ kind: "add" })}
-            className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add fuel log
-          </button>
+          <Can do="fuel_log.add">
+            <button
+              onClick={() => setModalMode({ kind: "add" })}
+              className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add fuel log
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -154,8 +157,12 @@ export default function FuelLog() {
                     <Td>{formatDate(l.date)}</Td>
                     <Td className="text-right">
                       <div className="inline-flex gap-1.5">
-                        <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", log: l })} />
-                        <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(l)} />
+                        <Can do="fuel_log.edit">
+                          <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", log: l })} />
+                        </Can>
+                        <Can do="fuel_log.delete">
+                          <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(l)} />
+                        </Can>
                       </div>
                     </Td>
                   </tr>

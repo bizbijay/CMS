@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class PermissionsController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class PermissionsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "permissions.view")]
     public async Task<ActionResult<IEnumerable<PermissionListItemDto>>> GetAll() =>
         Ok(await _service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "permissions.view")]
     public async Task<ActionResult<PermissionListItemDto>> GetById(int id)
     {
         var item = await _service.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "permissions.add")]
     public async Task<ActionResult<PermissionListItemDto>> Create([FromBody] CreatePermissionRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -37,6 +39,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "permissions.edit")]
     public async Task<ActionResult<PermissionListItemDto>> Update(int id, [FromBody] UpdatePermissionRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,6 +50,7 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "permissions.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

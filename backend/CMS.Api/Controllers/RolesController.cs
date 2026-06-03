@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class RolesController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class RolesController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "roles.view")]
     public async Task<ActionResult<IEnumerable<RoleListItemDto>>> GetAll() =>
         Ok(await _roles.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "roles.view")]
     public async Task<ActionResult<RoleListItemDto>> GetById(int id)
     {
         var role = await _roles.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "roles.add")]
     public async Task<ActionResult<RoleListItemDto>> Create([FromBody] CreateRoleRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -37,6 +39,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "roles.edit")]
     public async Task<ActionResult<RoleListItemDto>> Update(int id, [FromBody] UpdateRoleRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,6 +50,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "roles.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _roles.DeleteAsync(id);

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
@@ -23,6 +22,7 @@ public class UsersController : ControllerBase
 
     // GET: api/users
     [HttpGet]
+    [Authorize(Policy = "users.view")]
     public async Task<ActionResult<IEnumerable<UserListItemDto>>> GetAll()
     {
         return Ok(await _users.GetAllAsync());
@@ -30,6 +30,7 @@ public class UsersController : ControllerBase
 
     // GET: api/users/5
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "users.view")]
     public async Task<ActionResult<UserListItemDto>> GetById(int id)
     {
         var user = await _users.GetByIdAsync(id);
@@ -38,6 +39,7 @@ public class UsersController : ControllerBase
 
     // POST: api/users
     [HttpPost]
+    [Authorize(Policy = "users.add")]
     public async Task<ActionResult<UserListItemDto>> Create([FromBody] CreateUserRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -54,6 +56,7 @@ public class UsersController : ControllerBase
 
     // PUT: api/users/5
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "users.edit")]
     public async Task<ActionResult<UserListItemDto>> Update(int id, [FromBody] UpdateUserRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -71,6 +74,7 @@ public class UsersController : ControllerBase
 
     // DELETE: api/users/5
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "users.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var (deleted, error) = await _users.DeleteAsync(id, CurrentUserId);

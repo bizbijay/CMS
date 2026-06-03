@@ -103,6 +103,33 @@ public class AuthController : ControllerBase
         });
     }
 
+    // GET: api/auth/my-permissions
+    [HttpGet("my-permissions")]
+    [Authorize]
+    public async Task<IActionResult> MyPermissions()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(idClaim, out var id))
+            return Unauthorized();
+
+        var user = await _db.Users.FindAsync(id);
+        if (user is null || !user.IsActive)
+            return Unauthorized();
+
+        if (user.RoleId is null)
+            return Ok(Array.Empty<string>());
+
+        var names = await _db.RolePermissions
+            .Where(rp => rp.RoleId == user.RoleId)
+            .Join(_db.Permissions,
+                  rp => rp.PermissionId,
+                  p => p.Id,
+                  (rp, p) => p.Name)
+            .ToListAsync();
+
+        return Ok(names);
+    }
+
     // GET: api/auth/me  -> example protected endpoint
     [HttpGet("me")]
     [Authorize]

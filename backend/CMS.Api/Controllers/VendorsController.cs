@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class VendorsController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class VendorsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "vendors.view")]
     public async Task<ActionResult<IEnumerable<VendorListItemDto>>> GetAll() =>
         Ok(await _vendors.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "vendors.view")]
     public async Task<ActionResult<VendorListItemDto>> GetById(int id)
     {
         var vendor = await _vendors.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class VendorsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "vendors.add")]
     public async Task<ActionResult<VendorListItemDto>> Create([FromBody] CreateVendorRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -37,6 +39,7 @@ public class VendorsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "vendors.edit")]
     public async Task<ActionResult<VendorListItemDto>> Update(int id, [FromBody] UpdateVendorRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,6 +50,7 @@ public class VendorsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "vendors.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _vendors.DeleteAsync(id);

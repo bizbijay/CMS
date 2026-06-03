@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class MaterialsController : ControllerBase
 {
@@ -23,6 +22,7 @@ public class MaterialsController : ControllerBase
 
     // GET: api/materials
     [HttpGet]
+    [Authorize(Policy = "materials.view")]
     public async Task<ActionResult<IEnumerable<MaterialListItemDto>>> GetAll()
     {
         return Ok(await _materials.GetAllAsync());
@@ -30,6 +30,7 @@ public class MaterialsController : ControllerBase
 
     // GET: api/materials/5
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "materials.view")]
     public async Task<ActionResult<MaterialListItemDto>> GetById(int id)
     {
         var material = await _materials.GetByIdAsync(id);
@@ -38,6 +39,7 @@ public class MaterialsController : ControllerBase
 
     // POST: api/materials
     [HttpPost]
+    [Authorize(Policy = "materials.add")]
     public async Task<ActionResult<MaterialListItemDto>> Create([FromBody] CreateMaterialRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -48,6 +50,7 @@ public class MaterialsController : ControllerBase
 
     // PUT: api/materials/5
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "materials.edit")]
     public async Task<ActionResult<MaterialListItemDto>> Update(int id, [FromBody] UpdateMaterialRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -61,6 +64,7 @@ public class MaterialsController : ControllerBase
 
     // DELETE: api/materials/5
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "materials.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _materials.DeleteAsync(id);

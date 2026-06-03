@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/role-permissions")]
 public class RolePermissionsController : ControllerBase
 {
@@ -14,6 +13,7 @@ public class RolePermissionsController : ControllerBase
     public RolePermissionsController(IRolePermissionService service) => _service = service;
 
     [HttpGet("{roleId:int}")]
+    [Authorize(Policy = "role_permissions.view")]
     public async Task<ActionResult<RolePermissionsDto>> GetByRole(int roleId)
     {
         var result = await _service.GetByRoleIdAsync(roleId);
@@ -21,6 +21,7 @@ public class RolePermissionsController : ControllerBase
     }
 
     [HttpPut("{roleId:int}")]
+    [Authorize(Policy = "role_permissions.edit")]
     public async Task<ActionResult<RolePermissionsDto>> Set(int roleId, [FromBody] SetRolePermissionsRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);

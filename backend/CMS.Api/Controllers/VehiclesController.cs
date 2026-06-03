@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class VehiclesController : ControllerBase
 {
@@ -23,6 +22,7 @@ public class VehiclesController : ControllerBase
 
     // GET: api/vehicles
     [HttpGet]
+    [Authorize(Policy = "vehicles.view")]
     public async Task<ActionResult<IEnumerable<VehicleListItemDto>>> GetAll()
     {
         return Ok(await _vehicles.GetAllAsync());
@@ -30,6 +30,7 @@ public class VehiclesController : ControllerBase
 
     // GET: api/vehicles/5
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "vehicles.view")]
     public async Task<ActionResult<VehicleListItemDto>> GetById(int id)
     {
         var vehicle = await _vehicles.GetByIdAsync(id);
@@ -38,6 +39,7 @@ public class VehiclesController : ControllerBase
 
     // POST: api/vehicles
     [HttpPost]
+    [Authorize(Policy = "vehicles.add")]
     public async Task<ActionResult<VehicleListItemDto>> Create([FromBody] CreateVehicleRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -50,6 +52,7 @@ public class VehiclesController : ControllerBase
 
     // PUT: api/vehicles/5
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "vehicles.edit")]
     public async Task<ActionResult<VehicleListItemDto>> Update(int id, [FromBody] UpdateVehicleRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -63,6 +66,7 @@ public class VehiclesController : ControllerBase
 
     // DELETE: api/vehicles/5
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "vehicles.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _vehicles.DeleteAsync(id);

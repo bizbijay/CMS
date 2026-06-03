@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import ChangePasswordModal from "./ChangePasswordModal";
 
 interface Props {
@@ -10,10 +11,12 @@ interface Props {
 export default function Header({ onMenuOpen }: Props) {
   const navigate = useNavigate();
   const user = getStoredUser();
+  const { clearPermissions } = useAuth();
   const [changePwOpen, setChangePwOpen] = useState(false);
 
   function onLogout() {
     clearAuth();
+    clearPermissions();
     navigate("/login");
   }
 

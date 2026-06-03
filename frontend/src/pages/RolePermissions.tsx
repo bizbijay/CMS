@@ -3,9 +3,12 @@ import { rolesApi, permissionsApi, rolePermissionsApi } from "../services/api";
 import type { RoleListItem } from "../types/roles";
 import type { PermissionListItem } from "../types/permissions";
 import { useToast } from "../components/Toaster";
+import Can from "../components/Can";
+import { usePolicy } from "../hooks/usePolicy";
 
 export default function RolePermissions() {
   const { addToast } = useToast();
+  const canEdit = usePolicy("role_permissions.edit");
   const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionListItem[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
@@ -116,7 +119,8 @@ export default function RolePermissions() {
                             type="checkbox"
                             checked={assignedIds.has(p.id)}
                             onChange={() => toggle(p.id)}
-                            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600"
+                            disabled={!canEdit}
+                            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                           />
                           <div>
                             <p className="text-sm font-mono font-medium text-slate-800">{p.name}</p>
@@ -130,15 +134,17 @@ export default function RolePermissions() {
                   )}
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={save}
-                    disabled={saving || loadingRole}
-                    className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
-                  >
-                    {saving ? "Saving..." : "Save permissions"}
-                  </button>
-                </div>
+                <Can do="role_permissions.edit">
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={save}
+                      disabled={saving || loadingRole}
+                      className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
+                    >
+                      {saving ? "Saving..." : "Save permissions"}
+                    </button>
+                  </div>
+                </Can>
               </>
             )}
           </div>

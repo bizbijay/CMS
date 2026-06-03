@@ -1,9 +1,11 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi, saveAuth } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { refreshPermissions } = useAuth();
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +18,7 @@ export default function Login() {
     try {
       const res = await authApi.login({ usernameOrEmail, password });
       saveAuth(res);
+      await refreshPermissions();
       navigate("/");
     } catch (err) {
       if (err instanceof TypeError) {

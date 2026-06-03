@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class ProjectsController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class ProjectsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "projects.view")]
     public async Task<ActionResult<IEnumerable<ProjectListItemDto>>> GetAll() =>
         Ok(await _projects.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "projects.view")]
     public async Task<ActionResult<ProjectListItemDto>> GetById(int id)
     {
         var project = await _projects.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "projects.add")]
     public async Task<ActionResult<ProjectListItemDto>> Create([FromBody] CreateProjectRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -37,6 +39,7 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "projects.edit")]
     public async Task<ActionResult<ProjectListItemDto>> Update(int id, [FromBody] UpdateProjectRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,6 +50,7 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "projects.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _projects.DeleteAsync(id);

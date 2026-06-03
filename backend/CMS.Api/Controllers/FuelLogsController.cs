@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
 public class FuelLogsController : ControllerBase
 {
@@ -18,10 +17,12 @@ public class FuelLogsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
+    [Authorize(Policy = "fuel_log.view")]
     public async Task<ActionResult<IEnumerable<FuelLogListItemDto>>> GetAll() =>
         Ok(await _service.GetAllAsync());
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "fuel_log.view")]
     public async Task<ActionResult<FuelLogListItemDto>> GetById(int id)
     {
         var item = await _service.GetByIdAsync(id);
@@ -29,6 +30,7 @@ public class FuelLogsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "fuel_log.add")]
     public async Task<ActionResult<FuelLogListItemDto>> Create([FromBody] CreateFuelLogRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -38,6 +40,7 @@ public class FuelLogsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "fuel_log.edit")]
     public async Task<ActionResult<FuelLogListItemDto>> Update(int id, [FromBody] UpdateFuelLogRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -48,6 +51,7 @@ public class FuelLogsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "fuel_log.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id);

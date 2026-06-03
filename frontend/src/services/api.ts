@@ -71,6 +71,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       throw new Error("Invalid username or password.");
     }
 
+    if (res.status === 403) {
+      throw new Error("You don't have permission to perform this action.");
+    }
+
     let message = `Request failed (${res.status})`;
     try {
       const data = await res.json();
@@ -100,6 +104,9 @@ export const authApi = {
     }),
 
   me: () => request<UserDto>("/api/auth/me", { method: "GET" }),
+
+  myPermissions: () =>
+    request<string[]>("/api/auth/my-permissions", { method: "GET" }),
 
   changePassword: (body: ChangePasswordRequest) =>
     request<void>("/api/auth/change-password", {

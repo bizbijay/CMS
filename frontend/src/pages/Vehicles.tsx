@@ -7,6 +7,7 @@ import VehicleFormModal, {
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
+import Can from "../components/Can";
 
 const TYPE_LABELS: Record<string, string> = {
   tipper: "Tipper",
@@ -77,22 +78,24 @@ export default function Vehicles() {
           >
             Refresh
           </button>
-          <button
-            onClick={() => setModalMode({ kind: "add" })}
-            className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.2}
-              className="w-4 h-4"
+          <Can do="vehicles.add">
+            <button
+              onClick={() => setModalMode({ kind: "add" })}
+              className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
             >
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add vehicle
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                className="w-4 h-4"
+              >
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add vehicle
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -138,17 +141,21 @@ export default function Vehicles() {
                     <Td>{TYPE_LABELS[v.type] ?? v.type}</Td>
                     <Td className="text-right">
                       <div className="inline-flex gap-1.5">
-                        <IconButton
-                          tooltip="Edit vehicle"
-                          icon={<PencilIcon />}
-                          onClick={() => setModalMode({ kind: "edit", vehicle: v })}
-                        />
-                        <IconButton
-                          tooltip="Delete vehicle"
-                          tone="danger"
-                          icon={<TrashIcon />}
-                          onClick={() => setPendingDelete(v)}
-                        />
+                        <Can do="vehicles.edit">
+                          <IconButton
+                            tooltip="Edit vehicle"
+                            icon={<PencilIcon />}
+                            onClick={() => setModalMode({ kind: "edit", vehicle: v })}
+                          />
+                        </Can>
+                        <Can do="vehicles.delete">
+                          <IconButton
+                            tooltip="Delete vehicle"
+                            tone="danger"
+                            icon={<TrashIcon />}
+                            onClick={() => setPendingDelete(v)}
+                          />
+                        </Can>
                       </div>
                     </Td>
                   </tr>

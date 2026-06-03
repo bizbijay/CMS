@@ -5,6 +5,7 @@ import RoleFormModal, { type RoleFormMode } from "../components/RoleFormModal";
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
+import Can from "../components/Can";
 
 export default function Roles() {
   const { addToast } = useToast();
@@ -63,15 +64,17 @@ export default function Roles() {
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
             Refresh
           </button>
-          <button
-            onClick={() => setModalMode({ kind: "add" })}
-            className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add role
-          </button>
+          <Can do="roles.add">
+            <button
+              onClick={() => setModalMode({ kind: "add" })}
+              className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add role
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -97,8 +100,12 @@ export default function Roles() {
                     <Td><span className="font-medium text-slate-800">{r.name}</span></Td>
                     <Td className="text-right">
                       <div className="inline-flex gap-1.5">
-                        <IconButton tooltip="Edit role" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", role: r })} />
-                        <IconButton tooltip="Delete role" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(r)} />
+                        <Can do="roles.edit">
+                          <IconButton tooltip="Edit role" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", role: r })} />
+                        </Can>
+                        <Can do="roles.delete">
+                          <IconButton tooltip="Delete role" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(r)} />
+                        </Can>
                       </div>
                     </Td>
                   </tr>
