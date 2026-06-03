@@ -18,6 +18,8 @@ import type {
 import type { CreateMaterialRequest, UpdateMaterialRequest, MaterialListItem } from "../types/materials";
 import type { CreateFuelRequest, UpdateFuelRequest, FuelListItem } from "../types/fuels";
 import type { CreateRoleRequest, UpdateRoleRequest, RoleListItem } from "../types/roles";
+import type { CreatePermissionRequest, UpdatePermissionRequest, PermissionListItem } from "../types/permissions";
+import type { RolePermissions, SetRolePermissionsRequest } from "../types/rolePermissions";
 import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from "../types/fuelLog";
 import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
 import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
@@ -141,6 +143,22 @@ export const rolesApi = {
   update: (id: number, body: UpdateRoleRequest) =>
     request<RoleListItem>(`/api/roles/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/roles/${id}`, { method: "DELETE" }),
+};
+
+export const permissionsApi = {
+  list: () => request<PermissionListItem[]>("/api/permissions", { method: "GET" }),
+  create: (body: CreatePermissionRequest) =>
+    request<PermissionListItem>("/api/permissions", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdatePermissionRequest) =>
+    request<PermissionListItem>(`/api/permissions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/permissions/${id}`, { method: "DELETE" }),
+};
+
+export const rolePermissionsApi = {
+  getByRole: (roleId: number) =>
+    request<RolePermissions>(`/api/role-permissions/${roleId}`, { method: "GET" }),
+  set: (roleId: number, body: SetRolePermissionsRequest) =>
+    request<RolePermissions>(`/api/role-permissions/${roleId}`, { method: "PUT", body: JSON.stringify(body) }),
 };
 
 export const fuelsApi = {

@@ -66,6 +66,8 @@ builder.Services.AddScoped<ITransportationService, TransportationService>();
 builder.Services.AddScoped<IFuelService, FuelService>();
 builder.Services.AddScoped<IFuelLogService, FuelLogService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

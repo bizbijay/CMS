@@ -11,6 +11,8 @@ import Projects from "./pages/Projects";
 import Transportation from "./pages/Transportation";
 import Fuels from "./pages/Fuels";
 import Roles from "./pages/Roles";
+import Permissions from "./pages/Permissions";
+import RolePermissions from "./pages/RolePermissions";
 import FuelLog from "./pages/FuelLog";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -41,6 +43,8 @@ function AppRoutes() {
         <Route path="/transportation" element={<Transportation />} />
         <Route path="/fuels" element={<Fuels />} />
         <Route path="/roles" element={<Roles />} />
+        <Route path="/permissions" element={<Permissions />} />
+        <Route path="/role-permissions" element={<RolePermissions />} />
         <Route path="/fuel-log" element={<FuelLog />} />
       </Route>
     </Routes>

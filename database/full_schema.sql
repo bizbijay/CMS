@@ -6,6 +6,8 @@
 -- -------------------------------------------------------------
 -- Drop all tables (safe order, CASCADE handles remaining FKs)
 -- -------------------------------------------------------------
+DROP TABLE IF EXISTS "RolePermissions" CASCADE;
+DROP TABLE IF EXISTS "Permissions"    CASCADE;
 DROP TABLE IF EXISTS "FuelLogs"       CASCADE;
 DROP TABLE IF EXISTS "Transportations" CASCADE;
 DROP TABLE IF EXISTS "Materials"      CASCADE;
@@ -165,4 +167,28 @@ CREATE TABLE "FuelLogs" (
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Permissions
+-- -------------------------------------------------------------
+CREATE TABLE "Permissions" (
+    "Id"           SERIAL        PRIMARY KEY,
+    "Name"         VARCHAR(100)  NOT NULL,
+    "Description"  VARCHAR(255),
+    "CreatedAt"    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    "UpdatedAt"    TIMESTAMPTZ,
+    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    CONSTRAINT "UX_Permissions_Name" UNIQUE ("Name")
+);
+
+-- -------------------------------------------------------------
+-- RolePermissions  (junction)
+-- -------------------------------------------------------------
+CREATE TABLE "RolePermissions" (
+    "Id"            SERIAL  PRIMARY KEY,
+    "RoleId"        INT     NOT NULL REFERENCES "Roles"("Id")       ON DELETE CASCADE,
+    "PermissionId"  INT     NOT NULL REFERENCES "Permissions"("Id") ON DELETE CASCADE,
+    CONSTRAINT "UX_RolePermissions_RoleId_PermissionId" UNIQUE ("RoleId", "PermissionId")
 );
