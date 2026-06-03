@@ -36,6 +36,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
 
   const [transportedById, setTransportedById] = useState<number>(0);
 
@@ -65,6 +66,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
         setProjects(p);
         setMaterials(m);
 
+        const stored = getStoredUser();
+        const selfMatch = d.find((x) => x.id === stored?.id);
+        setIsCurrentUserDriver(!!selfMatch);
+
         if (mode.kind === "edit") {
           const t = mode.transportation;
           setTransportedById(t.transportedById);
@@ -87,9 +92,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             setProjectOther(t.projectOther ?? "");
           }
         } else {
-          const stored = getStoredUser();
-          const match = d.find((x) => x.id === stored?.id);
-          setTransportedById(match?.id ?? d[0]?.id ?? 0);
+          setTransportedById(selfMatch?.id ?? d[0]?.id ?? 0);
           setMaterialId(null);
           setVendorSel(v[0] ? String(v[0].id) : OTHER);
           setVendorOther("");
@@ -181,27 +184,31 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           <p className="text-sm text-slate-500 py-4 text-center">Loading options...</p>
         ) : (
           <>
-            <Field label="Transportation by" required>
-              <select
-                value={transportedById}
-                onChange={(e) => setTransportedById(Number(e.target.value))}
-                required
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {drivers.map((u) => (
-                  <option key={u.id} value={u.id}>{displayName(u)}</option>
-                ))}
-              </select>
-            </Field>
+            {!isCurrentUserDriver && (
+              <Field label="Transportation by" required>
+                <select
+                  value={transportedById}
+                  onChange={(e) => setTransportedById(Number(e.target.value))}
+                  required
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {drivers.map((u) => (
+                    <option key={u.id} value={u.id}>{displayName(u)}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
 
-            <Field label="Vehicle">
-              <input
-                type="text"
-                value={assignedVehicleName ?? "— No vehicle assigned —"}
-                disabled
-                className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
-              />
-            </Field>
+            {!isCurrentUserDriver && (
+              <Field label="Vehicle">
+                <input
+                  type="text"
+                  value={assignedVehicleName ?? "— No vehicle assigned —"}
+                  disabled
+                  className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
+                />
+              </Field>
+            )}
 
             <Field label="Material">
               <select

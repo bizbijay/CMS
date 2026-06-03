@@ -30,6 +30,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
   const [fuelTypes, setFuelTypes] = useState<FuelListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
 
   const [driverId, setDriverId] = useState<number>(0);
   const [fuelTypeId, setFuelTypeId] = useState<number>(0);
@@ -48,6 +49,10 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
         setDrivers(driverList);
         setFuelTypes(f);
 
+        const stored = getStoredUser();
+        const selfMatch = driverList.find((u) => u.id === stored?.id);
+        setIsCurrentUserDriver(!!selfMatch);
+
         if (mode.kind === "edit") {
           setDriverId(mode.log.driverId);
           setFuelTypeId(mode.log.fuelTypeId);
@@ -55,9 +60,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           setPrice(String(mode.log.price));
           setDate(mode.log.date.slice(0, 10));
         } else {
-          const stored = getStoredUser();
-          const match = driverList.find((u) => u.id === stored?.id);
-          setDriverId(match?.id ?? driverList[0]?.id ?? 0);
+          setDriverId(selfMatch?.id ?? driverList[0]?.id ?? 0);
           setFuelTypeId(f[0]?.id ?? 0);
           setQuantity("");
           setPrice("");
@@ -137,31 +140,35 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           <p className="text-sm text-slate-500 py-4 text-center">Loading options...</p>
         ) : (
           <>
-            <Field label="Driver" required>
-              {drivers.length === 0 ? (
-                <p className="text-sm text-amber-600 py-1">No drivers found. Add a driver user first.</p>
-              ) : (
-                <select
-                  value={driverId}
-                  onChange={(e) => setDriverId(Number(e.target.value))}
-                  required
-                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {drivers.map((u) => (
-                    <option key={u.id} value={u.id}>{displayName(u)}</option>
-                  ))}
-                </select>
-              )}
-            </Field>
+            {!isCurrentUserDriver && (
+              <Field label="Driver" required>
+                {drivers.length === 0 ? (
+                  <p className="text-sm text-amber-600 py-1">No drivers found. Add a driver user first.</p>
+                ) : (
+                  <select
+                    value={driverId}
+                    onChange={(e) => setDriverId(Number(e.target.value))}
+                    required
+                    className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {drivers.map((u) => (
+                      <option key={u.id} value={u.id}>{displayName(u)}</option>
+                    ))}
+                  </select>
+                )}
+              </Field>
+            )}
 
-            <Field label="Vehicle">
-              <input
-                type="text"
-                value={assignedVehicleName ?? "— No vehicle assigned —"}
-                disabled
-                className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
-              />
-            </Field>
+            {!isCurrentUserDriver && (
+              <Field label="Vehicle">
+                <input
+                  type="text"
+                  value={assignedVehicleName ?? "— No vehicle assigned —"}
+                  disabled
+                  className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
+                />
+              </Field>
+            )}
 
             <Field label="Fuel type" required>
               {fuelTypes.length === 0 ? (

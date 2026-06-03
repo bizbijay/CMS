@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { transportationsApi } from "../services/api";
+import { transportationsApi, usersApi, getStoredUser } from "../services/api";
 import type { TransportationListItem } from "../types/transportation";
 import TransportationFormModal, { type TransportationFormMode } from "../components/TransportationFormModal";
 import IconButton from "../components/IconButton";
@@ -15,6 +15,15 @@ export default function Transportation() {
   const [modalMode, setModalMode] = useState<TransportationFormMode | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TransportationListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const currentUserId = getStoredUser()?.id ?? 0;
+  const [isDriver, setIsDriver] = useState(false);
+
+  useEffect(() => {
+    usersApi.drivers()
+      .then(list => setIsDriver(list.some(d => d.id === currentUserId)))
+      .catch(() => {});
+  }, [currentUserId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,6 +65,10 @@ export default function Transportation() {
     }
   }
 
+  const visibleItems = isDriver
+    ? items.filter(t => t.transportedById === currentUserId)
+    : items;
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -87,8 +100,8 @@ export default function Transportation() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Transported by</Th>
-                <Th>Vehicle</Th>
+                {!isDriver && <Th>Transported by</Th>}
+                {!isDriver && <Th>Vehicle</Th>}
                 <Th>Material</Th>
                 <Th>Vendor</Th>
                 <Th>Project</Th>
@@ -98,14 +111,14 @@ export default function Transportation() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={9} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-6 text-center text-slate-500">No records yet. Click "Add transportation" to log one.</td></tr>
+                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+              ) : visibleItems.length === 0 ? (
+                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">No records yet. Click "Add transportation" to log one.</td></tr>
               ) : (
-                items.map((t) => (
+                visibleItems.map((t) => (
                   <tr key={t.id} className="hover:bg-slate-50">
-                    <Td><span className="font-medium text-slate-800">{t.transportedByName}</span></Td>
-                    <Td>{t.vehicleName ?? <span className="text-slate-400">—</span>}</Td>
+                    {!isDriver && <Td><span className="font-medium text-slate-800">{t.transportedByName}</span></Td>}
+                    {!isDriver && <Td>{t.vehicleName ?? <span className="text-slate-400">—</span>}</Td>}
                     <Td>{t.materialName ?? <span className="text-slate-400">—</span>}</Td>
                     <Td>{t.vendorName}</Td>
                     <Td>{t.projectName}</Td>

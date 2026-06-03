@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fuelLogsApi } from "../services/api";
+import { fuelLogsApi, usersApi, getStoredUser } from "../services/api";
 import type { FuelLogListItem } from "../types/fuelLog";
 import FuelLogFormModal, { type FuelLogFormMode } from "../components/FuelLogFormModal";
 import IconButton from "../components/IconButton";
@@ -17,6 +17,15 @@ export default function FuelLog() {
   const [deleting, setDeleting] = useState(false);
   const [driverFilter, setDriverFilter] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("");
+
+  const currentUserId = getStoredUser()?.id ?? 0;
+  const [isDriver, setIsDriver] = useState(false);
+
+  useEffect(() => {
+    usersApi.drivers()
+      .then(list => setIsDriver(list.some(d => d.id === currentUserId)))
+      .catch(() => {});
+  }, [currentUserId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,9 +67,11 @@ export default function FuelLog() {
     }
   }
 
-  const drivers = Array.from(new Set(items.map((l) => l.driverName))).sort();
-  const vehicles = Array.from(new Set(items.map((l) => l.vehicleName))).sort();
-  const filtered = items.filter(
+  // If the current user is a driver, only show their own records
+  const ownItems = isDriver ? items.filter(l => l.driverId === currentUserId) : items;
+  const driverNames = Array.from(new Set(ownItems.map((l) => l.driverName))).sort();
+  const vehicles = Array.from(new Set(ownItems.map((l) => l.vehicleName))).sort();
+  const filtered = ownItems.filter(
     (l) =>
       (driverFilter === "" || l.driverName === driverFilter) &&
       (vehicleFilter === "" || l.vehicleName === vehicleFilter),
@@ -89,16 +100,18 @@ export default function FuelLog() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <select
-          value={driverFilter}
-          onChange={(e) => setDriverFilter(e.target.value)}
-          className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All drivers</option>
-          {drivers.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
+        {!isDriver && (
+          <select
+            value={driverFilter}
+            onChange={(e) => setDriverFilter(e.target.value)}
+            className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All drivers</option>
+            {driverNames.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        )}
         <select
           value={vehicleFilter}
           onChange={(e) => setVehicleFilter(e.target.value)}
@@ -128,8 +141,8 @@ export default function FuelLog() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Driver</Th>
-                <Th>Vehicle</Th>
+                {!isDriver && <Th>Driver</Th>}
+                {!isDriver && <Th>Vehicle</Th>}
                 <Th>Fuel type</Th>
                 <Th>Qty (L)</Th>
                 <Th>Price (रू)</Th>
@@ -140,16 +153,16 @@ export default function FuelLog() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={10} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-6 text-center text-slate-500">
-                  {items.length === 0 ? `No fuel logs yet. Click "Add fuel log" to log one.` : "No logs match the selected filters."}
+                <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">
+                  {ownItems.length === 0 ? `No fuel logs yet. Click "Add fuel log" to log one.` : "No logs match the selected filters."}
                 </td></tr>
               ) : (
                 filtered.map((l) => (
                   <tr key={l.id} className="hover:bg-slate-50">
-                    <Td><span className="font-medium text-slate-800">{l.driverName}</span></Td>
-                    <Td>{l.vehicleName}</Td>
+                    {!isDriver && <Td><span className="font-medium text-slate-800">{l.driverName}</span></Td>}
+                    {!isDriver && <Td>{l.vehicleName}</Td>}
                     <Td>{l.fuelTypeName}</Td>
                     <Td>{l.quantity.toFixed(2)}</Td>
                     <Td>रू {l.price.toFixed(2)}</Td>
