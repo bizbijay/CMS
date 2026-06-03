@@ -17,12 +17,12 @@ public class ProjectsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
-    [Authorize(Policy = "projects.view")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<ProjectListItemDto>>> GetAll() =>
         Ok(await _projects.GetAllAsync());
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = "projects.view")]
+    [Authorize]
     public async Task<ActionResult<ProjectListItemDto>> GetById(int id)
     {
         var project = await _projects.GetByIdAsync(id);

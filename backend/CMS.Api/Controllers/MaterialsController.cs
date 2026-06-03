@@ -22,7 +22,7 @@ public class MaterialsController : ControllerBase
 
     // GET: api/materials
     [HttpGet]
-    [Authorize(Policy = "materials.view")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<MaterialListItemDto>>> GetAll()
     {
         return Ok(await _materials.GetAllAsync());
@@ -30,7 +30,7 @@ public class MaterialsController : ControllerBase
 
     // GET: api/materials/5
     [HttpGet("{id:int}")]
-    [Authorize(Policy = "materials.view")]
+    [Authorize]
     public async Task<ActionResult<MaterialListItemDto>> GetById(int id)
     {
         var material = await _materials.GetByIdAsync(id);

@@ -31,7 +31,7 @@ function displayName(u: UserListItem) {
 export default function TransportationFormModal({ open, mode, onClose, onSaved }: Props) {
   const isEdit = mode.kind === "edit";
 
-  const [users, setUsers] = useState<UserListItem[]>([]);
+  const [drivers, setDrivers] = useState<UserListItem[]>([]);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
@@ -50,19 +50,17 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const drivers = users.filter((u) => u.roleName?.toLowerCase() === "driver");
-
-  // Derive vehicle from the selected user — no separate state needed.
-  const selectedUser = users.find((u) => u.id === transportedById);
+  // Derive vehicle from the selected driver — no separate state needed.
+  const selectedUser = drivers.find((u) => u.id === transportedById);
   const assignedVehicleId = selectedUser?.vehicleId ?? null;
   const assignedVehicleName = selectedUser?.assignedVehicleName ?? null;
 
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.list(), vendorsApi.list(), projectsApi.list(), materialsApi.list()])
-      .then(([u, v, p, m]) => {
-        setUsers(u);
+    Promise.all([usersApi.drivers(), vendorsApi.list(), projectsApi.list(), materialsApi.list()])
+      .then(([d, v, p, m]) => {
+        setDrivers(d);
         setVendors(v);
         setProjects(p);
         setMaterials(m);
@@ -89,10 +87,9 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             setProjectOther(t.projectOther ?? "");
           }
         } else {
-          const driverList = u.filter((x) => x.roleName?.toLowerCase() === "driver");
           const stored = getStoredUser();
-          const match = driverList.find((x) => x.id === stored?.id);
-          setTransportedById(match?.id ?? driverList[0]?.id ?? 0);
+          const match = d.find((x) => x.id === stored?.id);
+          setTransportedById(match?.id ?? d[0]?.id ?? 0);
           setMaterialId(null);
           setVendorSel(v[0] ? String(v[0].id) : OTHER);
           setVendorOther("");

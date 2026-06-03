@@ -43,9 +43,8 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.list(), fuelsApi.list()])
-      .then(([users, f]) => {
-        const driverList = users.filter((u) => u.roleName?.toLowerCase() === "driver");
+    Promise.all([usersApi.drivers(), fuelsApi.list()])
+      .then(([driverList, f]) => {
         setDrivers(driverList);
         setFuelTypes(f);
 

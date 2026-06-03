@@ -118,6 +118,8 @@ export const authApi = {
 export const usersApi = {
   list: () => request<UserListItem[]>("/api/users", { method: "GET" }),
 
+  drivers: () => request<UserListItem[]>("/api/users/drivers", { method: "GET" }),
+
   create: (body: CreateUserRequest) =>
     request<UserListItem>("/api/users", {
       method: "POST",

@@ -17,12 +17,12 @@ public class FuelsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
-    [Authorize(Policy = "fuel_types.view")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<FuelListItemDto>>> GetAll() =>
         Ok(await _fuels.GetAllAsync());
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = "fuel_types.view")]
+    [Authorize]
     public async Task<ActionResult<FuelListItemDto>> GetById(int id)
     {
         var fuel = await _fuels.GetByIdAsync(id);

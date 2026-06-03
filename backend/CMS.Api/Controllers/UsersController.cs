@@ -20,6 +20,16 @@ public class UsersController : ControllerBase
     private int CurrentUserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
+    // GET: api/users/drivers  – lookup endpoint, no admin permission required
+    [HttpGet("drivers")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<UserListItemDto>>> GetDrivers()
+    {
+        var all = await _users.GetAllAsync();
+        return Ok(all.Where(u => u.RoleName != null &&
+                                 u.RoleName.Equals("Driver", StringComparison.OrdinalIgnoreCase)));
+    }
+
     // GET: api/users
     [HttpGet]
     [Authorize(Policy = "users.view")]

@@ -17,12 +17,12 @@ public class VendorsController : ControllerBase
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
-    [Authorize(Policy = "vendors.view")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<VendorListItemDto>>> GetAll() =>
         Ok(await _vendors.GetAllAsync());
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = "vendors.view")]
+    [Authorize]
     public async Task<ActionResult<VendorListItemDto>> GetById(int id)
     {
         var vendor = await _vendors.GetByIdAsync(id);
