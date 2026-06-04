@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { projectsApi } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { ProjectListItem } from "../types/projects";
 
 export type ProjectFormMode =
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props) {
+  const t = useT();
   const isEdit = mode.kind === "edit";
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +64,10 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {isEdit ? "Edit project" : "Add project"}
+              {isEdit ? t.modal.projects.editTitle : t.modal.projects.addTitle}
             </h3>
             <p className="text-sm text-slate-500">
-              {isEdit ? "Update the project name." : "Register a new project."}
+              {isEdit ? t.modal.projects.editSubtitle : t.modal.projects.addSubtitle}
             </p>
           </div>
           <button type="button" onClick={handleClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
@@ -81,7 +83,7 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Project name<span className="text-red-500 ml-0.5">*</span>
+            {t.modal.projects.nameLabel}<span className="text-red-500 ml-0.5">*</span>
           </label>
           <input
             type="text"
@@ -96,11 +98,11 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={handleClose} disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Cancel
+            {t.common.cancel}
           </button>
           <button type="submit" disabled={saving}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium">
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Add project"}
+            {saving ? t.common.saving : isEdit ? t.common.saveChanges : t.modal.projects.addTitle}
           </button>
         </div>
       </form>

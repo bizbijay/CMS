@@ -6,9 +6,11 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 export default function FuelLog() {
   const { addToast } = useToast();
+  const t = useT();
   const [items, setItems] = useState<FuelLogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,10 +82,10 @@ export default function FuelLog() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Fuel Log</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.fuelLog.title}</h2>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="fuel_log.add">
             <button
@@ -93,7 +95,7 @@ export default function FuelLog() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add fuel log
+              {t.pages.fuelLog.addButton}
             </button>
           </Can>
         </div>
@@ -106,7 +108,7 @@ export default function FuelLog() {
             onChange={(e) => setDriverFilter(e.target.value)}
             className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All drivers</option>
+            <option value="">{t.common.allDrivers}</option>
             {driverNames.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -117,7 +119,7 @@ export default function FuelLog() {
           onChange={(e) => setVehicleFilter(e.target.value)}
           className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All vehicles</option>
+          <option value="">{t.common.allVehicles}</option>
           {vehicles.map((v) => (
             <option key={v} value={v}>{v}</option>
           ))}
@@ -127,7 +129,7 @@ export default function FuelLog() {
             onClick={() => { setDriverFilter(""); setVehicleFilter(""); }}
             className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
           >
-            Clear filters
+            {t.common.clearFilters}
           </button>
         )}
       </div>
@@ -141,22 +143,22 @@ export default function FuelLog() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                {!isDriver && <Th>Driver</Th>}
-                {!isDriver && <Th>Vehicle</Th>}
-                <Th>Fuel type</Th>
-                <Th>Qty (L)</Th>
-                <Th>Price (रू)</Th>
-                <Th>Total (रू)</Th>
-                <Th>Date</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                {!isDriver && <Th>{t.common.driver}</Th>}
+                {!isDriver && <Th>{t.common.vehicle}</Th>}
+                <Th>{t.common.fuelType}</Th>
+                <Th>{t.common.quantity}</Th>
+                <Th>{t.common.price}</Th>
+                <Th>{t.common.total}</Th>
+                <Th>{t.common.date}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">{t.common.loading}</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">
-                  {ownItems.length === 0 ? `No fuel logs yet. Click "Add fuel log" to log one.` : "No logs match the selected filters."}
+                  {ownItems.length === 0 ? t.pages.fuelLog.noData : t.pages.fuelLog.noMatch}
                 </td></tr>
               ) : (
                 filtered.map((l) => (
@@ -195,9 +197,9 @@ export default function FuelLog() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete fuel log"
-        message={pendingDelete ? "Are you sure you want to delete this fuel log? This action cannot be undone." : ""}
-        confirmLabel="Delete"
+        title={t.modal.fuelLog.deleteTitle}
+        message={pendingDelete ? t.modal.fuelLog.deleteMessage : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

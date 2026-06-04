@@ -8,6 +8,7 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 const TYPE_LABELS: Record<string, string> = {
   tipper: "Tipper",
@@ -16,6 +17,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function Vehicles() {
   const { addToast } = useToast();
+  const t = useT();
   const [vehicles, setVehicles] = useState<VehicleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,14 +71,14 @@ export default function Vehicles() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">Vehicles</h2>
+          <h2 className="text-2xl font-semibold text-slate-800">{t.pages.vehicles.title}</h2>
         </div>
         <div className="flex gap-2">
           <button
             onClick={load}
             className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="vehicles.add">
             <button
@@ -93,7 +95,7 @@ export default function Vehicles() {
               >
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add vehicle
+              {t.pages.vehicles.addButton}
             </button>
           </Can>
         </div>
@@ -110,23 +112,23 @@ export default function Vehicles() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Vehicle name</Th>
-                <Th className="whitespace-nowrap">Number plate</Th>
-                <Th>Type</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                <Th>{t.common.name}</Th>
+                <Th className="whitespace-nowrap">{t.pages.vehicles.numberPlate}</Th>
+                <Th>{t.pages.vehicles.type}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                    Loading...
+                    {t.common.loading}
                   </td>
                 </tr>
               ) : vehicles.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                    No vehicles yet. Click "Add vehicle" to register one.
+                    {t.pages.vehicles.noData}
                   </td>
                 </tr>
               ) : (
@@ -175,13 +177,9 @@ export default function Vehicles() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete vehicle"
-        message={
-          pendingDelete
-            ? `Are you sure you want to delete "${pendingDelete.name} (${pendingDelete.numberPlate})"? This action cannot be undone.`
-            : ""
-        }
-        confirmLabel="Delete"
+        title={t.modal.vehicles.deleteTitle}
+        message={pendingDelete ? t.modal.vehicles.deleteMessage.replace("{{name}}", `${pendingDelete.name} (${pendingDelete.numberPlate})`) : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

@@ -6,9 +6,11 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 export default function Roles() {
   const { addToast } = useToast();
+  const t = useT();
   const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,10 +61,10 @@ export default function Roles() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Roles</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.roles.title}</h2>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="roles.add">
             <button
@@ -72,7 +74,7 @@ export default function Roles() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add role
+              {t.pages.roles.addButton}
             </button>
           </Can>
         </div>
@@ -85,15 +87,15 @@ export default function Roles() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Role name</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                <Th>{t.pages.roles.roleName}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">{t.common.loading}</td></tr>
               ) : roles.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">No roles yet. Click "Add role" to create one.</td></tr>
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">{t.pages.roles.noData}</td></tr>
               ) : (
                 roles.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50">
@@ -125,9 +127,9 @@ export default function Roles() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete role"
-        message={pendingDelete ? `Are you sure you want to delete "${pendingDelete.name}"? This action cannot be undone.` : ""}
-        confirmLabel="Delete"
+        title={t.modal.roles.deleteTitle}
+        message={pendingDelete ? t.modal.roles.deleteMessage.replace("{{name}}", pendingDelete.name) : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

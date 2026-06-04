@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { usersApi, vehiclesApi, rolesApi } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { UserListItem } from "../types/users";
 import type { VehicleListItem } from "../types/vehicles";
 import type { RoleListItem } from "../types/roles";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
+  const t = useT();
   const isEdit = mode.kind === "edit";
 
   const [username, setUsername] = useState("");
@@ -128,12 +130,10 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {isEdit ? "Edit user" : "Add user"}
+              {isEdit ? t.modal.users.editTitle : t.modal.users.addTitle}
             </h3>
             <p className="text-sm text-slate-500">
-              {isEdit
-                ? "Update this user's details. Leave password blank to keep it unchanged."
-                : "Create a new account in the system."}
+              {isEdit ? t.modal.users.editSubtitle : t.modal.users.addSubtitle}
             </p>
           </div>
           <button
@@ -162,7 +162,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="First name">
+          <Field label={t.modal.users.firstName}>
             <input
               type="text"
               value={firstName}
@@ -170,7 +170,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
               className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
-          <Field label="Last name">
+          <Field label={t.modal.users.lastName}>
             <input
               type="text"
               value={lastName}
@@ -180,7 +180,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           </Field>
         </div>
 
-        <Field label="Username" required>
+        <Field label={t.pages.users.username} required>
           <input
             type="text"
             value={username}
@@ -192,7 +192,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           />
         </Field>
 
-        <Field label="Email" required>
+        <Field label={t.pages.users.email} required>
           <input
             type="email"
             value={email}
@@ -203,7 +203,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
         </Field>
 
         <Field
-          label={isEdit ? "New password (optional)" : "Password"}
+          label={isEdit ? t.modal.users.newPasswordLabel : t.modal.users.passwordLabel}
           required={!isEdit}
         >
           <input
@@ -212,7 +212,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             required={!isEdit}
             minLength={isEdit && password.length === 0 ? undefined : 8}
-            placeholder={isEdit ? "Leave blank to keep current password" : ""}
+            placeholder={isEdit ? t.modal.users.passwordPlaceholder : ""}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <PasswordRequirements
@@ -222,7 +222,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           />
         </Field>
 
-        <Field label="Role">
+        <Field label={t.common.role}>
           <select
             value={roleId ?? ""}
             onChange={(e) => {
@@ -233,7 +233,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
             }}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">— No role —</option>
+            <option value="">{t.modal.users.noRoleOption}</option>
             {roles.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
@@ -243,13 +243,13 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
         </Field>
 
         {roles.find((r) => r.id === roleId)?.name?.toLowerCase() !== "admin" && (
-          <Field label="Assigned vehicle">
+          <Field label={t.common.assignedVehicle}>
             <select
               value={vehicleId ?? ""}
               onChange={(e) => setVehicleId(e.target.value ? Number(e.target.value) : null)}
               className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">— None / Unassigned —</option>
+              <option value="">{t.modal.users.noVehicleOption}</option>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name} ({v.numberPlate})
@@ -266,7 +266,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
             onChange={(e) => setIsActive(e.target.checked)}
             className="w-4 h-4 text-blue-600 rounded border-slate-300"
           />
-          Active
+          {t.modal.users.activeLabel}
         </label>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -276,18 +276,14 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
             disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
             disabled={saving || !passwordOk}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
           >
-            {saving
-              ? "Saving..."
-              : isEdit
-                ? "Save changes"
-                : "Create user"}
+            {saving ? t.common.saving : isEdit ? t.common.saveChanges : t.modal.users.createButton}
           </button>
         </div>
       </form>

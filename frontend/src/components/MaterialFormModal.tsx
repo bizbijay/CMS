@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { materialsApi } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { MaterialListItem } from "../types/materials";
 
 export type MaterialFormMode =
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function MaterialFormModal({ open, mode, onClose, onSaved }: Props) {
+  const t = useT();
   const isEdit = mode.kind === "edit";
 
   const [name, setName] = useState("");
@@ -63,10 +65,10 @@ export default function MaterialFormModal({ open, mode, onClose, onSaved }: Prop
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {isEdit ? "Edit material" : "Add material"}
+              {isEdit ? t.modal.materials.editTitle : t.modal.materials.addTitle}
             </h3>
             <p className="text-sm text-slate-500">
-              {isEdit ? "Update the material name." : "Register a new construction material."}
+              {isEdit ? t.modal.materials.editSubtitle : t.modal.materials.addSubtitle}
             </p>
           </div>
           <button
@@ -96,7 +98,7 @@ export default function MaterialFormModal({ open, mode, onClose, onSaved }: Prop
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Material name<span className="text-red-500 ml-0.5">*</span>
+            {t.modal.materials.nameLabel}<span className="text-red-500 ml-0.5">*</span>
           </label>
           <input
             type="text"
@@ -115,14 +117,14 @@ export default function MaterialFormModal({ open, mode, onClose, onSaved }: Prop
             disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
             disabled={saving}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
           >
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Add material"}
+            {saving ? t.common.saving : isEdit ? t.common.saveChanges : t.modal.materials.addTitle}
           </button>
         </div>
       </form>

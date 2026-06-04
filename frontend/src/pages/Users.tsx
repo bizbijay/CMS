@@ -8,9 +8,11 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 export default function Users() {
   const { addToast } = useToast();
+  const t = useT();
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,13 +67,13 @@ export default function Users() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Users</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.users.title}</h2>
         <div className="flex gap-2">
           <button
             onClick={load}
             className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="users.add">
             <button
@@ -88,7 +90,7 @@ export default function Users() {
               >
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add user
+              {t.pages.users.addButton}
             </button>
           </Can>
         </div>
@@ -105,28 +107,28 @@ export default function Users() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Username</Th>
-                <Th>Email</Th>
-                <Th>Name</Th>
-                <Th>Role</Th>
-                <Th className="whitespace-nowrap">Assigned vehicle</Th>
-                <Th className="whitespace-nowrap">Status</Th>
-                <Th className="whitespace-nowrap">Created</Th>
-                <Th className="whitespace-nowrap">Last login</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                <Th>{t.pages.users.username}</Th>
+                <Th>{t.pages.users.email}</Th>
+                <Th>{t.common.name}</Th>
+                <Th>{t.common.role}</Th>
+                <Th className="whitespace-nowrap">{t.common.assignedVehicle}</Th>
+                <Th className="whitespace-nowrap">{t.common.status}</Th>
+                <Th className="whitespace-nowrap">{t.common.createdAt}</Th>
+                <Th className="whitespace-nowrap">{t.common.lastLogin}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-6 text-center text-slate-500">
-                    Loading...
+                    {t.common.loading}
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-6 text-center text-slate-500">
-                    No users yet. Click "Add user" to create one.
+                    {t.pages.users.noData}
                   </td>
                 </tr>
               ) : (
@@ -159,9 +161,9 @@ export default function Users() {
                       </Td>
                       <Td>
                         {u.isActive ? (
-                          <Badge color="green">Active</Badge>
+                          <Badge color="green">{t.common.active}</Badge>
                         ) : (
-                          <Badge color="slate">Inactive</Badge>
+                          <Badge color="slate">{t.common.inactive}</Badge>
                         )}
                       </Td>
                       <Td>{formatDate(u.createdAt)}</Td>
@@ -169,7 +171,7 @@ export default function Users() {
                         {u.lastLoginAt ? (
                           formatDate(u.lastLoginAt)
                         ) : (
-                          <span className="text-slate-400">Never</span>
+                          <span className="text-slate-400">{t.common.never}</span>
                         )}
                       </Td>
                       <Td className="text-right">
@@ -210,13 +212,9 @@ export default function Users() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete user"
-        message={
-          pendingDelete
-            ? `Are you sure you want to delete "${pendingDelete.username}"? This action cannot be undone.`
-            : ""
-        }
-        confirmLabel="Delete"
+        title={t.modal.users.deleteTitle}
+        message={pendingDelete ? t.modal.users.deleteMessage.replace("{{name}}", pendingDelete.username) : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

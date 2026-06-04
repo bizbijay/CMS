@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useCulture } from "../context/CultureContext";
+import { LOCALE_NAMES, type Locale } from "../i18n/translations";
 import ChangePasswordModal from "./ChangePasswordModal";
 
 interface Props {
@@ -12,6 +14,7 @@ export default function Header({ onMenuOpen }: Props) {
   const navigate = useNavigate();
   const user = getStoredUser();
   const { clearPermissions } = useAuth();
+  const { locale, setLocale, t } = useCulture();
   const [changePwOpen, setChangePwOpen] = useState(false);
 
   function onLogout() {
@@ -39,7 +42,7 @@ export default function Header({ onMenuOpen }: Props) {
       >
         <HamburgerIcon />
       </button>
-      <div className="text-sm text-slate-500 hidden md:block">Welcome back</div>
+      <div className="text-sm text-slate-500 hidden md:block">{t.common.welcomeBack}</div>
       <div className="flex-1 md:hidden" />
 
       {/* Avatar with hover-revealed dropdown */}
@@ -67,13 +70,27 @@ export default function Header({ onMenuOpen }: Props) {
             <p className="text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
           <div className="p-2 space-y-0.5">
+            {/* Language selector */}
+            <div className="flex items-center gap-2 px-3 py-2 text-sm rounded text-slate-700">
+              <GlobeIcon />
+              <select
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as Locale)}
+                className="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
+                aria-label="Select language"
+              >
+                {(Object.entries(LOCALE_NAMES) as [Locale, string][]).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={() => setChangePwOpen(true)}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded text-slate-700 hover:bg-slate-100"
               role="menuitem"
             >
               <KeyIcon />
-              Change password
+              {t.auth.changePassword}
             </button>
             <button
               onClick={onLogout}
@@ -81,7 +98,7 @@ export default function Header({ onMenuOpen }: Props) {
               role="menuitem"
             >
               <SignOutIcon />
-              Sign out
+              {t.auth.signOut}
             </button>
           </div>
         </div>
@@ -129,6 +146,24 @@ function KeyIcon() {
       <path d="M21 2l-9.6 9.6" />
       <circle cx="7.5" cy="15.5" r="5.5" />
       <path d="M15.5 7.5l3 3" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-4 h-4 shrink-0"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
     </svg>
   );
 }

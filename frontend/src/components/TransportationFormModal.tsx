@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { transportationsApi, usersApi, vendorsApi, projectsApi, materialsApi, getStoredUser } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { TransportationListItem } from "../types/transportation";
 import type { UserListItem } from "../types/users";
 import type { VendorListItem } from "../types/vendors";
@@ -29,6 +30,7 @@ function displayName(u: UserListItem) {
 }
 
 export default function TransportationFormModal({ open, mode, onClose, onSaved }: Props) {
+  const tr = useT();
   const isEdit = mode.kind === "edit";
 
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
@@ -101,7 +103,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           setDate(todayIso());
         }
       })
-      .catch(() => setError("Failed to load dropdown options."))
+      .catch(() => setError(tr.modal.loadError))
       .finally(() => setLoadingOptions(false));
     setError(null);
   }, [open, mode]);
@@ -118,11 +120,11 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     setError(null);
 
     if (vendorSel === OTHER && !vendorOther.trim()) {
-      setError("Please enter the vendor name.");
+      setError(tr.modal.transportation.errorNoVendor);
       return;
     }
     if (projectSel === OTHER && !projectOther.trim()) {
-      setError("Please enter the project name.");
+      setError(tr.modal.transportation.errorNoProject);
       return;
     }
 
@@ -163,10 +165,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {isEdit ? "Edit transportation" : "Add transportation"}
+              {isEdit ? tr.modal.transportation.editTitle : tr.modal.transportation.addTitle}
             </h3>
             <p className="text-sm text-slate-500">
-              {isEdit ? "Update transportation details." : "Log a new transportation entry."}
+              {isEdit ? tr.modal.transportation.editSubtitle : tr.modal.transportation.addSubtitle}
             </p>
           </div>
           <button type="button" onClick={handleClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
@@ -181,11 +183,11 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
         )}
 
         {loadingOptions ? (
-          <p className="text-sm text-slate-500 py-4 text-center">Loading options...</p>
+          <p className="text-sm text-slate-500 py-4 text-center">{tr.modal.loadingOptions}</p>
         ) : (
           <>
             {!isCurrentUserDriver && (
-              <Field label="Transportation by" required>
+              <Field label={tr.common.transportedBy} required>
                 <select
                   value={transportedById}
                   onChange={(e) => setTransportedById(Number(e.target.value))}
@@ -200,30 +202,30 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             )}
 
             {!isCurrentUserDriver && (
-              <Field label="Vehicle">
+              <Field label={tr.common.vehicle}>
                 <input
                   type="text"
-                  value={assignedVehicleName ?? "— No vehicle assigned —"}
+                  value={assignedVehicleName ?? tr.common.noVehicleAssigned}
                   disabled
                   className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
                 />
               </Field>
             )}
 
-            <Field label="Material">
+            <Field label={tr.common.material}>
               <select
                 value={materialId ?? ""}
                 onChange={(e) => setMaterialId(e.target.value ? Number(e.target.value) : null)}
                 className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">— None —</option>
+                <option value="">{tr.modal.transportation.noneOption}</option>
                 {materials.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
             </Field>
 
-            <Field label="Vendor" required>
+            <Field label={tr.common.vendor} required>
               <select
                 value={vendorSel}
                 onChange={(e) => { setVendorSel(e.target.value); setVendorOther(""); }}
@@ -232,20 +234,20 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                 {vendors.map((v) => (
                   <option key={v.id} value={String(v.id)}>{v.name}</option>
                 ))}
-                <option value={OTHER}>Other</option>
+                <option value={OTHER}>{tr.modal.transportation.otherOption}</option>
               </select>
               {vendorSel === OTHER && (
                 <input
                   type="text"
                   value={vendorOther}
                   onChange={(e) => setVendorOther(e.target.value)}
-                  placeholder="Enter vendor name"
+                  placeholder={tr.modal.transportation.enterVendorName}
                   className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               )}
             </Field>
 
-            <Field label="Project" required>
+            <Field label={tr.common.project} required>
               <select
                 value={projectSel}
                 onChange={(e) => { setProjectSel(e.target.value); setProjectOther(""); }}
@@ -254,20 +256,20 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                 {projects.map((p) => (
                   <option key={p.id} value={String(p.id)}>{p.name}</option>
                 ))}
-                <option value={OTHER}>Other</option>
+                <option value={OTHER}>{tr.modal.transportation.otherOption}</option>
               </select>
               {projectSel === OTHER && (
                 <input
                   type="text"
                   value={projectOther}
                   onChange={(e) => setProjectOther(e.target.value)}
-                  placeholder="Enter project name"
+                  placeholder={tr.modal.transportation.enterProjectName}
                   className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               )}
             </Field>
 
-            <Field label="Date" required>
+            <Field label={tr.common.date} required>
               <input
                 type="date"
                 value={date}
@@ -282,11 +284,11 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={handleClose} disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Cancel
+            {tr.common.cancel}
           </button>
           <button type="submit" disabled={saving || loadingOptions}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium">
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Add transportation"}
+            {saving ? tr.common.saving : isEdit ? tr.common.saveChanges : tr.modal.transportation.addButton}
           </button>
         </div>
       </form>

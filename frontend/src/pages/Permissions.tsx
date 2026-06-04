@@ -6,9 +6,11 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 export default function Permissions() {
   const { addToast } = useToast();
+  const t = useT();
   const [items, setItems] = useState<PermissionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,10 +61,10 @@ export default function Permissions() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Permissions</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.permissions.title}</h2>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="permissions.add">
             <button
@@ -72,7 +74,7 @@ export default function Permissions() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add permission
+              {t.pages.permissions.addButton}
             </button>
           </Can>
         </div>
@@ -85,16 +87,16 @@ export default function Permissions() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Name</Th>
-                <Th>Description</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                <Th>{t.common.name}</Th>
+                <Th>{t.common.description}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-500">{t.common.loading}</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-500">No permissions yet. Click "Add permission" to create one.</td></tr>
+                <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-500">{t.pages.permissions.noData}</td></tr>
               ) : (
                 items.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50">
@@ -127,9 +129,9 @@ export default function Permissions() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete permission"
-        message={pendingDelete ? `Are you sure you want to delete "${pendingDelete.name}"? This will also remove it from all roles.` : ""}
-        confirmLabel="Delete"
+        title={t.modal.permissions.deleteTitle}
+        message={pendingDelete ? t.modal.permissions.deleteMessage.replace("{{name}}", pendingDelete.name) : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

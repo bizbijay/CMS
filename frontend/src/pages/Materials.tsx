@@ -8,9 +8,11 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 export default function Materials() {
   const { addToast } = useToast();
+  const t = useT();
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,13 +65,13 @@ export default function Materials() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Construction Materials</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.materials.title}</h2>
         <div className="flex gap-2">
           <button
             onClick={load}
             className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="materials.add">
             <button
@@ -86,7 +88,7 @@ export default function Materials() {
               >
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add material
+              {t.pages.materials.addButton}
             </button>
           </Can>
         </div>
@@ -103,21 +105,21 @@ export default function Materials() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <Th>Material name</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                <Th>{t.common.name}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                    Loading...
+                    {t.common.loading}
                   </td>
                 </tr>
               ) : materials.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                    No materials yet. Click "Add material" to register one.
+                    {t.pages.materials.noData}
                   </td>
                 </tr>
               ) : (
@@ -162,13 +164,9 @@ export default function Materials() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete material"
-        message={
-          pendingDelete
-            ? `Are you sure you want to delete "${pendingDelete.name}"? This action cannot be undone.`
-            : ""
-        }
-        confirmLabel="Delete"
+        title={t.modal.materials.deleteTitle}
+        message={pendingDelete ? t.modal.materials.deleteMessage.replace("{{name}}", pendingDelete.name) : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

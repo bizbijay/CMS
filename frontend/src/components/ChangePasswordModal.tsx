@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { authApi } from "../services/api";
+import { useT } from "../hooks/useT";
 import { isPasswordValid } from "../services/passwordPolicy";
 import PasswordRequirements from "./PasswordRequirements";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function ChangePasswordModal({ open, onClose }: Props) {
+  const t = useT();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -41,15 +43,15 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
     setSuccess(false);
 
     if (!isPasswordValid(newPassword)) {
-      setError("New password does not meet all requirements.");
+      setError(t.modal.changePassword.errorRequirements);
       return;
     }
     if (newPassword !== confirm) {
-      setError("New passwords do not match.");
+      setError(t.modal.changePassword.noMatch);
       return;
     }
     if (newPassword === currentPassword) {
-      setError("New password must be different from the current password.");
+      setError(t.modal.changePassword.errorSamePassword);
       return;
     }
 
@@ -78,10 +80,10 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              Change password
+              {t.modal.changePassword.title}
             </h3>
             <p className="text-sm text-slate-500">
-              Enter your current password and choose a new one.
+              {t.modal.changePassword.subtitle}
             </p>
           </div>
           <button
@@ -110,11 +112,11 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
         )}
         {success && (
           <div className="rounded bg-green-50 text-green-700 text-sm p-3 border border-green-200">
-            Password changed successfully.
+            {t.modal.changePassword.success}
           </div>
         )}
 
-        <Field label="Current password" required>
+        <Field label={t.modal.changePassword.currentPassword} required>
           <input
             type={inputType}
             value={currentPassword}
@@ -125,7 +127,7 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
           />
         </Field>
 
-        <Field label="New password" required>
+        <Field label={t.modal.changePassword.newPassword} required>
           <input
             type={inputType}
             value={newPassword}
@@ -138,7 +140,7 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
           <PasswordRequirements value={newPassword} className="mt-2" />
         </Field>
 
-        <Field label="Confirm new password" required>
+        <Field label={t.modal.changePassword.confirmNewPassword} required>
           <input
             type={inputType}
             value={confirm}
@@ -149,7 +151,7 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {confirm.length > 0 && newPassword !== confirm && (
-            <p className="text-xs text-red-600 mt-1">Passwords do not match.</p>
+            <p className="text-xs text-red-600 mt-1">{t.modal.changePassword.noMatch}</p>
           )}
         </Field>
 
@@ -160,7 +162,7 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
             onChange={(e) => setShowPasswords(e.target.checked)}
             className="w-4 h-4 text-blue-600 rounded border-slate-300"
           />
-          Show passwords
+          {t.modal.changePassword.showPasswords}
         </label>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -170,7 +172,7 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
             disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            {success ? "Close" : "Cancel"}
+            {success ? t.modal.changePassword.close : t.common.cancel}
           </button>
           {!success && (
             <button
@@ -183,7 +185,7 @@ export default function ChangePasswordModal({ open, onClose }: Props) {
               }
               className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
             >
-              {saving ? "Updating..." : "Change password"}
+              {saving ? t.modal.changePassword.updating : t.auth.changePassword}
             </button>
           )}
         </div>

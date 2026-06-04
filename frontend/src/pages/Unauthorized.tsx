@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useT } from "../hooks/useT";
 
 export default function Unauthorized() {
   const navigate = useNavigate();
+  const t = useT();
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
@@ -13,11 +15,8 @@ export default function Unauthorized() {
         </div>
 
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-slate-800">Access Denied</h1>
-          <p className="text-sm text-slate-500">
-            You don't have permission to access this page. Contact your
-            administrator if you think this is a mistake.
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-800">{t.auth.accessDenied}</h1>
+          <p className="text-sm text-slate-500">{t.auth.accessDeniedMsg}</p>
         </div>
 
         <div className="flex gap-3">
@@ -25,13 +24,13 @@ export default function Unauthorized() {
             onClick={() => navigate(-1)}
             className="flex-1 px-4 py-2 rounded border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50"
           >
-            Go back
+            {t.auth.goBack}
           </button>
           <button
             onClick={() => navigate("/", { replace: true })}
             className="flex-1 px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
           >
-            Dashboard
+            {t.nav.dashboard}
           </button>
         </div>
       </div>

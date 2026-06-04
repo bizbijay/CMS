@@ -18,6 +18,7 @@ import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
 import { AuthProvider } from "./context/AuthContext";
+import { CultureProvider } from "./context/CultureContext";
 import { useUnauthorizedHandler } from "./hooks/useUnauthorizedHandler";
 
 function AppRoutes() {
@@ -131,10 +132,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </ToastProvider>
+    <CultureProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ToastProvider>
+    </CultureProvider>
   );
 }

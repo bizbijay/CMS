@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { permissionsApi } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { PermissionListItem } from "../types/permissions";
 
 export type PermissionFormMode =
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function PermissionFormModal({ open, mode, onClose, onSaved }: Props) {
+  const t = useT();
   const isEdit = mode.kind === "edit";
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -65,8 +67,8 @@ export default function PermissionFormModal({ open, mode, onClose, onSaved }: Pr
       <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-800">{isEdit ? "Edit permission" : "Add permission"}</h3>
-            <p className="text-sm text-slate-500">{isEdit ? "Update the permission details." : "Register a new permission."}</p>
+            <h3 className="text-lg font-semibold text-slate-800">{isEdit ? t.modal.permissions.editTitle : t.modal.permissions.addTitle}</h3>
+            <p className="text-sm text-slate-500">{isEdit ? t.modal.permissions.editSubtitle : t.modal.permissions.addSubtitle}</p>
           </div>
           <button type="button" onClick={handleClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -79,7 +81,7 @@ export default function PermissionFormModal({ open, mode, onClose, onSaved }: Pr
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Permission name<span className="text-red-500 ml-0.5">*</span>
+            {t.modal.permissions.nameLabel}<span className="text-red-500 ml-0.5">*</span>
           </label>
           <input
             type="text"
@@ -92,12 +94,12 @@ export default function PermissionFormModal({ open, mode, onClose, onSaved }: Pr
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">{t.modal.permissions.descriptionLabel}</label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
+            placeholder={t.modal.permissions.descriptionPlaceholder}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -105,11 +107,11 @@ export default function PermissionFormModal({ open, mode, onClose, onSaved }: Pr
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={handleClose} disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Cancel
+            {t.common.cancel}
           </button>
           <button type="submit" disabled={saving}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium">
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Add permission"}
+            {saving ? t.common.saving : isEdit ? t.common.saveChanges : t.modal.permissions.addTitle}
           </button>
         </div>
       </form>

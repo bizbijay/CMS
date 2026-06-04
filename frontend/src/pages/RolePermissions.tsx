@@ -5,9 +5,11 @@ import type { PermissionListItem } from "../types/permissions";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { usePolicy } from "../hooks/usePolicy";
+import { useT } from "../hooks/useT";
 
 export default function RolePermissions() {
   const { addToast } = useToast();
+  const t = useT();
   const canEdit = usePolicy("role_permissions.edit");
   const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionListItem[]>([]);
@@ -74,18 +76,18 @@ export default function RolePermissions() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Role Permissions</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.rolePermissions.title}</h2>
       </div>
 
       {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
       {loadingOptions ? (
-        <p className="text-slate-500 text-sm">Loading...</p>
+        <p className="text-slate-500 text-sm">{t.common.loading}</p>
       ) : (
         <>
           <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
             <div className="max-w-xs">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Select role</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t.pages.rolePermissions.selectRole}</label>
               <select
                 value={selectedRoleId ?? ""}
                 onChange={(e) => setSelectedRoleId(Number(e.target.value))}
@@ -101,13 +103,13 @@ export default function RolePermissions() {
               <>
                 <div className="border-t border-slate-100 pt-4">
                   <p className="text-sm font-medium text-slate-700 mb-3">
-                    Permissions for <span className="text-blue-600">{selectedRole.name}</span>
+                    {t.pages.rolePermissions.permissionsFor} <span className="text-blue-600">{selectedRole.name}</span>
                   </p>
 
                   {loadingRole ? (
-                    <p className="text-sm text-slate-500">Loading permissions...</p>
+                    <p className="text-sm text-slate-500">{t.pages.rolePermissions.loadingPermissions}</p>
                   ) : permissions.length === 0 ? (
-                    <p className="text-sm text-slate-500">No permissions defined yet. Go to the Permissions page to add some.</p>
+                    <p className="text-sm text-slate-500">{t.pages.rolePermissions.noPermissions}</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {permissions.map((p) => (
@@ -141,7 +143,7 @@ export default function RolePermissions() {
                       disabled={saving || loadingRole}
                       className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
                     >
-                      {saving ? "Saving..." : "Save permissions"}
+                      {saving ? t.common.saving : t.pages.rolePermissions.savePermissions}
                     </button>
                   </div>
                 </Can>

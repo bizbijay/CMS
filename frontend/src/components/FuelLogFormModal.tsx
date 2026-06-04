@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { fuelLogsApi, usersApi, fuelsApi, getStoredUser } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { FuelLogListItem } from "../types/fuelLog";
 import type { UserListItem } from "../types/users";
 import type { FuelListItem } from "../types/fuels";
@@ -25,6 +26,7 @@ function displayName(u: UserListItem) {
 }
 
 export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props) {
+  const t = useT();
   const isEdit = mode.kind === "edit";
 
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
@@ -67,7 +69,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           setDate(todayIso());
         }
       })
-      .catch(() => setError("Failed to load dropdown options."))
+      .catch(() => setError(t.modal.loadError))
       .finally(() => setLoadingOptions(false));
     setError(null);
   }, [open, mode]);
@@ -86,11 +88,11 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!driverId) { setError("Please select a driver."); return; }
-    if (!assignedVehicleId) { setError("Selected driver has no assigned vehicle."); return; }
-    if (!fuelTypeId) { setError("Please select a fuel type."); return; }
-    if (!quantity || Number(quantity) <= 0) { setError("Please enter a valid quantity."); return; }
-    if (!price || Number(price) <= 0) { setError("Please enter a valid price."); return; }
+    if (!driverId) { setError(t.modal.fuelLog.errorNoDriver); return; }
+    if (!assignedVehicleId) { setError(t.modal.fuelLog.errorNoVehicle); return; }
+    if (!fuelTypeId) { setError(t.modal.fuelLog.errorNoFuelType); return; }
+    if (!quantity || Number(quantity) <= 0) { setError(t.modal.fuelLog.errorInvalidQuantity); return; }
+    if (!price || Number(price) <= 0) { setError(t.modal.fuelLog.errorInvalidPrice); return; }
 
     const body = { driverId, vehicleId: assignedVehicleId, fuelTypeId, quantity: Number(quantity), price: Number(price), date };
     setSaving(true);
@@ -119,10 +121,10 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {isEdit ? "Edit fuel log" : "Add fuel log"}
+              {isEdit ? t.modal.fuelLog.editTitle : t.modal.fuelLog.addTitle}
             </h3>
             <p className="text-sm text-slate-500">
-              {isEdit ? "Update fuel log details." : "Log a new fuel entry."}
+              {isEdit ? t.modal.fuelLog.editSubtitle : t.modal.fuelLog.addSubtitle}
             </p>
           </div>
           <button type="button" onClick={handleClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
@@ -137,13 +139,13 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
         )}
 
         {loadingOptions ? (
-          <p className="text-sm text-slate-500 py-4 text-center">Loading options...</p>
+          <p className="text-sm text-slate-500 py-4 text-center">{t.modal.loadingOptions}</p>
         ) : (
           <>
             {!isCurrentUserDriver && (
-              <Field label="Driver" required>
+              <Field label={t.common.driver} required>
                 {drivers.length === 0 ? (
-                  <p className="text-sm text-amber-600 py-1">No drivers found. Add a driver user first.</p>
+                  <p className="text-sm text-amber-600 py-1">{t.modal.noDriversFound}</p>
                 ) : (
                   <select
                     value={driverId}
@@ -160,19 +162,19 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
             )}
 
             {!isCurrentUserDriver && (
-              <Field label="Vehicle">
+              <Field label={t.common.vehicle}>
                 <input
                   type="text"
-                  value={assignedVehicleName ?? "— No vehicle assigned —"}
+                  value={assignedVehicleName ?? t.common.noVehicleAssigned}
                   disabled
                   className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
                 />
               </Field>
             )}
 
-            <Field label="Fuel type" required>
+            <Field label={t.common.fuelType} required>
               {fuelTypes.length === 0 ? (
-                <p className="text-sm text-amber-600 py-1">No fuel types found. Add a fuel type first.</p>
+                <p className="text-sm text-amber-600 py-1">{t.modal.noFuelTypesFound}</p>
               ) : (
                 <select
                   value={fuelTypeId}
@@ -188,7 +190,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Quantity (litres)" required>
+              <Field label={t.modal.fuelLog.quantityLabel} required>
                 <input
                   type="number"
                   value={quantity}
@@ -201,7 +203,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
                 />
               </Field>
 
-              <Field label="Price (रू)" required>
+              <Field label={t.common.price} required>
                 <input
                   type="number"
                   value={price}
@@ -217,14 +219,14 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
 
             {quantity && price && Number(quantity) > 0 && Number(price) > 0 && (
               <div className="rounded bg-slate-50 border border-slate-200 px-4 py-2 flex items-center justify-between text-sm">
-                <span className="text-slate-500">Total price</span>
+                <span className="text-slate-500">{t.modal.fuelLog.totalPriceLabel}</span>
                 <span className="font-semibold text-slate-800">
                   रू {(Number(quantity) * Number(price)).toFixed(2)}
                 </span>
               </div>
             )}
 
-            <Field label="Date" required>
+            <Field label={t.common.date} required>
               <input
                 type="date"
                 value={date}
@@ -239,11 +241,11 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={handleClose} disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Cancel
+            {t.common.cancel}
           </button>
           <button type="submit" disabled={saving || loadingOptions}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium">
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Add fuel log"}
+            {saving ? t.common.saving : isEdit ? t.common.saveChanges : t.modal.fuelLog.addButton}
           </button>
         </div>
       </form>

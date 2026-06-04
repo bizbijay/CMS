@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { vehiclesApi } from "../services/api";
+import { useT } from "../hooks/useT";
 import type { VehicleListItem, VehicleType } from "../types/vehicles";
 
 export type VehicleFormMode =
@@ -13,12 +14,11 @@ interface Props {
   onSaved: (vehicle: VehicleListItem, mode: VehicleFormMode["kind"]) => void;
 }
 
-const VEHICLE_TYPES: { value: VehicleType; label: string }[] = [
-  { value: "tipper", label: "Tipper" },
-  { value: "jcb", label: "JCB" },
-];
+// Labels translated inside component via useT — kept as static fallback for type only
+const VEHICLE_TYPE_VALUES: VehicleType[] = ["tipper", "jcb"];
 
 export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props) {
+  const t = useT();
   const isEdit = mode.kind === "edit";
 
   const [name, setName] = useState("");
@@ -84,10 +84,10 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {isEdit ? "Edit vehicle" : "Add vehicle"}
+              {isEdit ? t.modal.vehicles.editTitle : t.modal.vehicles.addTitle}
             </h3>
             <p className="text-sm text-slate-500">
-              {isEdit ? "Update the vehicle details." : "Register a new vehicle."}
+              {isEdit ? t.modal.vehicles.editSubtitle : t.modal.vehicles.addSubtitle}
             </p>
           </div>
           <button
@@ -115,7 +115,7 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
           </div>
         )}
 
-        <Field label="Vehicle name" required>
+        <Field label={t.modal.vehicles.nameLabel} required>
           <input
             type="text"
             value={name}
@@ -126,7 +126,7 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
           />
         </Field>
 
-        <Field label="Number plate" required>
+        <Field label={t.modal.vehicles.numberPlateLabel} required>
           <input
             type="text"
             value={numberPlate}
@@ -137,15 +137,15 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
           />
         </Field>
 
-        <Field label="Vehicle type" required>
+        <Field label={t.modal.vehicles.typeLabel} required>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as VehicleType)}
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {VEHICLE_TYPES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {VEHICLE_TYPE_VALUES.map((v) => (
+              <option key={v} value={v}>
+                {v === "tipper" ? t.modal.vehicles.typeTipper : t.modal.vehicles.typeJcb}
               </option>
             ))}
           </select>
@@ -158,14 +158,14 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
             disabled={saving}
             className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
             disabled={saving}
             className="px-4 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium"
           >
-            {saving ? "Saving..." : isEdit ? "Save changes" : "Add vehicle"}
+            {saving ? t.common.saving : isEdit ? t.common.saveChanges : t.modal.vehicles.addTitle}
           </button>
         </div>
       </form>

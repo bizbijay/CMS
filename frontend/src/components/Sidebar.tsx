@@ -1,36 +1,41 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCulture } from "../context/CultureContext";
 
 interface Props {
   mobileOpen: boolean;
   onMobileClose: () => void;
 }
 
-const topMenu = [
-  { to: "/", label: "Dashboard", icon: DashboardIcon },
-  { to: "/users", label: "Users", icon: UsersIcon, policy: "users.view" },
-  { to: "/transportation", label: "Transportation", icon: TransportationIcon, policy: "transportation.view" },
-  { to: "/fuel-log", label: "Fuel Log", icon: FuelLogIcon, policy: "fuel_log.view" },
+const settingsPaths = [
+  "/vehicles", "/materials", "/vendors", "/projects",
+  "/fuels", "/roles", "/permissions", "/role-permissions",
 ];
-
-const settingsMenu = [
-  { to: "/vehicles", label: "Vehicles", icon: VehiclesIcon, policy: "vehicles.view" },
-  { to: "/materials", label: "Materials", icon: MaterialsIcon, policy: "materials.view" },
-  { to: "/vendors", label: "Vendors", icon: VendorsIcon, policy: "vendors.view" },
-  { to: "/projects", label: "Projects", icon: ProjectsIcon, policy: "projects.view" },
-  { to: "/fuels", label: "Fuel Types", icon: FuelIcon, policy: "fuel_types.view" },
-  { to: "/roles", label: "Roles", icon: RolesIcon, policy: "roles.view" },
-  { to: "/permissions", label: "Permissions", icon: PermissionsIcon, policy: "permissions.view" },
-  { to: "/role-permissions", label: "Role Permissions", icon: RolePermissionsIcon, policy: "role_permissions.view" },
-];
-
-const settingsPaths = settingsMenu.map((m) => m.to);
 
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { can } = useAuth();
+  const { t } = useCulture();
+
+  const topMenu = [
+    { to: "/", label: t.nav.dashboard, icon: DashboardIcon },
+    { to: "/users", label: t.nav.users, icon: UsersIcon, policy: "users.view" },
+    { to: "/transportation", label: t.nav.transportation, icon: TransportationIcon, policy: "transportation.view" },
+    { to: "/fuel-log", label: t.nav.fuelLog, icon: FuelLogIcon, policy: "fuel_log.view" },
+  ];
+
+  const settingsMenu = [
+    { to: "/vehicles", label: t.nav.vehicles, icon: VehiclesIcon, policy: "vehicles.view" },
+    { to: "/materials", label: t.nav.materials, icon: MaterialsIcon, policy: "materials.view" },
+    { to: "/vendors", label: t.nav.vendors, icon: VendorsIcon, policy: "vendors.view" },
+    { to: "/projects", label: t.nav.projects, icon: ProjectsIcon, policy: "projects.view" },
+    { to: "/fuels", label: t.nav.fuelTypes, icon: FuelIcon, policy: "fuel_types.view" },
+    { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
+    { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
+    { to: "/role-permissions", label: t.nav.rolePermissions, icon: RolePermissionsIcon, policy: "role_permissions.view" },
+  ];
 
   const visibleTopMenu = topMenu.filter((m) => !m.policy || can(m.policy));
   const visibleSettingsMenu = settingsMenu.filter((m) => !m.policy || can(m.policy));
@@ -112,7 +117,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
           <SettingsIcon className="w-5 h-5 shrink-0" />
           {(!collapsed || isMobile) && (
             <>
-              <span className="flex-1 text-left">Settings</span>
+              <span className="flex-1 text-left">{t.nav.settings}</span>
               <ChevronIcon direction={settingsOpen ? "down" : "right"} />
             </>
           )}

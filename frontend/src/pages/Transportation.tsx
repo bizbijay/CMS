@@ -6,9 +6,11 @@ import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
+import { useT } from "../hooks/useT";
 
 export default function Transportation() {
   const { addToast } = useToast();
+  const t = useT();
   const [items, setItems] = useState<TransportationListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,10 +74,10 @@ export default function Transportation() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Transportation</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.transportation.title}</h2>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
-            Refresh
+            {t.common.refresh}
           </button>
           <Can do="transportation.add">
             <button
@@ -85,7 +87,7 @@ export default function Transportation() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add transportation
+              {t.pages.transportation.addButton}
             </button>
           </Can>
         </div>
@@ -100,20 +102,20 @@ export default function Transportation() {
           <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                {!isDriver && <Th>Transported by</Th>}
-                {!isDriver && <Th>Vehicle</Th>}
-                <Th>Material</Th>
-                <Th>Vendor</Th>
-                <Th>Project</Th>
-                <Th>Date</Th>
-                <Th className="text-right whitespace-nowrap">Actions</Th>
+                {!isDriver && <Th>{t.common.transportedBy}</Th>}
+                {!isDriver && <Th>{t.common.vehicle}</Th>}
+                <Th>{t.common.material}</Th>
+                <Th>{t.common.vendor}</Th>
+                <Th>{t.common.project}</Th>
+                <Th>{t.common.date}</Th>
+                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">{t.common.loading}</td></tr>
               ) : visibleItems.length === 0 ? (
-                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">No records yet. Click "Add transportation" to log one.</td></tr>
+                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">{t.pages.transportation.noData}</td></tr>
               ) : (
                 visibleItems.map((t) => (
                   <tr key={t.id} className="hover:bg-slate-50">
@@ -150,9 +152,9 @@ export default function Transportation() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete transportation"
-        message={pendingDelete ? `Are you sure you want to delete this transportation record? This action cannot be undone.` : ""}
-        confirmLabel="Delete"
+        title={t.modal.transportation.deleteTitle}
+        message={pendingDelete ? t.modal.transportation.deleteMessage : ""}
+        confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
         onConfirm={confirmDelete}

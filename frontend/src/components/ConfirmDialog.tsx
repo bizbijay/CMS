@@ -1,3 +1,5 @@
+import { useT } from "../hooks/useT";
+
 interface Props {
   open: boolean;
   title: string;
@@ -21,6 +23,7 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  const t = useT();
   if (!open) return null;
 
   const confirmClass =
@@ -48,7 +51,7 @@ export default function ConfirmDialog({
             disabled={busy}
             className={`px-4 py-2 text-sm rounded text-white font-medium ${confirmClass}`}
           >
-            {busy ? "Working..." : confirmLabel}
+            {busy ? t.modal.working : confirmLabel}
           </button>
         </div>
       </div>
