@@ -221,7 +221,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
               <div className="rounded bg-slate-50 border border-slate-200 px-4 py-2 flex items-center justify-between text-sm">
                 <span className="text-slate-500">{t.modal.fuelLog.totalPriceLabel}</span>
                 <span className="font-semibold text-slate-800">
-                  रू {(Number(quantity) * Number(price)).toFixed(2)}
+                  {t.common.currencySymbol} {(Number(quantity) * Number(price)).toFixed(2)}
                 </span>
               </div>
             )}

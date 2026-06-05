@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  type ColumnDef,
+  type SortingState,
+} from "@tanstack/react-table";
 import { transportationsApi, usersApi, getStoredUser } from "../services/api";
 import type { TransportationListItem } from "../types/transportation";
 import TransportationFormModal, { type TransportationFormMode } from "../components/TransportationFormModal";
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
+import DataTable from "../components/DataTable";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { useT } from "../hooks/useT";
@@ -17,6 +26,7 @@ export default function Transportation() {
   const [modalMode, setModalMode] = useState<TransportationFormMode | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TransportationListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
 
   const currentUserId = getStoredUser()?.id ?? 0;
   const [isDriver, setIsDriver] = useState(false);
@@ -47,7 +57,7 @@ export default function Transportation() {
       setItems((prev) => [item, ...prev]);
       addToast("Transportation added successfully.", "success");
     } else {
-      setItems((prev) => prev.map((t) => (t.id === item.id ? item : t)));
+      setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
       addToast("Transportation updated successfully.", "success");
     }
   }
@@ -57,7 +67,7 @@ export default function Transportation() {
     setDeleting(true);
     try {
       await transportationsApi.remove(pendingDelete.id);
-      setItems((prev) => prev.filter((t) => t.id !== pendingDelete.id));
+      setItems((prev) => prev.filter((i) => i.id !== pendingDelete.id));
       setPendingDelete(null);
       addToast("Transportation deleted.", "success");
     } catch (err) {
@@ -68,8 +78,71 @@ export default function Transportation() {
   }
 
   const visibleItems = isDriver
-    ? items.filter(t => t.transportedById === currentUserId)
+    ? items.filter(i => i.transportedById === currentUserId)
     : items;
+
+  const columns = useMemo<ColumnDef<TransportationListItem>[]>(() => [
+    {
+      accessorKey: "transportedByName",
+      header: t.common.transportedBy,
+      cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.transportedByName}</span>,
+    },
+    {
+      accessorKey: "vehicleName",
+      header: t.common.vehicle,
+      cell: ({ row }) => row.original.vehicleName ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "materialName",
+      header: t.common.material,
+      cell: ({ row }) => row.original.materialName ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "vendorName",
+      header: t.common.vendor,
+    },
+    {
+      accessorKey: "projectName",
+      header: t.common.project,
+    },
+    {
+      accessorKey: "date",
+      header: t.common.date,
+      cell: ({ row }) => formatDate(row.original.date),
+    },
+    {
+      id: "actions",
+      header: t.common.actions,
+      enableSorting: false,
+      meta: { className: "text-right" },
+      cell: ({ row }) => (
+        <div className="inline-flex gap-1.5">
+          <Can do="transportation.edit">
+            <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", transportation: row.original })} />
+          </Can>
+          <Can do="transportation.delete">
+            <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(row.original)} />
+          </Can>
+        </div>
+      ),
+    },
+  ], [t, setModalMode, setPendingDelete]);
+
+  const columnVisibility = useMemo(() => ({
+    transportedByName: !isDriver,
+    vehicleName: !isDriver,
+  }), [isDriver]);
+
+  const table = useReactTable({
+    data: visibleItems,
+    columns,
+    state: { sorting, columnVisibility },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
+  });
 
   return (
     <div className="space-y-5">
@@ -93,55 +166,9 @@ export default function Transportation() {
         </div>
       </div>
 
-      {error && (
-        <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>
-      )}
+      {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm table-auto">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                {!isDriver && <Th>{t.common.transportedBy}</Th>}
-                {!isDriver && <Th>{t.common.vehicle}</Th>}
-                <Th>{t.common.material}</Th>
-                <Th>{t.common.vendor}</Th>
-                <Th>{t.common.project}</Th>
-                <Th>{t.common.date}</Th>
-                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {loading ? (
-                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">{t.common.loading}</td></tr>
-              ) : visibleItems.length === 0 ? (
-                <tr><td colSpan={isDriver ? 5 : 7} className="px-4 py-6 text-center text-slate-500">{t.pages.transportation.noData}</td></tr>
-              ) : (
-                visibleItems.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50">
-                    {!isDriver && <Td><span className="font-medium text-slate-800">{t.transportedByName}</span></Td>}
-                    {!isDriver && <Td>{t.vehicleName ?? <span className="text-slate-400">—</span>}</Td>}
-                    <Td>{t.materialName ?? <span className="text-slate-400">—</span>}</Td>
-                    <Td>{t.vendorName}</Td>
-                    <Td>{t.projectName}</Td>
-                    <Td>{formatDate(t.date)}</Td>
-                    <Td className="text-right">
-                      <div className="inline-flex gap-1.5">
-                        <Can do="transportation.edit">
-                          <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", transportation: t })} />
-                        </Can>
-                        <Can do="transportation.delete">
-                          <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(t)} />
-                        </Can>
-                      </div>
-                    </Td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable table={table} loading={loading} emptyMessage={t.pages.transportation.noData} />
 
       <TransportationFormModal
         open={modalMode !== null}
@@ -162,14 +189,6 @@ export default function Transportation() {
       />
     </div>
   );
-}
-
-function Th({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <th className={`text-left font-medium uppercase text-xs tracking-wide px-4 py-3 ${className ?? ""}`}>{children}</th>;
-}
-
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 text-slate-700 ${className ?? ""}`}>{children}</td>;
 }
 
 function formatDate(iso: string) {

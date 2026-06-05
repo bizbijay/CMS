@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  type ColumnDef,
+  type SortingState,
+} from "@tanstack/react-table";
 import { fuelLogsApi, usersApi, getStoredUser } from "../services/api";
 import type { FuelLogListItem } from "../types/fuelLog";
 import FuelLogFormModal, { type FuelLogFormMode } from "../components/FuelLogFormModal";
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
+import DataTable from "../components/DataTable";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { useT } from "../hooks/useT";
@@ -19,6 +28,7 @@ export default function FuelLog() {
   const [deleting, setDeleting] = useState(false);
   const [driverFilter, setDriverFilter] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
 
   const currentUserId = getStoredUser()?.id ?? 0;
   const [isDriver, setIsDriver] = useState(false);
@@ -69,7 +79,6 @@ export default function FuelLog() {
     }
   }
 
-  // If the current user is a driver, only show their own records
   const ownItems = isDriver ? items.filter(l => l.driverId === currentUserId) : items;
   const driverNames = Array.from(new Set(ownItems.map((l) => l.driverName))).sort();
   const vehicles = Array.from(new Set(ownItems.map((l) => l.vehicleName))).sort();
@@ -78,6 +87,79 @@ export default function FuelLog() {
       (driverFilter === "" || l.driverName === driverFilter) &&
       (vehicleFilter === "" || l.vehicleName === vehicleFilter),
   );
+
+  const columns = useMemo<ColumnDef<FuelLogListItem>[]>(() => [
+    {
+      accessorKey: "driverName",
+      header: t.common.driver,
+      cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.driverName}</span>,
+    },
+    {
+      accessorKey: "vehicleName",
+      header: t.common.vehicle,
+    },
+    {
+      accessorKey: "fuelTypeName",
+      header: t.common.fuelType,
+    },
+    {
+      accessorKey: "quantity",
+      header: t.common.quantity,
+      cell: ({ row }) => row.original.quantity.toFixed(2),
+    },
+    {
+      accessorKey: "price",
+      header: t.common.price,
+      cell: ({ row }) => `${t.common.currencySymbol} ${row.original.price.toFixed(2)}`,
+    },
+    {
+      id: "total",
+      header: t.common.total,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="font-medium">{t.common.currencySymbol} {(row.original.quantity * row.original.price).toFixed(2)}</span>
+      ),
+    },
+    {
+      accessorKey: "date",
+      header: t.common.date,
+      cell: ({ row }) => formatDate(row.original.date),
+    },
+    {
+      id: "actions",
+      header: t.common.actions,
+      enableSorting: false,
+      meta: { className: "text-right" },
+      cell: ({ row }) => (
+        <div className="inline-flex gap-1.5">
+          <Can do="fuel_log.edit">
+            <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", log: row.original })} />
+          </Can>
+          <Can do="fuel_log.delete">
+            <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(row.original)} />
+          </Can>
+        </div>
+      ),
+    },
+  ], [t, setModalMode, setPendingDelete]);
+
+  const columnVisibility = useMemo(() => ({
+    driverName: !isDriver,
+    vehicleName: !isDriver,
+  }), [isDriver]);
+
+  const table = useReactTable({
+    data: filtered,
+    columns,
+    state: { sorting, columnVisibility },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
+  });
+
+  const emptyMessage = ownItems.length === 0 ? t.pages.fuelLog.noData : t.pages.fuelLog.noMatch;
 
   return (
     <div className="space-y-5">
@@ -109,9 +191,7 @@ export default function FuelLog() {
             className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{t.common.allDrivers}</option>
-            {driverNames.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
+            {driverNames.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         )}
         <select
@@ -120,9 +200,7 @@ export default function FuelLog() {
           className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">{t.common.allVehicles}</option>
-          {vehicles.map((v) => (
-            <option key={v} value={v}>{v}</option>
-          ))}
+          {vehicles.map((v) => <option key={v} value={v}>{v}</option>)}
         </select>
         {(driverFilter || vehicleFilter) && (
           <button
@@ -134,59 +212,9 @@ export default function FuelLog() {
         )}
       </div>
 
-      {error && (
-        <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>
-      )}
+      {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm table-auto">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                {!isDriver && <Th>{t.common.driver}</Th>}
-                {!isDriver && <Th>{t.common.vehicle}</Th>}
-                <Th>{t.common.fuelType}</Th>
-                <Th>{t.common.quantity}</Th>
-                <Th>{t.common.price}</Th>
-                <Th>{t.common.total}</Th>
-                <Th>{t.common.date}</Th>
-                <Th className="text-right whitespace-nowrap">{t.common.actions}</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {loading ? (
-                <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">{t.common.loading}</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={isDriver ? 6 : 8} className="px-4 py-6 text-center text-slate-500">
-                  {ownItems.length === 0 ? t.pages.fuelLog.noData : t.pages.fuelLog.noMatch}
-                </td></tr>
-              ) : (
-                filtered.map((l) => (
-                  <tr key={l.id} className="hover:bg-slate-50">
-                    {!isDriver && <Td><span className="font-medium text-slate-800">{l.driverName}</span></Td>}
-                    {!isDriver && <Td>{l.vehicleName}</Td>}
-                    <Td>{l.fuelTypeName}</Td>
-                    <Td>{l.quantity.toFixed(2)}</Td>
-                    <Td>रू {l.price.toFixed(2)}</Td>
-                    <Td className="font-medium">रू {(l.quantity * l.price).toFixed(2)}</Td>
-                    <Td>{formatDate(l.date)}</Td>
-                    <Td className="text-right">
-                      <div className="inline-flex gap-1.5">
-                        <Can do="fuel_log.edit">
-                          <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", log: l })} />
-                        </Can>
-                        <Can do="fuel_log.delete">
-                          <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(l)} />
-                        </Can>
-                      </div>
-                    </Td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable table={table} loading={loading} emptyMessage={emptyMessage} />
 
       <FuelLogFormModal
         open={modalMode !== null}
@@ -207,14 +235,6 @@ export default function FuelLog() {
       />
     </div>
   );
-}
-
-function Th({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <th className={`text-left font-medium uppercase text-xs tracking-wide px-4 py-3 ${className ?? ""}`}>{children}</th>;
-}
-
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 text-slate-700 ${className ?? ""}`}>{children}</td>;
 }
 
 function formatDate(iso: string) {
