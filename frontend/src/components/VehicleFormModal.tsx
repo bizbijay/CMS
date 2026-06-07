@@ -14,7 +14,6 @@ interface Props {
   onSaved: (vehicle: VehicleListItem, mode: VehicleFormMode["kind"]) => void;
 }
 
-// Labels translated inside component via useT — kept as static fallback for type only
 const VEHICLE_TYPE_VALUES: VehicleType[] = ["tipper", "jcb"];
 
 export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props) {

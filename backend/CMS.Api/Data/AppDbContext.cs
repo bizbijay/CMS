@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Transportation> Transportations => Set<Transportation>();
     public DbSet<Fuel> Fuels => Set<Fuel>();
     public DbSet<FuelLog> FuelLogs => Set<FuelLog>();
+    public DbSet<DozerLog> DozerLogs => Set<DozerLog>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
@@ -64,6 +65,15 @@ public class AppDbContext : DbContext
         {
             entity.HasOne(f => f.CreatedBy).WithMany().HasForeignKey(f => f.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(f => f.UpdatedBy).WithMany().HasForeignKey(f => f.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<DozerLog>(entity =>
+        {
+            entity.HasOne(d => d.Driver).WithMany().HasForeignKey(d => d.DriverId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.Vehicle).WithMany().HasForeignKey(d => d.VehicleId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.Project).WithMany().HasForeignKey(d => d.ProjectId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.CreatedBy).WithMany().HasForeignKey(d => d.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.UpdatedBy).WithMany().HasForeignKey(d => d.UpdatedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Transportation>(entity =>

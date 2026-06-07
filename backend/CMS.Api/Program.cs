@@ -68,6 +68,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITransportationService, TransportationService>();
 builder.Services.AddScoped<IFuelService, FuelService>();
 builder.Services.AddScoped<IFuelLogService, FuelLogService>();
+builder.Services.AddScoped<IDozerLogService, DozerLogService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
@@ -103,6 +104,8 @@ builder.Services.AddAuthorization(options =>
         "transportation.view", "transportation.add", "transportation.edit", "transportation.delete",
 
         "fuel_log.view", "fuel_log.add", "fuel_log.edit", "fuel_log.delete",
+
+        "dozer_log.view", "dozer_log.add", "dozer_log.edit", "dozer_log.delete",
 
         "vehicles.view", "vehicles.add", "vehicles.edit", "vehicles.delete",
 

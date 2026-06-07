@@ -22,6 +22,7 @@ import type { CreatePermissionRequest, UpdatePermissionRequest, PermissionListIt
 import type { RolePermissions, SetRolePermissionsRequest } from "../types/rolePermissions";
 import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from "../types/fuelLog";
 import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
+import type { CreateDozerLogRequest, UpdateDozerLogRequest, DozerLogListItem } from "../types/dozerLog";
 import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
 import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem } from "../types/projects";
 
@@ -119,6 +120,7 @@ export const usersApi = {
   list: () => request<UserListItem[]>("/api/users", { method: "GET" }),
 
   drivers: () => request<UserListItem[]>("/api/users/drivers", { method: "GET" }),
+  dozerDrivers: () => request<UserListItem[]>("/api/users/dozer-drivers", { method: "GET" }),
 
   create: (body: CreateUserRequest) =>
     request<UserListItem>("/api/users", {
@@ -204,6 +206,15 @@ export const projectsApi = {
   update: (id: number, body: UpdateProjectRequest) =>
     request<ProjectListItem>(`/api/projects/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/projects/${id}`, { method: "DELETE" }),
+};
+
+export const dozerLogsApi = {
+  list: () => request<DozerLogListItem[]>("/api/dozerlogs", { method: "GET" }),
+  create: (body: CreateDozerLogRequest) =>
+    request<DozerLogListItem>("/api/dozerlogs", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateDozerLogRequest) =>
+    request<DozerLogListItem>(`/api/dozerlogs/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/dozerlogs/${id}`, { method: "DELETE" }),
 };
 
 export const materialsApi = {

@@ -33,6 +33,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   const [fuelTypes, setFuelTypes] = useState<FuelListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
+  const [selfUser, setSelfUser] = useState<UserListItem | null>(null);
 
   const [driverId, setDriverId] = useState<number>(0);
   const [fuelTypeId, setFuelTypeId] = useState<number>(0);
@@ -46,14 +47,17 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.drivers(), fuelsApi.list()])
-      .then(([driverList, f]) => {
+    Promise.all([usersApi.drivers(), usersApi.dozerDrivers(), fuelsApi.list()])
+      .then(([driverList, operatorList, f]) => {
         setDrivers(driverList);
         setFuelTypes(f);
 
         const stored = getStoredUser();
-        const selfMatch = driverList.find((u) => u.id === stored?.id);
+        const selfInDrivers = driverList.find((u) => u.id === stored?.id);
+        const selfInOperators = operatorList.find((u) => u.id === stored?.id);
+        const selfMatch = selfInDrivers ?? selfInOperators ?? null;
         setIsCurrentUserDriver(!!selfMatch);
+        setSelfUser(selfMatch);
 
         if (mode.kind === "edit") {
           setDriverId(mode.log.driverId);
@@ -81,7 +85,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
     onClose();
   }
 
-  const selectedDriver = drivers.find((u) => u.id === driverId);
+  const selectedDriver = drivers.find((u) => u.id === driverId) ?? (selfUser?.id === driverId ? selfUser : null);
   const assignedVehicleId = selectedDriver?.vehicleId ?? null;
   const assignedVehicleName = selectedDriver?.assignedVehicleName ?? null;
 

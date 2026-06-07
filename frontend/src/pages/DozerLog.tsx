@@ -7,9 +7,9 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { fuelLogsApi, usersApi, getStoredUser } from "../services/api";
-import type { FuelLogListItem } from "../types/fuelLog";
-import FuelLogFormModal, { type FuelLogFormMode } from "../components/FuelLogFormModal";
+import { dozerLogsApi, usersApi, getStoredUser } from "../services/api";
+import type { DozerLogListItem } from "../types/dozerLog";
+import DozerLogFormModal, { type DozerLogFormMode } from "../components/DozerLogFormModal";
 import IconButton from "../components/IconButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable from "../components/DataTable";
@@ -17,30 +17,23 @@ import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { useT } from "../hooks/useT";
 
-export default function FuelLog() {
+export default function DozerLog() {
   const { addToast } = useToast();
   const t = useT();
-  const [items, setItems] = useState<FuelLogListItem[]>([]);
+  const [items, setItems] = useState<DozerLogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modalMode, setModalMode] = useState<FuelLogFormMode | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<FuelLogListItem | null>(null);
+  const [modalMode, setModalMode] = useState<DozerLogFormMode | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<DozerLogListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [driverFilter, setDriverFilter] = useState("");
-  const [vehicleFilter, setVehicleFilter] = useState("");
-  const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "operationDate", desc: true }]);
 
   const currentUserId = getStoredUser()?.id ?? 0;
   const [isDriver, setIsDriver] = useState(false);
 
   useEffect(() => {
-    Promise.all([usersApi.drivers(), usersApi.dozerDrivers()])
-      .then(([drivers, operators]) =>
-        setIsDriver(
-          drivers.some(d => d.id === currentUserId) ||
-          operators.some(o => o.id === currentUserId)
-        )
-      )
+    usersApi.dozerDrivers()
+      .then(list => setIsDriver(list.some(d => d.id === currentUserId)))
       .catch(() => {});
   }, [currentUserId]);
 
@@ -48,10 +41,10 @@ export default function FuelLog() {
     setLoading(true);
     setError(null);
     try {
-      const rows = await fuelLogsApi.list();
+      const rows = await dozerLogsApi.list();
       setItems(rows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load fuel logs.");
+      setError(err instanceof Error ? err.message : "Failed to load dozer logs.");
     } finally {
       setLoading(false);
     }
@@ -59,13 +52,13 @@ export default function FuelLog() {
 
   useEffect(() => { load(); }, [load]);
 
-  function onSaved(item: FuelLogListItem, kind: FuelLogFormMode["kind"]) {
+  function onSaved(item: DozerLogListItem, kind: DozerLogFormMode["kind"]) {
     if (kind === "add") {
       setItems((prev) => [item, ...prev]);
-      addToast("Fuel log added successfully.", "success");
+      addToast("JCB log added successfully.", "success");
     } else {
-      setItems((prev) => prev.map((l) => (l.id === item.id ? item : l)));
-      addToast("Fuel log updated successfully.", "success");
+      setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
+      addToast("JCB log updated successfully.", "success");
     }
   }
 
@@ -73,10 +66,10 @@ export default function FuelLog() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      await fuelLogsApi.remove(pendingDelete.id);
-      setItems((prev) => prev.filter((l) => l.id !== pendingDelete.id));
+      await dozerLogsApi.remove(pendingDelete.id);
+      setItems((prev) => prev.filter((i) => i.id !== pendingDelete.id));
       setPendingDelete(null);
-      addToast("Fuel log deleted.", "success");
+      addToast("JCB log deleted.", "success");
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Delete failed.", "error");
     } finally {
@@ -84,63 +77,35 @@ export default function FuelLog() {
     }
   }
 
-  const ownItems = useMemo(
-    () => isDriver ? items.filter(l => l.driverId === currentUserId) : items,
-    [isDriver, items, currentUserId],
-  );
-  const driverNames = useMemo(
-    () => Array.from(new Set(ownItems.map((l) => l.driverName).filter(Boolean))).sort(),
-    [ownItems],
-  );
-  const vehicles = useMemo(
-    () => Array.from(new Set(ownItems.map((l) => l.vehicleName).filter((v): v is string => !!v))).sort(),
-    [ownItems],
-  );
-  const filtered = useMemo(
-    () => ownItems.filter(
-      (l) =>
-        (driverFilter === "" || l.driverName === driverFilter) &&
-        (vehicleFilter === "" || l.vehicleName === vehicleFilter),
-    ),
-    [ownItems, driverFilter, vehicleFilter],
+  const visibleItems = useMemo(
+    () => isDriver ? items.filter(i => i.driverId === currentUserId) : items,
+    [isDriver, items, currentUserId]
   );
 
-  const columns = useMemo<ColumnDef<FuelLogListItem>[]>(() => [
+  const columns = useMemo<ColumnDef<DozerLogListItem>[]>(() => [
     {
       accessorKey: "driverName",
-      header: t.common.driver,
+      header: t.common.operator,
       cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.driverName}</span>,
     },
     {
       accessorKey: "vehicleName",
       header: t.common.vehicle,
+      cell: ({ row }) => row.original.vehicleName ?? <span className="text-slate-400">—</span>,
     },
     {
-      accessorKey: "fuelTypeName",
-      header: t.common.fuelType,
-    },
-    {
-      accessorKey: "quantity",
-      header: t.common.quantity,
-      cell: ({ row }) => row.original.quantity.toFixed(2),
-    },
-    {
-      accessorKey: "price",
-      header: t.common.price,
-      cell: ({ row }) => `${t.common.currencySymbol} ${row.original.price.toFixed(2)}`,
-    },
-    {
-      id: "total",
-      header: t.common.total,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <span className="font-medium">{t.common.currencySymbol} {(row.original.quantity * row.original.price).toFixed(2)}</span>
-      ),
-    },
-    {
-      accessorKey: "date",
+      accessorKey: "operationDate",
       header: t.common.date,
-      cell: ({ row }) => formatDate(row.original.date),
+      cell: ({ row }) => formatDate(row.original.operationDate),
+    },
+    {
+      id: "operatedTime",
+      header: t.common.operatedTime,
+      cell: ({ row }) => formatTime(row.original.operatedTimeMs),
+    },
+    {
+      accessorKey: "projectName",
+      header: t.common.project,
     },
     {
       id: "actions",
@@ -149,10 +114,10 @@ export default function FuelLog() {
       meta: { className: "text-right" },
       cell: ({ row }) => (
         <div className="inline-flex gap-1.5">
-          <Can do="fuel_log.edit">
+          <Can do="dozer_log.edit">
             <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", log: row.original })} />
           </Can>
-          <Can do="fuel_log.delete">
+          <Can do="dozer_log.delete">
             <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(row.original)} />
           </Can>
         </div>
@@ -166,7 +131,7 @@ export default function FuelLog() {
   }), [isDriver]);
 
   const table = useReactTable({
-    data: filtered,
+    data: visibleItems,
     columns,
     state: { sorting, columnVisibility },
     onSortingChange: setSorting,
@@ -176,17 +141,15 @@ export default function FuelLog() {
     initialState: { pagination: { pageSize: 10 } },
   });
 
-  const emptyMessage = ownItems.length === 0 ? t.pages.fuelLog.noData : t.pages.fuelLog.noMatch;
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.fuelLog.title}</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">{t.pages.dozerLog.title}</h2>
         <div className="flex gap-2">
           <button onClick={load} className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
             {t.common.refresh}
           </button>
-          <Can do="fuel_log.add">
+          <Can do="dozer_log.add">
             <button
               onClick={() => setModalMode({ kind: "add" })}
               className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
@@ -194,46 +157,17 @@ export default function FuelLog() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              {t.pages.fuelLog.addButton}
+              {t.pages.dozerLog.addButton}
             </button>
           </Can>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        {!isDriver && (
-          <select
-            value={driverFilter}
-            onChange={(e) => setDriverFilter(e.target.value)}
-            className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">{t.common.allDrivers}</option>
-            {driverNames.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-        )}
-        <select
-          value={vehicleFilter}
-          onChange={(e) => setVehicleFilter(e.target.value)}
-          className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">{t.common.allVehicles}</option>
-          {vehicles.map((v) => <option key={v} value={v}>{v}</option>)}
-        </select>
-        {(driverFilter || vehicleFilter) && (
-          <button
-            onClick={() => { setDriverFilter(""); setVehicleFilter(""); }}
-            className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
-          >
-            {t.common.clearFilters}
-          </button>
-        )}
-      </div>
-
       {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
-      <DataTable table={table} loading={loading} emptyMessage={emptyMessage} />
+      <DataTable table={table} loading={loading} emptyMessage={t.pages.dozerLog.noData} />
 
-      <FuelLogFormModal
+      <DozerLogFormModal
         open={modalMode !== null}
         mode={modalMode ?? { kind: "add" }}
         onClose={() => setModalMode(null)}
@@ -242,8 +176,8 @@ export default function FuelLog() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title={t.modal.fuelLog.deleteTitle}
-        message={pendingDelete ? t.modal.fuelLog.deleteMessage : ""}
+        title={t.modal.dozerLog.deleteTitle}
+        message={pendingDelete ? t.modal.dozerLog.deleteMessage : ""}
         confirmLabel={t.common.delete}
         tone="danger"
         busy={deleting}
@@ -258,6 +192,12 @@ function formatDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString();
+}
+
+function formatTime(ms: number) {
+  const hours = Math.floor(ms / 3_600_000);
+  const minutes = Math.floor((ms % 3_600_000) / 60_000);
+  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
 }
 
 function PencilIcon() {

@@ -20,7 +20,7 @@ public class UsersController : ControllerBase
     private int CurrentUserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
-    // GET: api/users/drivers  – lookup endpoint, no admin permission required
+    // GET: api/users/drivers  – all drivers (any vehicle type)
     [HttpGet("drivers")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<UserListItemDto>>> GetDrivers()
@@ -29,6 +29,12 @@ public class UsersController : ControllerBase
         return Ok(all.Where(u => u.RoleName != null &&
                                  u.RoleName.Equals("Driver", StringComparison.OrdinalIgnoreCase)));
     }
+
+    // GET: api/users/dozer-drivers  – drivers assigned to a Dozer vehicle
+    [HttpGet("dozer-drivers")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<UserListItemDto>>> GetDozerDrivers() =>
+        Ok(await _users.GetDozerDriversAsync());
 
     // GET: api/users
     [HttpGet]

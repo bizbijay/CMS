@@ -14,6 +14,7 @@ import Roles from "./pages/Roles";
 import Permissions from "./pages/Permissions";
 import RolePermissions from "./pages/RolePermissions";
 import FuelLog from "./pages/FuelLog";
+import DozerLog from "./pages/DozerLog";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -58,6 +59,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="fuel_log.view">
               <FuelLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dozer-log"
+          element={
+            <ProtectedRoute policy="dozer_log.view">
+              <DozerLog />
             </ProtectedRoute>
           }
         />

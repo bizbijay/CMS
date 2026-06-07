@@ -21,79 +21,81 @@ CREATE TABLE IF NOT EXISTS "RolePermissions" (
 );
 
 -- =============================================================
--- Seed: all permissions (insert, skip if already exists)
+-- Seed: all permissions — safe to re-run, skips existing rows
 -- =============================================================
 
-INSERT INTO "Permissions" ("Name", "Description") VALUES
+-- Dashboard
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dashboard.view',           'View the dashboard')                         ON CONFLICT ("Name") DO NOTHING;
 
-    -- Dashboard
-    ('dashboard.view',              'View the dashboard'),
+-- Users
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.view',               'View the users list')                        ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.add',                'Create a new user')                          ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.edit',               'Edit an existing user')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.delete',             'Delete a user')                              ON CONFLICT ("Name") DO NOTHING;
 
-    -- Users
-    ('users.view',                  'View the users list'),
-    ('users.add',                   'Create a new user'),
-    ('users.edit',                  'Edit an existing user'),
-    ('users.delete',                'Delete a user'),
+-- Transportation
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.view',      'View transportation records')                 ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.add',       'Add a transportation record')                 ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.edit',      'Edit a transportation record')                ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.delete',    'Delete a transportation record')              ON CONFLICT ("Name") DO NOTHING;
 
-    -- Transportation
-    ('transportation.view',         'View transportation records'),
-    ('transportation.add',          'Add a transportation record'),
-    ('transportation.edit',         'Edit a transportation record'),
-    ('transportation.delete',       'Delete a transportation record'),
+-- Fuel Log
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.view',            'View fuel log entries')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.add',             'Add a fuel log entry')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.edit',            'Edit a fuel log entry')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.delete',          'Delete a fuel log entry')                    ON CONFLICT ("Name") DO NOTHING;
 
-    -- Fuel Log
-    ('fuel_log.view',               'View fuel log entries'),
-    ('fuel_log.add',                'Add a fuel log entry'),
-    ('fuel_log.edit',               'Edit a fuel log entry'),
-    ('fuel_log.delete',             'Delete a fuel log entry'),
+-- Dozer Log
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.view',           'View dozer log entries')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.add',            'Add a dozer log entry')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.edit',           'Edit a dozer log entry')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.delete',         'Delete a dozer log entry')                   ON CONFLICT ("Name") DO NOTHING;
 
-    -- Vehicles
-    ('vehicles.view',               'View the vehicles list'),
-    ('vehicles.add',                'Add a vehicle'),
-    ('vehicles.edit',               'Edit a vehicle'),
-    ('vehicles.delete',             'Delete a vehicle'),
+-- Vehicles
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.view',            'View the vehicles list')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.add',             'Add a vehicle')                              ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.edit',            'Edit a vehicle')                             ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.delete',          'Delete a vehicle')                           ON CONFLICT ("Name") DO NOTHING;
 
-    -- Materials
-    ('materials.view',              'View the materials list'),
-    ('materials.add',               'Add a material'),
-    ('materials.edit',              'Edit a material'),
-    ('materials.delete',            'Delete a material'),
+-- Materials
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.view',           'View the materials list')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.add',            'Add a material')                             ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.edit',           'Edit a material')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.delete',         'Delete a material')                          ON CONFLICT ("Name") DO NOTHING;
 
-    -- Vendors
-    ('vendors.view',                'View the vendors list'),
-    ('vendors.add',                 'Add a vendor'),
-    ('vendors.edit',                'Edit a vendor'),
-    ('vendors.delete',              'Delete a vendor'),
+-- Vendors
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.view',             'View the vendors list')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.add',              'Add a vendor')                               ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.edit',             'Edit a vendor')                              ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.delete',           'Delete a vendor')                            ON CONFLICT ("Name") DO NOTHING;
 
-    -- Projects
-    ('projects.view',               'View the projects list'),
-    ('projects.add',                'Add a project'),
-    ('projects.edit',               'Edit a project'),
-    ('projects.delete',             'Delete a project'),
+-- Projects
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.view',            'View the projects list')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.add',             'Add a project')                              ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.edit',            'Edit a project')                             ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.delete',          'Delete a project')                           ON CONFLICT ("Name") DO NOTHING;
 
-    -- Fuel Types
-    ('fuel_types.view',             'View the fuel types list'),
-    ('fuel_types.add',              'Add a fuel type'),
-    ('fuel_types.edit',             'Edit a fuel type'),
-    ('fuel_types.delete',           'Delete a fuel type'),
+-- Fuel Types
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.view',          'View the fuel types list')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.add',           'Add a fuel type')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.edit',          'Edit a fuel type')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.delete',        'Delete a fuel type')                         ON CONFLICT ("Name") DO NOTHING;
 
-    -- Roles
-    ('roles.view',                  'View the roles list'),
-    ('roles.add',                   'Create a new role'),
-    ('roles.edit',                  'Edit an existing role'),
-    ('roles.delete',                'Delete a role'),
+-- Roles
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.view',               'View the roles list')                        ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.add',                'Create a new role')                          ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.edit',               'Edit an existing role')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.delete',             'Delete a role')                              ON CONFLICT ("Name") DO NOTHING;
 
-    -- Permissions
-    ('permissions.view',            'View the permissions list'),
-    ('permissions.add',             'Create a new permission'),
-    ('permissions.edit',            'Edit an existing permission'),
-    ('permissions.delete',          'Delete a permission'),
+-- Permissions
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.view',         'View the permissions list')                  ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.add',          'Create a new permission')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.edit',         'Edit an existing permission')                ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.delete',       'Delete a permission')                        ON CONFLICT ("Name") DO NOTHING;
 
-    -- Role Permissions
-    ('role_permissions.view',       'View permissions assigned to roles'),
-    ('role_permissions.edit',       'Assign or remove permissions from a role')
-
-ON CONFLICT ("Name") DO NOTHING;
+-- Role Permissions
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.view',    'View permissions assigned to roles')         ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.edit',    'Assign or remove permissions from a role')   ON CONFLICT ("Name") DO NOTHING;
 
 -- =============================================================
 -- Seed: Admin role → assign every permission

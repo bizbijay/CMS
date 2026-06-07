@@ -26,6 +26,19 @@ public class UserService : IUserService
         return users.Select(ToDto);
     }
 
+    public async Task<IEnumerable<UserListItemDto>> GetDozerDriversAsync()
+    {
+        var users = await _db.Users
+            .Include(u => u.Role)
+            .Include(u => u.AssignedVehicle)
+            .Where(u => u.Role != null &&
+                        u.Role.Name.ToLower() == "operator")
+            .OrderBy(u => u.FirstName ?? u.Username)
+            .ThenBy(u => u.LastName)
+            .ToListAsync();
+        return users.Select(ToDto);
+    }
+
     public async Task<UserListItemDto?> GetByIdAsync(int id)
     {
         var user = await _db.Users

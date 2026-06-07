@@ -24,6 +24,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/users", label: t.nav.users, icon: UsersIcon, policy: "users.view" },
     { to: "/transportation", label: t.nav.transportation, icon: TransportationIcon, policy: "transportation.view" },
     { to: "/fuel-log", label: t.nav.fuelLog, icon: FuelLogIcon, policy: "fuel_log.view" },
+    { to: "/dozer-log", label: t.nav.dozerLog, icon: DozerLogIcon, policy: "dozer_log.view" },
   ];
 
   const settingsMenu = [
@@ -381,6 +382,19 @@ function RolePermissionsIcon({ className }: { className?: string }) {
       strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+
+function DozerLogIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="13" width="14" height="6" rx="1.5" />
+      <path d="M16 16h3l3-4V9h-6" />
+      <circle cx="6" cy="19" r="2" />
+      <circle cx="18" cy="19" r="2" />
+      <path d="M2 13l4-6h6l2 6" />
     </svg>
   );
 }
