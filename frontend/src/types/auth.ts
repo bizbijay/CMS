@@ -4,6 +4,7 @@ export interface UserDto {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
+  roleName?: string | null;
 }
 
 export interface AuthResponse {

@@ -24,16 +24,23 @@ export default function Transportation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<TransportationFormMode | null>(null);
+  const [modalKey, setModalKey] = useState(0);
+
+  const openModal = useCallback((mode: TransportationFormMode) => {
+    setModalKey(k => k + 1);
+    setModalMode(mode);
+  }, []);
   const [pendingDelete, setPendingDelete] = useState<TransportationListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
 
   const currentUserId = getStoredUser()?.id ?? 0;
   const [isDriver, setIsDriver] = useState(false);
+  const canViewCosts = getStoredUser()?.roleName?.toLowerCase() === 'admin';
 
   useEffect(() => {
     usersApi.drivers()
-      .then(list => setIsDriver(list.some(d => d.id === currentUserId)))
+      .then(list => setIsDriver((list ?? []).some(d => d.id === currentUserId)))
       .catch(() => {});
   }, [currentUserId]);
 
@@ -77,9 +84,10 @@ export default function Transportation() {
     }
   }
 
-  const visibleItems = isDriver
-    ? items.filter(i => i.transportedById === currentUserId)
-    : items;
+  const visibleItems = useMemo(
+    () => isDriver ? items.filter(i => i.transportedById === currentUserId) : items,
+    [isDriver, items, currentUserId]
+  );
 
   const columns = useMemo<ColumnDef<TransportationListItem>[]>(() => [
     {
@@ -106,6 +114,27 @@ export default function Transportation() {
       header: t.common.project,
     },
     {
+      accessorKey: "materialCost",
+      header: t.common.materialCost,
+      cell: ({ row }) => row.original.materialCost != null
+        ? `${t.common.currencySymbol} ${row.original.materialCost.toLocaleString()}`
+        : <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "tax",
+      header: t.common.tax,
+      cell: ({ row }) => row.original.tax != null
+        ? `${t.common.currencySymbol} ${row.original.tax.toLocaleString()}`
+        : <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "wages",
+      header: t.common.wages,
+      cell: ({ row }) => row.original.wages != null
+        ? `${t.common.currencySymbol} ${row.original.wages.toLocaleString()}`
+        : <span className="text-slate-400">—</span>,
+    },
+    {
       accessorKey: "date",
       header: t.common.date,
       cell: ({ row }) => formatDate(row.original.date),
@@ -118,7 +147,7 @@ export default function Transportation() {
       cell: ({ row }) => (
         <div className="inline-flex gap-1.5">
           <Can do="transportation.edit">
-            <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => setModalMode({ kind: "edit", transportation: row.original })} />
+            <IconButton tooltip="Edit" icon={<PencilIcon />} onClick={() => openModal({ kind: "edit", transportation: row.original })} />
           </Can>
           <Can do="transportation.delete">
             <IconButton tooltip="Delete" tone="danger" icon={<TrashIcon />} onClick={() => setPendingDelete(row.original)} />
@@ -126,12 +155,14 @@ export default function Transportation() {
         </div>
       ),
     },
-  ], [t, setModalMode, setPendingDelete]);
+  ], [t, openModal, setPendingDelete]);
 
   const columnVisibility = useMemo(() => ({
     transportedByName: !isDriver,
     vehicleName: !isDriver,
-  }), [isDriver]);
+    materialCost: canViewCosts,
+    tax: canViewCosts,
+  }), [isDriver, canViewCosts]);
 
   const table = useReactTable({
     data: visibleItems,
@@ -154,7 +185,7 @@ export default function Transportation() {
           </button>
           <Can do="transportation.add">
             <button
-              onClick={() => setModalMode({ kind: "add" })}
+              onClick={() => openModal({ kind: "add" })}
               className="px-3 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
@@ -171,6 +202,7 @@ export default function Transportation() {
       <DataTable table={table} loading={loading} emptyMessage={t.pages.transportation.noData} />
 
       <TransportationFormModal
+        key={modalKey}
         open={modalMode !== null}
         mode={modalMode ?? { kind: "add" }}
         onClose={() => setModalMode(null)}

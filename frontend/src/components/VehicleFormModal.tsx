@@ -14,7 +14,7 @@ interface Props {
   onSaved: (vehicle: VehicleListItem, mode: VehicleFormMode["kind"]) => void;
 }
 
-const VEHICLE_TYPE_VALUES: VehicleType[] = ["tipper", "jcb"];
+const VEHICLE_TYPE_VALUES: VehicleType[] = ["tipper", "jcb", "nissan"];
 
 export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props) {
   const t = useT();
@@ -144,7 +144,7 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
           >
             {VEHICLE_TYPE_VALUES.map((v) => (
               <option key={v} value={v}>
-                {v === "tipper" ? t.modal.vehicles.typeTipper : t.modal.vehicles.typeJcb}
+                {v === "tipper" ? t.modal.vehicles.typeTipper : v === "jcb" ? t.modal.vehicles.typeJcb : t.modal.vehicles.typeNissan}
               </option>
             ))}
           </select>

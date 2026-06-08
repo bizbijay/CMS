@@ -17,7 +17,7 @@ import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { useT } from "../hooks/useT";
 
-const TYPE_LABELS: Record<string, string> = { tipper: "Tipper", jcb: "JCB" };
+const TYPE_LABELS: Record<string, string> = { tipper: "Tipper", jcb: "JCB", nissan: "Nissan" };
 
 export default function Vehicles() {
   const { addToast } = useToast();

@@ -54,6 +54,9 @@ public class TransportationService : ITransportationService
             VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null,
             ProjectId = request.ProjectId,
             ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
+            MaterialCost = request.MaterialCost,
+            Tax = request.Tax,
+            Wages = request.Wages,
             Date = request.Date,
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
@@ -95,6 +98,9 @@ public class TransportationService : ITransportationService
         item.VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null;
         item.ProjectId = request.ProjectId;
         item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
+        item.MaterialCost = request.MaterialCost;
+        item.Tax = request.Tax;
+        item.Wages = request.Wages;
         item.Date = request.Date;
         item.UpdatedById = updatedById;
         item.UpdatedAt = DateTime.UtcNow;
@@ -175,6 +181,9 @@ public class TransportationService : ITransportationService
         ProjectId = t.ProjectId,
         ProjectName = t.Project?.Name ?? t.ProjectOther ?? string.Empty,
         ProjectOther = t.ProjectOther,
+        MaterialCost = t.MaterialCost,
+        Tax = t.Tax,
+        Wages = t.Wages,
         Date = t.Date,
         CreatedBy = t.CreatedBy?.Username,
         UpdatedBy = t.UpdatedBy?.Username,

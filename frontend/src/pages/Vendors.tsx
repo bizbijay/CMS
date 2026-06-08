@@ -75,6 +75,11 @@ export default function Vendors() {
       cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.name}</span>,
     },
     {
+      accessorKey: "panNumber",
+      header: t.modal.vendors.panNumberLabel,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.panNumber || "—"}</span>,
+    },
+    {
       id: "actions",
       header: t.common.actions,
       enableSorting: false,

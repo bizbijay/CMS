@@ -33,6 +33,15 @@ public class Transportation
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal? MaterialCost { get; set; }
+
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal? Tax { get; set; }
+
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal? Wages { get; set; }
+
     [Required]
     public DateOnly Date { get; set; }
 

@@ -31,6 +31,7 @@ public class VendorService : IVendorService
         var vendor = new Vendor
         {
             Name = request.Name.Trim(),
+            PanNumber = request.PanNumber?.Trim(),
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
         };
@@ -48,6 +49,7 @@ public class VendorService : IVendorService
         if (vendor is null) return (null, null);
 
         vendor.Name = request.Name.Trim();
+        vendor.PanNumber = request.PanNumber?.Trim();
         vendor.UpdatedById = updatedById;
         vendor.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -67,6 +69,7 @@ public class VendorService : IVendorService
     private static VendorListItemDto ToDto(Vendor v) => new()
     {
         Id = v.Id,
+        PanNumber = v.PanNumber,
         Name = v.Name,
         CreatedBy = v.CreatedBy?.Username,
         UpdatedBy = v.UpdatedBy?.Username,

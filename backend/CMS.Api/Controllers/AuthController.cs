@@ -81,6 +81,7 @@ public class AuthController : ControllerBase
         var keyLower = key.ToLowerInvariant();
 
         var user = await _db.Users
+            .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Username == key || u.Email == keyLower);
 
         if (user is null || !user.IsActive)
@@ -139,7 +140,7 @@ public class AuthController : ControllerBase
         if (!int.TryParse(idClaim, out var id))
             return Unauthorized();
 
-        var user = await _db.Users.FindAsync(id);
+        var user = await _db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == id);
         if (user is null) return NotFound();
 
         return Ok(ToDto(user));
@@ -187,6 +188,7 @@ public class AuthController : ControllerBase
         Username = u.Username,
         Email = u.Email,
         FirstName = u.FirstName,
-        LastName = u.LastName
+        LastName = u.LastName,
+        RoleName = u.Role?.Name
     };
 }

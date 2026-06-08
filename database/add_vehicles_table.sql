@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "Vehicles" (
     "CreatedAt"    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMP WITH TIME ZONE NULL,
 
-    CONSTRAINT "CK_Vehicles_Type" CHECK ("Type" IN ('Tipper', 'Jcb'))
+    CONSTRAINT "CK_Vehicles_Type" CHECK ("Type" IN ('Tipper', 'Jcb', 'Nissan'))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "UX_Vehicles_NumberPlate" ON "Vehicles" ("NumberPlate");

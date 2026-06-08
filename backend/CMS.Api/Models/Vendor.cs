@@ -12,6 +12,9 @@ public class Vendor
     [Required, MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(20)]
+    public string? PanNumber { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

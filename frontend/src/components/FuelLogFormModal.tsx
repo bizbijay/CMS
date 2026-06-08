@@ -67,7 +67,8 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           setDate(mode.log.date.slice(0, 10));
         } else {
           setDriverId(selfMatch?.id ?? driverList[0]?.id ?? 0);
-          setFuelTypeId(f[0]?.id ?? 0);
+          const diesel = f.find(ft => ft.name.toLowerCase() === 'diesel');
+          setFuelTypeId(diesel?.id ?? f[0]?.id ?? 0);
           setQuantity("");
           setPrice("");
           setDate(todayIso());

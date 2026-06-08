@@ -12,6 +12,9 @@ export interface TransportationListItem {
   projectId?: number | null;
   projectName: string;
   projectOther?: string | null;
+  materialCost?: number | null;
+  tax?: number | null;
+  wages?: number | null;
   date: string;
   createdBy?: string | null;
   updatedBy?: string | null;
@@ -27,6 +30,9 @@ export interface CreateTransportationRequest {
   vendorOther?: string | null;
   projectId?: number | null;
   projectOther?: string | null;
+  materialCost?: number | null;
+  tax?: number | null;
+  wages?: number | null;
   date: string;
 }
 
@@ -38,5 +44,8 @@ export interface UpdateTransportationRequest {
   vendorOther?: string | null;
   projectId?: number | null;
   projectOther?: string | null;
+  materialCost?: number | null;
+  tax?: number | null;
+  wages?: number | null;
   date: string;
 }

@@ -32,12 +32,13 @@ function displayName(u: UserListItem) {
 export default function TransportationFormModal({ open, mode, onClose, onSaved }: Props) {
   const tr = useT();
   const isEdit = mode.kind === "edit";
+  const canViewCosts = getStoredUser()?.roleName?.toLowerCase() === 'admin';
 
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
 
   const [transportedById, setTransportedById] = useState<number>(0);
@@ -48,6 +49,9 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
   const [materialId, setMaterialId] = useState<number | null>(null);
+  const [materialCost, setMaterialCost] = useState("");
+  const [tax, setTax] = useState("");
+  const [wages, setWages] = useState("");
 
   const [date, setDate] = useState(todayIso());
   const [error, setError] = useState<string | null>(null);
@@ -63,13 +67,17 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     setLoadingOptions(true);
     Promise.all([usersApi.drivers(), vendorsApi.list(), projectsApi.list(), materialsApi.list()])
       .then(([d, v, p, m]) => {
-        setDrivers(d);
-        setVendors(v);
-        setProjects(p);
-        setMaterials(m);
+        const safeD = d ?? [];
+        const safeV = v ?? [];
+        const safeP = p ?? [];
+        const safeM = m ?? [];
+        setDrivers(safeD);
+        setVendors(safeV);
+        setProjects(safeP);
+        setMaterials(safeM);
 
         const stored = getStoredUser();
-        const selfMatch = d.find((x) => x.id === stored?.id);
+        const selfMatch = safeD.find((x) => x.id === stored?.id);
         setIsCurrentUserDriver(!!selfMatch);
 
         if (mode.kind === "edit") {
@@ -77,6 +85,9 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           setTransportedById(t.transportedById);
           setDate(t.date.slice(0, 10));
           setMaterialId(t.materialId ?? null);
+          setMaterialCost(t.materialCost != null ? String(t.materialCost) : "");
+          setTax(t.tax != null ? String(t.tax) : "");
+          setWages(t.wages != null ? String(t.wages) : "");
 
           if (t.vendorId) {
             setVendorSel(String(t.vendorId));
@@ -94,11 +105,14 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             setProjectOther(t.projectOther ?? "");
           }
         } else {
-          setTransportedById(selfMatch?.id ?? d[0]?.id ?? 0);
+          setTransportedById(selfMatch?.id ?? safeD[0]?.id ?? 0);
           setMaterialId(null);
-          setVendorSel(v[0] ? String(v[0].id) : OTHER);
+          setMaterialCost("");
+          setTax("");
+          setWages("");
+          setVendorSel(safeV[0] ? String(safeV[0].id) : OTHER);
           setVendorOther("");
-          setProjectSel(p[0] ? String(p[0].id) : OTHER);
+          setProjectSel(safeP[0] ? String(safeP[0].id) : OTHER);
           setProjectOther("");
           setDate(todayIso());
         }
@@ -136,6 +150,9 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
       vendorOther: vendorSel === OTHER ? vendorOther.trim() : null,
       projectId: projectSel !== OTHER ? Number(projectSel) : null,
       projectOther: projectSel === OTHER ? projectOther.trim() : null,
+      materialCost: materialCost !== "" ? Number(materialCost) : null,
+      tax: tax !== "" ? Number(tax) : null,
+      wages: wages !== "" ? Number(wages) : null,
       date,
     };
 
@@ -160,7 +177,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4"
+        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -222,6 +239,46 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                 {materials.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
+              </select>
+            </Field>
+
+            {canViewCosts && (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={tr.common.materialCost}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={materialCost}
+                    onChange={(e) => setMaterialCost(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </Field>
+                <Field label={tr.common.tax}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={tax}
+                    onChange={(e) => setTax(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </Field>
+              </div>
+            )}
+
+            <Field label={tr.common.wages}>
+              <select
+                value={wages}
+                onChange={(e) => setWages(e.target.value)}
+                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">—</option>
+                <option value="1000">1000</option>
+                <option value="1500">1500</option>
+                <option value="3000">3000</option>
               </select>
             </Field>
 

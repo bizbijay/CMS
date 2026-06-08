@@ -6,7 +6,8 @@ namespace CMS.Api.Models;
 public enum VehicleType
 {
     Tipper,
-    Jcb
+    Jcb,
+    Nissan
 }
 
 [Table("Vehicles")]

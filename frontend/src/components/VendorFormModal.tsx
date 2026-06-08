@@ -18,12 +18,14 @@ export default function VendorFormModal({ open, mode, onClose, onSaved }: Props)
   const t = useT();
   const isEdit = mode.kind === "edit";
   const [name, setName] = useState("");
+  const [panNumber, setPanNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setName(mode.kind === "edit" ? mode.vendor.name : "");
+    setPanNumber(mode.kind === "edit" ? mode.vendor.panNumber || "" : "");
     setError(null);
   }, [open, mode]);
 
@@ -37,7 +39,7 @@ export default function VendorFormModal({ open, mode, onClose, onSaved }: Props)
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const body = { name: name.trim() };
+    const body = { name: name.trim(), panNumber: panNumber.trim() || undefined };
     setSaving(true);
     try {
       if (mode.kind === "add") {
@@ -91,6 +93,19 @@ export default function VendorFormModal({ open, mode, onClose, onSaved }: Props)
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="e.g. Acme Supplies Ltd"
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            {t.modal.vendors.panNumberLabel}
+          </label>
+          <input
+            type="text"
+            value={panNumber}
+            onChange={(e) => setPanNumber(e.target.value)}
+            placeholder="e.g. 123456789"
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

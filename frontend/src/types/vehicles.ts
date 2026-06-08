@@ -1,4 +1,4 @@
-export type VehicleType = "tipper" | "jcb";
+export type VehicleType = "tipper" | "jcb" | "nissan";
 
 export interface VehicleListItem {
   id: number;
