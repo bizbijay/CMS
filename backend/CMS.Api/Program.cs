@@ -72,6 +72,10 @@ builder.Services.AddScoped<IDozerLogService, DozerLogService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
+builder.Services.AddScoped<ISalarySetupService, SalarySetupService>();
+builder.Services.AddScoped<IMonthlySalaryService, MonthlySalaryService>();
+builder.Services.AddScoped<ISalaryPaymentService, SalaryPaymentService>();
+builder.Services.AddScoped<ISalaryDetailService, SalaryDetailService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
@@ -122,6 +126,14 @@ builder.Services.AddAuthorization(options =>
         "permissions.view", "permissions.add", "permissions.edit", "permissions.delete",
 
         "role_permissions.view", "role_permissions.edit",
+
+        "monthly_salary.view", "monthly_salary.edit",
+
+        "salary_setup.view", "salary_setup.add", "salary_setup.edit", "salary_setup.delete",
+
+        "salary_payment.view", "salary_payment.add", "salary_payment.edit", "salary_payment.delete",
+
+        "salary_detail.view",
     ];
 
     foreach (var perm in permissions)

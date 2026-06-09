@@ -55,6 +55,21 @@ export const POLICY_MAP: Record<string, string> = {
 
   "role_permissions.view": "role_permissions.view",
   "role_permissions.edit": "role_permissions.edit",
+
+  "monthly_salary.view":    "monthly_salary.view",
+  "monthly_salary.edit":    "monthly_salary.edit",
+
+  "salary_setup.view":      "salary_setup.view",
+  "salary_setup.add":       "salary_setup.add",
+  "salary_setup.edit":      "salary_setup.edit",
+  "salary_setup.delete":    "salary_setup.delete",
+
+  "salary_payment.view":    "salary_payment.view",
+  "salary_payment.add":     "salary_payment.add",
+  "salary_payment.edit":    "salary_payment.edit",
+  "salary_payment.delete":  "salary_payment.delete",
+
+  "salary_detail.view":     "salary_detail.view",
 };
 
 export type PolicyName = keyof typeof POLICY_MAP;

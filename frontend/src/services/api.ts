@@ -25,6 +25,10 @@ import type { CreateTransportationRequest, UpdateTransportationRequest, Transpor
 import type { CreateDozerLogRequest, UpdateDozerLogRequest, DozerLogListItem } from "../types/dozerLog";
 import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
 import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem } from "../types/projects";
+import type { CreateSalarySetupRequest, UpdateSalarySetupRequest, SalarySetupListItem } from "../types/salarySetup";
+import type { MonthlySalaryRow, SaveMonthlySalaryRequest } from "../types/monthlySalary";
+import type { SalaryPaymentListItem, CreateSalaryPaymentRequest, UpdateSalaryPaymentRequest } from "../types/salaryPayment";
+import type { SalaryDetailDto } from "../types/salaryDetail";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -206,6 +210,39 @@ export const projectsApi = {
   update: (id: number, body: UpdateProjectRequest) =>
     request<ProjectListItem>(`/api/projects/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/projects/${id}`, { method: "DELETE" }),
+};
+
+export const monthlySalaryApi = {
+  getForMonth: (month: number, year: number) =>
+    request<MonthlySalaryRow[]>(`/api/monthly-salary?month=${month}&year=${year}`, { method: "GET" }),
+  save: (body: SaveMonthlySalaryRequest) =>
+    request<MonthlySalaryRow>("/api/monthly-salary", { method: "POST", body: JSON.stringify(body) }),
+  verifyAll: (month: number, year: number) =>
+    request<MonthlySalaryRow[]>("/api/monthly-salary/verify-all", { method: "POST", body: JSON.stringify({ month, year }) }),
+};
+
+export const salaryPaymentApi = {
+  list: () =>
+    request<SalaryPaymentListItem[]>("/api/salary-payments", { method: "GET" }),
+  create: (body: CreateSalaryPaymentRequest) =>
+    request<SalaryPaymentListItem>("/api/salary-payments", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateSalaryPaymentRequest) =>
+    request<SalaryPaymentListItem>(`/api/salary-payments/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/salary-payments/${id}`, { method: "DELETE" }),
+};
+
+export const salaryDetailApi = {
+  list: () => request<SalaryDetailDto[]>("/api/salary-details", { method: "GET" }),
+};
+
+export const salarySetupApi = {
+  list: () => request<SalarySetupListItem[]>("/api/salary-setup", { method: "GET" }),
+  create: (body: CreateSalarySetupRequest) =>
+    request<SalarySetupListItem>("/api/salary-setup", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateSalarySetupRequest) =>
+    request<SalarySetupListItem>(`/api/salary-setup/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/salary-setup/${id}`, { method: "DELETE" }),
 };
 
 export const dozerLogsApi = {

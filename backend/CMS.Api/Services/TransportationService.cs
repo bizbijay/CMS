@@ -8,7 +8,13 @@ namespace CMS.Api.Services;
 public class TransportationService : ITransportationService
 {
     private readonly AppDbContext _db;
-    public TransportationService(AppDbContext db) => _db = db;
+    private readonly ISalaryDetailService _salaryDetailService;
+
+    public TransportationService(AppDbContext db, ISalaryDetailService salaryDetailService)
+    {
+        _db = db;
+        _salaryDetailService = salaryDetailService;
+    }
 
     public async Task<IEnumerable<TransportationListItemDto>> GetAllAsync()
     {
@@ -63,6 +69,10 @@ public class TransportationService : ITransportationService
         };
 
         _db.Transportations.Add(item);
+
+        if (request.Wages > 0)
+            await _salaryDetailService.AdjustAsync(request.TransportedById, totalSalaryDelta: request.Wages ?? 0m);
+
         await _db.SaveChangesAsync();
 
         await _db.Entry(item).Reference(t => t.TransportedBy).LoadAsync();
@@ -91,6 +101,9 @@ public class TransportationService : ITransportationService
         var error = await ValidateRequest(request.TransportedById, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
         if (error is not null) return (null, error);
 
+        var oldTransportedById = item.TransportedById;
+        var oldWages = item.Wages;
+
         item.TransportedById = request.TransportedById;
         item.VehicleId = request.VehicleId;
         item.MaterialId = request.MaterialId;
@@ -104,6 +117,24 @@ public class TransportationService : ITransportationService
         item.Date = request.Date;
         item.UpdatedById = updatedById;
         item.UpdatedAt = DateTime.UtcNow;
+
+        var oldWagesValue = oldWages ?? 0m;
+        var newWagesValue = request.Wages ?? 0m;
+
+        if (oldTransportedById == request.TransportedById)
+        {
+            var delta = newWagesValue - oldWagesValue;
+            if (delta != 0)
+                await _salaryDetailService.AdjustAsync(request.TransportedById, totalSalaryDelta: delta);
+        }
+        else
+        {
+            // Driver changed: reverse old wages from old driver, apply new wages to new driver.
+            if (oldWagesValue != 0)
+                await _salaryDetailService.AdjustAsync(oldTransportedById, totalSalaryDelta: -oldWagesValue);
+            if (newWagesValue != 0)
+                await _salaryDetailService.AdjustAsync(request.TransportedById, totalSalaryDelta: newWagesValue);
+        }
 
         await _db.SaveChangesAsync();
 

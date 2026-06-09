@@ -19,6 +19,10 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<SalarySetup> SalarySetups => Set<SalarySetup>();
+    public DbSet<MonthlySalary> MonthlySalaries => Set<MonthlySalary>();
+    public DbSet<SalaryPayment> SalaryPayments => Set<SalaryPayment>();
+    public DbSet<SalaryDetail> SalaryDetails => Set<SalaryDetail>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -145,6 +149,74 @@ public class AppDbContext : DbContext
             entity.HasOne(v => v.UpdatedBy)
                   .WithMany()
                   .HasForeignKey(v => v.UpdatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<MonthlySalary>(entity =>
+        {
+            entity.HasIndex(m => new { m.UserId, m.Month, m.Year }).IsUnique();
+
+            entity.HasOne(m => m.User)
+                  .WithMany()
+                  .HasForeignKey(m => m.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.CreatedBy)
+                  .WithMany()
+                  .HasForeignKey(m => m.CreatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(m => m.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(m => m.UpdatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SalaryPayment>(entity =>
+        {
+            entity.HasOne(p => p.User)
+                  .WithMany()
+                  .HasForeignKey(p => p.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.CreatedBy)
+                  .WithMany()
+                  .HasForeignKey(p => p.CreatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(p => p.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(p => p.UpdatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SalaryDetail>(entity =>
+        {
+            entity.HasIndex(d => d.UserId).IsUnique();
+
+            entity.HasOne(d => d.User)
+                  .WithMany()
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SalarySetup>(entity =>
+        {
+            entity.HasIndex(s => s.UserId).IsUnique();
+
+            entity.HasOne(s => s.User)
+                  .WithMany()
+                  .HasForeignKey(s => s.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.CreatedBy)
+                  .WithMany()
+                  .HasForeignKey(s => s.CreatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(s => s.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(s => s.UpdatedById)
                   .OnDelete(DeleteBehavior.SetNull);
         });
     }

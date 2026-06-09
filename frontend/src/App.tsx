@@ -15,6 +15,10 @@ import Permissions from "./pages/Permissions";
 import RolePermissions from "./pages/RolePermissions";
 import FuelLog from "./pages/FuelLog";
 import DozerLog from "./pages/DozerLog";
+import SalarySetup from "./pages/SalarySetup";
+import MonthlySalary from "./pages/MonthlySalary";
+import SalaryPayments from "./pages/SalaryPayments";
+import SalaryDetails from "./pages/SalaryDetails";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -131,6 +135,38 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="role_permissions.view">
               <RolePermissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/monthly-salary"
+          element={
+            <ProtectedRoute policy="monthly_salary.view">
+              <MonthlySalary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/salary-setup"
+          element={
+            <ProtectedRoute policy="salary_setup.view">
+              <SalarySetup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/salary-payments"
+          element={
+            <ProtectedRoute policy="salary_payment.view">
+              <SalaryPayments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/salary-details"
+          element={
+            <ProtectedRoute policy="salary_detail.view">
+              <SalaryDetails />
             </ProtectedRoute>
           }
         />

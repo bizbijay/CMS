@@ -97,6 +97,25 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.delete', 
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.view',    'View permissions assigned to roles')         ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.edit',    'Assign or remove permissions from a role')   ON CONFLICT ("Name") DO NOTHING;
 
+-- Monthly Salary
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('monthly_salary.view',       'View monthly salary records')                ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('monthly_salary.edit',       'Save or verify a monthly salary record')     ON CONFLICT ("Name") DO NOTHING;
+
+-- Salary Payments
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.view',      'View salary payment records')                ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.add',       'Record a salary payment')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.edit',      'Edit a salary payment record')               ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.delete',    'Delete a salary payment record')             ON CONFLICT ("Name") DO NOTHING;
+
+-- Salary Details
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_detail.view',    'View salary detail summary')                 ON CONFLICT ("Name") DO NOTHING;
+
+-- Salary Setup
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.view',        'View salary setup entries')                  ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.add',         'Add a salary entry')                         ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.edit',        'Edit a salary entry')                        ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.delete',      'Delete a salary entry')                      ON CONFLICT ("Name") DO NOTHING;
+
 -- =============================================================
 -- Seed: Admin role → assign every permission
 -- =============================================================

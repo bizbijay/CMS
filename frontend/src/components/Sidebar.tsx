@@ -10,7 +10,7 @@ interface Props {
 
 const settingsPaths = [
   "/vehicles", "/materials", "/vendors", "/projects",
-  "/fuels", "/roles", "/permissions", "/role-permissions",
+  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup",
 ];
 
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
@@ -25,6 +25,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/transportation", label: t.nav.transportation, icon: TransportationIcon, policy: "transportation.view" },
     { to: "/fuel-log", label: t.nav.fuelLog, icon: FuelLogIcon, policy: "fuel_log.view" },
     { to: "/dozer-log", label: t.nav.dozerLog, icon: DozerLogIcon, policy: "dozer_log.view" },
+    { to: "/monthly-salary", label: t.nav.monthlySalary, icon: MonthlySalaryIcon, policy: "monthly_salary.view" },
+    { to: "/salary-payments", label: t.nav.salaryPayments, icon: SalaryPaymentsIcon, policy: "salary_payment.view" },
+    { to: "/salary-details", label: t.nav.salaryDetails, icon: SalaryDetailIcon, policy: "salary_detail.view" },
   ];
 
   const settingsMenu = [
@@ -36,6 +39,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
     { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
     { to: "/role-permissions", label: t.nav.rolePermissions, icon: RolePermissionsIcon, policy: "role_permissions.view" },
+    { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
   ];
 
   const visibleTopMenu = topMenu.filter((m) => !m.policy || can(m.policy));
@@ -414,6 +418,57 @@ function VehiclesIcon({ className }: { className?: string }) {
       <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-3h10l2 3h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
       <circle cx="7.5" cy="17.5" r="2.5" />
       <circle cx="16.5" cy="17.5" r="2.5" />
+    </svg>
+  );
+}
+
+function MonthlySalaryIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="12" y1="11" x2="12" y2="17" />
+      <line x1="9" y1="14" x2="15" y2="14" />
+    </svg>
+  );
+}
+
+function SalarySetupIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <line x1="2" y1="10" x2="22" y2="10" />
+      <circle cx="12" cy="15" r="2" />
+      <line x1="6" y1="15" x2="8" y2="15" />
+      <line x1="16" y1="15" x2="18" y2="15" />
+    </svg>
+  );
+}
+
+function SalaryPaymentsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <line x1="2" y1="10" x2="22" y2="10" />
+      <path d="M12 14v2" />
+      <path d="M9 13c0-1.1.9-2 2-2h2a2 2 0 1 1 0 4h-2" />
+    </svg>
+  );
+}
+
+function SalaryDetailIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="3" width="20" height="18" rx="2" />
+      <line x1="2" y1="9" x2="22" y2="9" />
+      <line x1="8" y1="3" x2="8" y2="9" />
+      <line x1="16" y1="3" x2="16" y2="9" />
+      <line x1="6" y1="14" x2="12" y2="14" />
+      <line x1="6" y1="18" x2="10" y2="18" />
     </svg>
   );
 }
