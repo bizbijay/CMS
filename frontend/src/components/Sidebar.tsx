@@ -36,10 +36,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/vendors", label: t.nav.vendors, icon: VendorsIcon, policy: "vendors.view" },
     { to: "/projects", label: t.nav.projects, icon: ProjectsIcon, policy: "projects.view" },
     { to: "/fuels", label: t.nav.fuelTypes, icon: FuelIcon, policy: "fuel_types.view" },
+    { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
     { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
     { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
     { to: "/role-permissions", label: t.nav.rolePermissions, icon: RolePermissionsIcon, policy: "role_permissions.view" },
-    { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
   ];
 
   const visibleTopMenu = topMenu.filter((m) => !m.policy || can(m.policy));

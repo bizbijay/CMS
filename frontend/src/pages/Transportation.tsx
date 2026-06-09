@@ -38,6 +38,9 @@ export default function Transportation() {
   const [isDriver, setIsDriver] = useState(false);
   const canViewCosts = getStoredUser()?.roleName?.toLowerCase() === 'admin';
 
+  const [filterDriverId, setFilterDriverId] = useState<number | "">("");
+  const [filterVehicleId, setFilterVehicleId] = useState<number | "">("");
+
   useEffect(() => {
     usersApi.drivers()
       .then(list => setIsDriver((list ?? []).some(d => d.id === currentUserId)))
@@ -84,10 +87,31 @@ export default function Transportation() {
     }
   }
 
-  const visibleItems = useMemo(
-    () => isDriver ? items.filter(i => i.transportedById === currentUserId) : items,
-    [isDriver, items, currentUserId]
-  );
+  const driverOptions = useMemo(() => {
+    const seen = new Map<number, string>();
+    items.forEach(i => { if (!seen.has(i.transportedById)) seen.set(i.transportedById, i.transportedByName); });
+    return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [items]);
+
+  const vehicleOptions = useMemo(() => {
+    const seen = new Map<number, string>();
+    items.forEach(i => { if (i.vehicleId != null && i.vehicleName && !seen.has(i.vehicleId)) seen.set(i.vehicleId, i.vehicleName); });
+    return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [items]);
+
+  const visibleItems = useMemo(() => {
+    let result = isDriver ? items.filter(i => i.transportedById === currentUserId) : items;
+    if (filterDriverId !== "") result = result.filter(i => i.transportedById === filterDriverId);
+    if (filterVehicleId !== "") result = result.filter(i => i.vehicleId === filterVehicleId);
+    return result;
+  }, [isDriver, items, currentUserId, filterDriverId, filterVehicleId]);
+
+  const hasFilters = filterDriverId !== "" || filterVehicleId !== "";
+
+  function clearFilters() {
+    setFilterDriverId("");
+    setFilterVehicleId("");
+  }
 
   const columns = useMemo<ColumnDef<TransportationListItem>[]>(() => [
     {
@@ -195,6 +219,39 @@ export default function Transportation() {
             </button>
           </Can>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {!isDriver && (
+          <select
+            value={filterDriverId}
+            onChange={e => setFilterDriverId(e.target.value === "" ? "" : Number(e.target.value))}
+            className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">{t.common.allDrivers}</option>
+            {driverOptions.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+        )}
+        <select
+          value={filterVehicleId}
+          onChange={e => setFilterVehicleId(e.target.value === "" ? "" : Number(e.target.value))}
+          className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">{t.common.allVehicles}</option>
+          {vehicleOptions.map(([id, name]) => (
+            <option key={id} value={id}>{name}</option>
+          ))}
+        </select>
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-500 hover:bg-slate-50"
+          >
+            {t.common.clearFilters}
+          </button>
+        )}
       </div>
 
       {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}

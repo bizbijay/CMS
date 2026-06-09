@@ -23,4 +23,14 @@ public class SalaryDetailController : ControllerBase
     {
         return Ok(await _service.GetAllAsync());
     }
+
+    // GET: api/salary-details/{userId}/breakdown
+    [HttpGet("{userId:int}/breakdown")]
+    [Authorize(Policy = "salary_detail.view")]
+    public async Task<ActionResult<SalaryBreakdownDto>> GetBreakdown(int userId)
+    {
+        var result = await _service.GetBreakdownAsync(userId);
+        if (result is null) return NotFound();
+        return Ok(result);
+    }
 }

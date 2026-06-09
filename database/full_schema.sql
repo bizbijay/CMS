@@ -1,22 +1,27 @@
 -- =============================================================
 -- CMS Full Schema — PostgreSQL / Supabase
--- Run this in Supabase SQL Editor after dropping all tables.
+-- Run this on a fresh database (drops everything first).
 -- =============================================================
 
 -- -------------------------------------------------------------
--- Drop all tables (safe order, CASCADE handles remaining FKs)
+-- Drop all tables (reverse-dependency order)
 -- -------------------------------------------------------------
-DROP TABLE IF EXISTS "RolePermissions" CASCADE;
-DROP TABLE IF EXISTS "Permissions"    CASCADE;
-DROP TABLE IF EXISTS "FuelLogs"       CASCADE;
+DROP TABLE IF EXISTS "SalaryDetails"   CASCADE;
+DROP TABLE IF EXISTS "SalaryPayments"  CASCADE;
+DROP TABLE IF EXISTS "MonthlySalaries" CASCADE;
+DROP TABLE IF EXISTS "SalarySetups"    CASCADE;
+DROP TABLE IF EXISTS "DozerLogs"       CASCADE;
+DROP TABLE IF EXISTS "FuelLogs"        CASCADE;
 DROP TABLE IF EXISTS "Transportations" CASCADE;
-DROP TABLE IF EXISTS "Materials"      CASCADE;
-DROP TABLE IF EXISTS "Vendors"        CASCADE;
-DROP TABLE IF EXISTS "Projects"       CASCADE;
-DROP TABLE IF EXISTS "Fuels"          CASCADE;
-DROP TABLE IF EXISTS "Users"          CASCADE;
-DROP TABLE IF EXISTS "Vehicles"       CASCADE;
-DROP TABLE IF EXISTS "Roles"          CASCADE;
+DROP TABLE IF EXISTS "RolePermissions" CASCADE;
+DROP TABLE IF EXISTS "Permissions"     CASCADE;
+DROP TABLE IF EXISTS "Materials"       CASCADE;
+DROP TABLE IF EXISTS "Vendors"         CASCADE;
+DROP TABLE IF EXISTS "Projects"        CASCADE;
+DROP TABLE IF EXISTS "Fuels"           CASCADE;
+DROP TABLE IF EXISTS "Users"           CASCADE;
+DROP TABLE IF EXISTS "Vehicles"        CASCADE;
+DROP TABLE IF EXISTS "Roles"           CASCADE;
 
 -- -------------------------------------------------------------
 -- Roles  (no dependencies)
@@ -46,7 +51,7 @@ CREATE TABLE "Vehicles" (
 );
 
 -- -------------------------------------------------------------
--- Users  (VehicleId / self-ref FKs added after Vehicles)
+-- Users
 -- -------------------------------------------------------------
 CREATE TABLE "Users" (
     "Id"            SERIAL       PRIMARY KEY,
@@ -67,9 +72,7 @@ CREATE TABLE "Users" (
     CONSTRAINT "UX_Users_Email"    UNIQUE ("Email")
 );
 
--- -------------------------------------------------------------
 -- Cross-table FKs now that both Vehicles and Users exist
--- -------------------------------------------------------------
 ALTER TABLE "Users"
     ADD CONSTRAINT "FK_Users_VehicleId"   FOREIGN KEY ("VehicleId")   REFERENCES "Vehicles"("Id") ON DELETE SET NULL,
     ADD CONSTRAINT "FK_Users_CreatedById" FOREIGN KEY ("CreatedById")  REFERENCES "Users"("Id")    ON DELETE SET NULL,
@@ -136,16 +139,19 @@ CREATE TABLE "Fuels" (
 -- Transportations
 -- -------------------------------------------------------------
 CREATE TABLE "Transportations" (
-    "Id"               SERIAL       PRIMARY KEY,
-    "TransportedById"  INT          NOT NULL REFERENCES "Users"("Id")    ON DELETE RESTRICT,
-    "VehicleId"        INT          REFERENCES "Vehicles"("Id")          ON DELETE SET NULL,
-    "MaterialId"       INT          REFERENCES "Materials"("Id")         ON DELETE SET NULL,
-    "VendorId"         INT          REFERENCES "Vendors"("Id")           ON DELETE SET NULL,
+    "Id"               SERIAL          PRIMARY KEY,
+    "TransportedById"  INT             NOT NULL REFERENCES "Users"("Id")     ON DELETE RESTRICT,
+    "VehicleId"        INT             REFERENCES "Vehicles"("Id")           ON DELETE SET NULL,
+    "MaterialId"       INT             REFERENCES "Materials"("Id")          ON DELETE SET NULL,
+    "VendorId"         INT             REFERENCES "Vendors"("Id")            ON DELETE SET NULL,
     "VendorOther"      VARCHAR(200),
-    "ProjectId"        INT          REFERENCES "Projects"("Id")          ON DELETE SET NULL,
+    "ProjectId"        INT             REFERENCES "Projects"("Id")           ON DELETE SET NULL,
     "ProjectOther"     VARCHAR(200),
-    "Date"             DATE         NOT NULL,
-    "CreatedAt"        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    "MaterialCost"     NUMERIC(18, 2),
+    "Tax"              NUMERIC(18, 2),
+    "Wages"            NUMERIC(18, 2),
+    "Date"             DATE            NOT NULL,
+    "CreatedAt"        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     "UpdatedAt"        TIMESTAMPTZ,
     "CreatedById"      INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById"      INT REFERENCES "Users"("Id") ON DELETE SET NULL,
@@ -171,6 +177,25 @@ CREATE TABLE "FuelLogs" (
 );
 
 -- -------------------------------------------------------------
+-- DozerLogs
+-- -------------------------------------------------------------
+CREATE TABLE "DozerLogs" (
+    "Id"              SERIAL         PRIMARY KEY,
+    "DriverId"        INT            NOT NULL REFERENCES "Users"("Id")    ON DELETE RESTRICT,
+    "VehicleId"       INT            REFERENCES "Vehicles"("Id")          ON DELETE SET NULL,
+    "OperationDate"   DATE           NOT NULL,
+    "OperatedTimeMs"  INT            NOT NULL CHECK ("OperatedTimeMs" >= 0),
+    "ProjectId"       INT            REFERENCES "Projects"("Id")          ON DELETE SET NULL,
+    "ProjectOther"    VARCHAR(200),
+    "Wages"           NUMERIC(12, 2),
+    "CreatedAt"       TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    "UpdatedAt"       TIMESTAMPTZ,
+    "CreatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    CONSTRAINT "chk_dozer_project" CHECK (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL))
+);
+
+-- -------------------------------------------------------------
 -- Permissions
 -- -------------------------------------------------------------
 CREATE TABLE "Permissions" (
@@ -193,3 +218,172 @@ CREATE TABLE "RolePermissions" (
     "PermissionId"  INT     NOT NULL REFERENCES "Permissions"("Id") ON DELETE CASCADE,
     CONSTRAINT "UX_RolePermissions_RoleId_PermissionId" UNIQUE ("RoleId", "PermissionId")
 );
+
+-- -------------------------------------------------------------
+-- SalarySetups
+-- -------------------------------------------------------------
+CREATE TABLE "SalarySetups" (
+    "Id"             SERIAL          PRIMARY KEY,
+    "UserId"         INT             NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "MonthlySalary"  NUMERIC(12, 2)  NOT NULL,
+    "CreatedAt"      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"      TIMESTAMPTZ,
+    "CreatedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    CONSTRAINT "UX_SalarySetups_UserId" UNIQUE ("UserId")
+);
+
+-- -------------------------------------------------------------
+-- MonthlySalaries
+-- -------------------------------------------------------------
+CREATE TABLE "MonthlySalaries" (
+    "Id"          SERIAL          PRIMARY KEY,
+    "UserId"      INT             NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "Month"       SMALLINT        NOT NULL CHECK ("Month" BETWEEN 1 AND 12),
+    "Year"        SMALLINT        NOT NULL,
+    "Amount"      NUMERIC(12, 2)  NOT NULL,
+    "IsVerified"  BOOLEAN         NOT NULL DEFAULT FALSE,
+    "CreatedAt"   TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"   TIMESTAMPTZ,
+    "CreatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    CONSTRAINT "UX_MonthlySalaries_UserId_Month_Year" UNIQUE ("UserId", "Month", "Year")
+);
+
+-- -------------------------------------------------------------
+-- SalaryPayments
+-- -------------------------------------------------------------
+CREATE TABLE "SalaryPayments" (
+    "Id"          SERIAL          PRIMARY KEY,
+    "UserId"      INT             NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "Amount"      NUMERIC(12, 2)  NOT NULL,
+    "PaidOn"      DATE            NOT NULL,
+    "Remarks"     TEXT,
+    "CreatedAt"   TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"   TIMESTAMPTZ,
+    "CreatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- SalaryDetails  (one row per employee, auto-maintained)
+-- -------------------------------------------------------------
+CREATE TABLE "SalaryDetails" (
+    "Id"          SERIAL          PRIMARY KEY,
+    "UserId"      INT             NOT NULL REFERENCES "Users"("Id") ON DELETE CASCADE,
+    "TotalSalary" NUMERIC(14, 2)  NOT NULL DEFAULT 0,
+    "Paid"        NUMERIC(14, 2)  NOT NULL DEFAULT 0,
+    "Remaining"   NUMERIC(14, 2)  NOT NULL DEFAULT 0,
+    CONSTRAINT "UX_SalaryDetails_UserId" UNIQUE ("UserId")
+);
+
+-- =============================================================
+-- Seed: Admin role
+-- =============================================================
+INSERT INTO "Roles" ("Name") VALUES ('Admin') ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- Seed: Permissions
+-- =============================================================
+
+-- Dashboard
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dashboard.view',          'View the dashboard')                        ON CONFLICT ("Name") DO NOTHING;
+
+-- Users
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.view',              'View the users list')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.add',               'Create a new user')                         ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.edit',              'Edit an existing user')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.delete',            'Delete a user')                             ON CONFLICT ("Name") DO NOTHING;
+
+-- Transportation
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.view',     'View transportation records')                ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.add',      'Add a transportation record')                ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.edit',     'Edit a transportation record')               ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation.delete',   'Delete a transportation record')             ON CONFLICT ("Name") DO NOTHING;
+
+-- Fuel Log
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.view',           'View fuel log entries')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.add',            'Add a fuel log entry')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.edit',           'Edit a fuel log entry')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log.delete',         'Delete a fuel log entry')                   ON CONFLICT ("Name") DO NOTHING;
+
+-- Dozer Log
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.view',          'View dozer log entries')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.add',           'Add a dozer log entry')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.edit',          'Edit a dozer log entry')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log.delete',        'Delete a dozer log entry')                  ON CONFLICT ("Name") DO NOTHING;
+
+-- Vehicles
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.view',           'View the vehicles list')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.add',            'Add a vehicle')                             ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.edit',           'Edit a vehicle')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicles.delete',         'Delete a vehicle')                          ON CONFLICT ("Name") DO NOTHING;
+
+-- Materials
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.view',          'View the materials list')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.add',           'Add a material')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.edit',          'Edit a material')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('materials.delete',        'Delete a material')                         ON CONFLICT ("Name") DO NOTHING;
+
+-- Vendors
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.view',            'View the vendors list')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.add',             'Add a vendor')                              ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.edit',            'Edit a vendor')                             ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.delete',          'Delete a vendor')                           ON CONFLICT ("Name") DO NOTHING;
+
+-- Projects
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.view',           'View the projects list')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.add',            'Add a project')                             ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.edit',           'Edit a project')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.delete',         'Delete a project')                          ON CONFLICT ("Name") DO NOTHING;
+
+-- Fuel Types
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.view',         'View the fuel types list')                  ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.add',          'Add a fuel type')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.edit',         'Edit a fuel type')                          ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.delete',       'Delete a fuel type')                        ON CONFLICT ("Name") DO NOTHING;
+
+-- Roles
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.view',              'View the roles list')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.add',               'Create a new role')                         ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.edit',              'Edit an existing role')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('roles.delete',            'Delete a role')                             ON CONFLICT ("Name") DO NOTHING;
+
+-- Permissions
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.view',        'View the permissions list')                 ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.add',         'Create a new permission')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.edit',        'Edit an existing permission')               ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.delete',      'Delete a permission')                       ON CONFLICT ("Name") DO NOTHING;
+
+-- Role Permissions
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.view',   'View permissions assigned to roles')        ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.edit',   'Assign or remove permissions from a role')  ON CONFLICT ("Name") DO NOTHING;
+
+-- Monthly Salary
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('monthly_salary.view',     'View monthly salary records')               ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('monthly_salary.edit',     'Save or verify a monthly salary record')    ON CONFLICT ("Name") DO NOTHING;
+
+-- Salary Payments
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.view',     'View salary payment records')               ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.add',      'Record a salary payment')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.edit',     'Edit a salary payment record')              ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_payment.delete',   'Delete a salary payment record')            ON CONFLICT ("Name") DO NOTHING;
+
+-- Salary Details
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_detail.view',      'View salary detail summary')                ON CONFLICT ("Name") DO NOTHING;
+
+-- Salary Setup
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.view',       'View salary setup entries')                 ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.add',        'Add a salary entry')                        ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.edit',       'Edit a salary entry')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.delete',     'Delete a salary entry')                     ON CONFLICT ("Name") DO NOTHING;
+
+-- =============================================================
+-- Seed: Admin role → assign every permission
+-- =============================================================
+INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
+SELECT r."Id", p."Id"
+FROM   "Roles" r
+CROSS JOIN "Permissions" p
+WHERE  r."Name" = 'Admin'
+ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;

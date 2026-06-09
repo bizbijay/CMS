@@ -8,7 +8,13 @@ namespace CMS.Api.Services;
 public class DozerLogService : IDozerLogService
 {
     private readonly AppDbContext _db;
-    public DozerLogService(AppDbContext db) => _db = db;
+    private readonly ISalaryDetailService _salaryDetailService;
+
+    public DozerLogService(AppDbContext db, ISalaryDetailService salaryDetailService)
+    {
+        _db = db;
+        _salaryDetailService = salaryDetailService;
+    }
 
     public async Task<IEnumerable<DozerLogListItemDto>> GetAllAsync()
     {
@@ -49,11 +55,16 @@ public class DozerLogService : IDozerLogService
             OperatedTimeMs = request.OperatedTimeMs,
             ProjectId = request.ProjectId,
             ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
+            Wages = request.Wages,
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
         };
 
         _db.DozerLogs.Add(item);
+
+        if (request.Wages > 0)
+            await _salaryDetailService.AdjustAsync(request.DriverId, totalSalaryDelta: request.Wages ?? 0m);
+
         await _db.SaveChangesAsync();
 
         await _db.Entry(item).Reference(d => d.Driver).LoadAsync();
@@ -79,14 +90,35 @@ public class DozerLogService : IDozerLogService
         var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther);
         if (error is not null) return (null, error);
 
+        var oldDriverId = item.DriverId;
+        var oldWages = item.Wages;
+
         item.DriverId = request.DriverId;
         item.VehicleId = request.VehicleId;
         item.OperationDate = request.OperationDate;
         item.OperatedTimeMs = request.OperatedTimeMs;
         item.ProjectId = request.ProjectId;
         item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
+        item.Wages = request.Wages;
         item.UpdatedById = updatedById;
         item.UpdatedAt = DateTime.UtcNow;
+
+        var oldWagesValue = oldWages ?? 0m;
+        var newWagesValue = request.Wages ?? 0m;
+
+        if (oldDriverId == request.DriverId)
+        {
+            var delta = newWagesValue - oldWagesValue;
+            if (delta != 0)
+                await _salaryDetailService.AdjustAsync(request.DriverId, totalSalaryDelta: delta);
+        }
+        else
+        {
+            if (oldWagesValue != 0)
+                await _salaryDetailService.AdjustAsync(oldDriverId, totalSalaryDelta: -oldWagesValue);
+            if (newWagesValue != 0)
+                await _salaryDetailService.AdjustAsync(request.DriverId, totalSalaryDelta: newWagesValue);
+        }
 
         await _db.SaveChangesAsync();
 
@@ -102,6 +134,8 @@ public class DozerLogService : IDozerLogService
     {
         var item = await _db.DozerLogs.FindAsync(id);
         if (item is null) return false;
+        if (item.Wages is { } wages && wages != 0)
+            await _salaryDetailService.AdjustAsync(item.DriverId, totalSalaryDelta: -wages);
         _db.DozerLogs.Remove(item);
         await _db.SaveChangesAsync();
         return true;
@@ -146,6 +180,7 @@ public class DozerLogService : IDozerLogService
         ProjectId = d.ProjectId,
         ProjectName = d.Project?.Name ?? d.ProjectOther ?? string.Empty,
         ProjectOther = d.ProjectOther,
+        Wages = d.Wages,
         CreatedBy = d.CreatedBy?.Username,
         UpdatedBy = d.UpdatedBy?.Username,
         CreatedAt = d.CreatedAt,

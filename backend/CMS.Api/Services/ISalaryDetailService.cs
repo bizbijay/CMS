@@ -5,6 +5,7 @@ namespace CMS.Api.Services;
 public interface ISalaryDetailService
 {
     Task<IEnumerable<SalaryDetailDto>> GetAllAsync();
+    Task<SalaryBreakdownDto?> GetBreakdownAsync(int userId);
     // Modifies tracked entities without saving — caller must call SaveChangesAsync.
     Task AdjustAsync(int userId, decimal totalSalaryDelta = 0, decimal paidDelta = 0);
 }

@@ -5,9 +5,10 @@ interface Props<T> {
   table: Table<T>;
   loading?: boolean;
   emptyMessage?: string;
+  footerRow?: React.ReactNode;
 }
 
-export default function DataTable<T>({ table, loading, emptyMessage = "No data." }: Props<T>) {
+export default function DataTable<T>({ table, loading, emptyMessage = "No data.", footerRow }: Props<T>) {
   const colCount = table.getVisibleLeafColumns().length;
   const hasRows = table.getPrePaginationRowModel().rows.length > 0;
 
@@ -70,6 +71,11 @@ export default function DataTable<T>({ table, loading, emptyMessage = "No data."
               ))
             )}
           </tbody>
+          {footerRow && !loading && hasRows && (
+            <tfoot className="border-t-2 border-slate-300 bg-slate-50 font-semibold text-slate-800">
+              {footerRow}
+            </tfoot>
+          )}
         </table>
       </div>
       {!loading && hasRows && <TablePagination table={table} />}

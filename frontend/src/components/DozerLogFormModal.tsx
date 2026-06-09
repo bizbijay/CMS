@@ -54,6 +54,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   const [operatedMinutes, setOperatedMinutes] = useState<string>("0");
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
+  const [wages, setWages] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -88,6 +89,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
             setProjectSel(OTHER);
             setProjectOther(log.projectOther ?? "");
           }
+          setWages(log.wages != null ? String(log.wages) : "");
         } else {
           setDriverId(selfMatch?.id ?? d[0]?.id ?? 0);
           setOperationDate(todayIso());
@@ -95,6 +97,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
           setOperatedMinutes("0");
           setProjectSel(p[0] ? String(p[0].id) : OTHER);
           setProjectOther("");
+          setWages("1500");
         }
       })
       .catch(() => setError(tr.modal.loadError))
@@ -129,6 +132,8 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
       return;
     }
 
+    const parsedWages = wages.trim() !== "" ? parseFloat(wages) : null;
+
     const body = {
       driverId,
       vehicleId: assignedVehicleId,
@@ -136,6 +141,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
       operatedTimeMs: hoursMinutesToMs(hours, minutes),
       projectId: projectSel !== OTHER ? Number(projectSel) : null,
       projectOther: projectSel === OTHER ? projectOther.trim() : null,
+      wages: parsedWages !== null && !isNaN(parsedWages) ? parsedWages : null,
     };
 
     setSaving(true);
@@ -266,6 +272,19 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
                   className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               )}
+            </Field>
+
+            <Field label={tr.common.wages}>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={wages}
+                onChange={(e) => setWages(e.target.value)}
+                disabled
+                placeholder="0"
+                className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
+              />
             </Field>
           </>
         )}

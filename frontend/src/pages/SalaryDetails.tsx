@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -19,6 +20,7 @@ import { useT } from "../hooks/useT";
 export default function SalaryDetails() {
   const t = useT();
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   const [items, setItems] = useState<SalaryDetailDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +106,12 @@ export default function SalaryDetails() {
       meta: { className: "text-right" },
       cell: ({ row }) => (
         <div className="flex justify-end gap-2">
+          <button
+            onClick={() => navigate(`/salary-details/${row.original.userId}`)}
+            className="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium"
+          >
+            {t.pages.salaryDetails.viewBreakdown}
+          </button>
           <Can do="salary_payment.view">
             <button
               onClick={() => setViewTarget(row.original)}
@@ -150,7 +158,26 @@ export default function SalaryDetails() {
 
       {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
-      <DataTable table={table} loading={loading} emptyMessage={t.pages.salaryDetails.noData} />
+      <DataTable
+        table={table}
+        loading={loading}
+        emptyMessage={t.pages.salaryDetails.noData}
+        footerRow={
+          <tr>
+            <td className="px-4 py-3 text-sm">{t.pages.salaryDetails.total}</td>
+            <td className="px-4 py-3 text-sm">
+              {t.common.currencySymbol} {items.reduce((s, i) => s + i.totalSalary, 0).toLocaleString()}
+            </td>
+            <td className="px-4 py-3 text-sm text-green-700">
+              {t.common.currencySymbol} {items.reduce((s, i) => s + i.paid, 0).toLocaleString()}
+            </td>
+            <td className="px-4 py-3 text-sm text-red-600">
+              {t.common.currencySymbol} {items.reduce((s, i) => s + i.remaining, 0).toLocaleString()}
+            </td>
+            <td className="px-4 py-3" />
+          </tr>
+        }
+      />
 
       {/* Make Payment modal */}
       <SalaryPaymentFormModal

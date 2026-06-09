@@ -1,0 +1,2 @@
+ALTER TABLE "DozerLogs"
+    ADD COLUMN IF NOT EXISTS "Wages" NUMERIC(12, 2);

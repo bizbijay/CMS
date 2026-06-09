@@ -9,6 +9,7 @@ export interface DozerLogListItem {
   projectId: number | null;
   projectName: string;
   projectOther: string | null;
+  wages: number | null;
 }
 
 export interface CreateDozerLogRequest {
@@ -18,6 +19,7 @@ export interface CreateDozerLogRequest {
   operatedTimeMs: number;
   projectId: number | null;
   projectOther: string | null;
+  wages: number | null;
 }
 
 export interface UpdateDozerLogRequest {
@@ -27,4 +29,5 @@ export interface UpdateDozerLogRequest {
   operatedTimeMs: number;
   projectId: number | null;
   projectOther: string | null;
+  wages: number | null;
 }

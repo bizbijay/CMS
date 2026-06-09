@@ -31,6 +31,9 @@ public class DozerLog
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
+    [Column(TypeName = "numeric(12,2)")]
+    public decimal? Wages { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

@@ -108,6 +108,13 @@ export default function DozerLog() {
       header: t.common.project,
     },
     {
+      accessorKey: "wages",
+      header: t.common.wages,
+      cell: ({ row }) => row.original.wages != null
+        ? `${t.common.currencySymbol} ${row.original.wages.toLocaleString()}`
+        : <span className="text-slate-400">—</span>,
+    },
+    {
       id: "actions",
       header: t.common.actions,
       enableSorting: false,

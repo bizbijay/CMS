@@ -152,6 +152,8 @@ public class TransportationService : ITransportationService
     {
         var item = await _db.Transportations.FindAsync(id);
         if (item is null) return false;
+        if (item.Wages is { } wages && wages != 0)
+            await _salaryDetailService.AdjustAsync(item.TransportedById, totalSalaryDelta: -wages);
         _db.Transportations.Remove(item);
         await _db.SaveChangesAsync();
         return true;

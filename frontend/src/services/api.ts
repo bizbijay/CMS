@@ -28,7 +28,7 @@ import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem } from
 import type { CreateSalarySetupRequest, UpdateSalarySetupRequest, SalarySetupListItem } from "../types/salarySetup";
 import type { MonthlySalaryRow, SaveMonthlySalaryRequest } from "../types/monthlySalary";
 import type { SalaryPaymentListItem, CreateSalaryPaymentRequest, UpdateSalaryPaymentRequest } from "../types/salaryPayment";
-import type { SalaryDetailDto } from "../types/salaryDetail";
+import type { SalaryDetailDto, SalaryBreakdownDto } from "../types/salaryDetail";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -234,6 +234,7 @@ export const salaryPaymentApi = {
 
 export const salaryDetailApi = {
   list: () => request<SalaryDetailDto[]>("/api/salary-details", { method: "GET" }),
+  breakdown: (userId: number) => request<SalaryBreakdownDto>(`/api/salary-details/${userId}/breakdown`, { method: "GET" }),
 };
 
 export const salarySetupApi = {

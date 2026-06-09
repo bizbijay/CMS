@@ -19,6 +19,7 @@ import SalarySetup from "./pages/SalarySetup";
 import MonthlySalary from "./pages/MonthlySalary";
 import SalaryPayments from "./pages/SalaryPayments";
 import SalaryDetails from "./pages/SalaryDetails";
+import SalaryBreakdown from "./pages/SalaryBreakdown";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -167,6 +168,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="salary_detail.view">
               <SalaryDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/salary-details/:userId"
+          element={
+            <ProtectedRoute policy="salary_detail.view">
+              <SalaryBreakdown />
             </ProtectedRoute>
           }
         />

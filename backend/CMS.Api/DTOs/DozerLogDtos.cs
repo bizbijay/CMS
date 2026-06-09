@@ -14,6 +14,7 @@ public class DozerLogListItemDto
     public int? ProjectId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public string? ProjectOther { get; set; }
+    public decimal? Wages { get; set; }
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -38,6 +39,9 @@ public class CreateDozerLogRequest
 
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal? Wages { get; set; }
 }
 
 public class UpdateDozerLogRequest
@@ -58,4 +62,7 @@ public class UpdateDozerLogRequest
 
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal? Wages { get; set; }
 }
