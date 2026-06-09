@@ -6,9 +6,10 @@ interface Props<T> {
   loading?: boolean;
   emptyMessage?: string;
   footerRow?: React.ReactNode;
+  headerClassName?: string;
 }
 
-export default function DataTable<T>({ table, loading, emptyMessage = "No data.", footerRow }: Props<T>) {
+export default function DataTable<T>({ table, loading, emptyMessage = "No data.", footerRow, headerClassName }: Props<T>) {
   const colCount = table.getVisibleLeafColumns().length;
   const hasRows = table.getPrePaginationRowModel().rows.length > 0;
 
@@ -16,7 +17,7 @@ export default function DataTable<T>({ table, loading, emptyMessage = "No data."
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm table-auto">
-          <thead className="bg-slate-50 text-slate-600">
+          <thead className={headerClassName ?? "bg-slate-200 text-slate-700"}>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => {
