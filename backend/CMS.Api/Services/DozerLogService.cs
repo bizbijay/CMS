@@ -130,13 +130,16 @@ public class DozerLogService : IDozerLogService
         return (ToDto(item), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var item = await _db.DozerLogs.FindAsync(id);
         if (item is null) return false;
         if (item.Wages is { } wages && wages != 0)
             await _salaryDetailService.AdjustAsync(item.DriverId, totalSalaryDelta: -wages);
-        _db.DozerLogs.Remove(item);
+
+        item.IsDeleted = true;
+        item.DeletedById = deletedById;
+        item.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

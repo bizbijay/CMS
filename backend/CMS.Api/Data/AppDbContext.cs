@@ -30,6 +30,8 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
+            entity.HasQueryFilter(u => !u.IsDeleted);
+
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.Email).IsUnique();
 
@@ -54,34 +56,46 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(u => u.UpdatedById)
                   .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(u => u.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(u => u.DeletedById)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<FuelLog>(entity =>
         {
+            entity.HasQueryFilter(l => !l.IsDeleted);
             entity.HasOne(l => l.Driver).WithMany().HasForeignKey(l => l.DriverId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(l => l.Vehicle).WithMany().HasForeignKey(l => l.VehicleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(l => l.FuelType).WithMany().HasForeignKey(l => l.FuelTypeId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Fuel>(entity =>
         {
+            entity.HasQueryFilter(f => !f.IsDeleted);
             entity.HasOne(f => f.CreatedBy).WithMany().HasForeignKey(f => f.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(f => f.UpdatedBy).WithMany().HasForeignKey(f => f.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(f => f.DeletedBy).WithMany().HasForeignKey(f => f.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<DozerLog>(entity =>
         {
+            entity.HasQueryFilter(d => !d.IsDeleted);
             entity.HasOne(d => d.Driver).WithMany().HasForeignKey(d => d.DriverId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(d => d.Vehicle).WithMany().HasForeignKey(d => d.VehicleId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.Project).WithMany().HasForeignKey(d => d.ProjectId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.CreatedBy).WithMany().HasForeignKey(d => d.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.UpdatedBy).WithMany().HasForeignKey(d => d.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.DeletedBy).WithMany().HasForeignKey(d => d.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Transportation>(entity =>
         {
+            entity.HasQueryFilter(t => !t.IsDeleted);
             entity.HasOne(t => t.TransportedBy).WithMany().HasForeignKey(t => t.TransportedById).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(t => t.Vehicle).WithMany().HasForeignKey(t => t.VehicleId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.Material).WithMany().HasForeignKey(t => t.MaterialId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
@@ -89,22 +103,29 @@ public class AppDbContext : DbContext
             entity.HasOne(t => t.Project).WithMany().HasForeignKey(t => t.ProjectId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.CreatedBy).WithMany().HasForeignKey(t => t.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.UpdatedBy).WithMany().HasForeignKey(t => t.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(t => t.DeletedBy).WithMany().HasForeignKey(t => t.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Vendor>(entity =>
         {
+            entity.HasQueryFilter(v => !v.IsDeleted);
             entity.HasOne(v => v.CreatedBy).WithMany().HasForeignKey(v => v.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(v => v.UpdatedBy).WithMany().HasForeignKey(v => v.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(v => v.DeletedBy).WithMany().HasForeignKey(v => v.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Project>(entity =>
         {
+            entity.HasQueryFilter(p => !p.IsDeleted);
             entity.HasOne(p => p.CreatedBy).WithMany().HasForeignKey(p => p.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(p => p.UpdatedBy).WithMany().HasForeignKey(p => p.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.DeletedBy).WithMany().HasForeignKey(p => p.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Material>(entity =>
         {
+            entity.HasQueryFilter(m => !m.IsDeleted);
+
             entity.HasOne(m => m.CreatedBy)
                   .WithMany()
                   .HasForeignKey(m => m.CreatedById)
@@ -114,19 +135,28 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(m => m.UpdatedById)
                   .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(m => m.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(m => m.DeletedById)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
+            entity.HasQueryFilter(r => !r.IsDeleted);
             entity.HasOne(r => r.CreatedBy).WithMany().HasForeignKey(r => r.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(r => r.UpdatedBy).WithMany().HasForeignKey(r => r.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(r => r.DeletedBy).WithMany().HasForeignKey(r => r.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Permission>(entity =>
         {
+            entity.HasQueryFilter(p => !p.IsDeleted);
             entity.HasIndex(p => p.Name).IsUnique();
             entity.HasOne(p => p.CreatedBy).WithMany().HasForeignKey(p => p.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(p => p.UpdatedBy).WithMany().HasForeignKey(p => p.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.DeletedBy).WithMany().HasForeignKey(p => p.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<RolePermission>(entity =>
@@ -138,6 +168,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
+            entity.HasQueryFilter(v => !v.IsDeleted);
             entity.HasIndex(v => v.NumberPlate).IsUnique();
             entity.Property(v => v.Type).HasConversion<string>();
 
@@ -150,10 +181,16 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(v => v.UpdatedById)
                   .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(v => v.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(v => v.DeletedById)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<MonthlySalary>(entity =>
         {
+            entity.HasQueryFilter(m => !m.IsDeleted);
             entity.HasIndex(m => new { m.UserId, m.Month, m.Year }).IsUnique();
 
             entity.HasOne(m => m.User)
@@ -170,10 +207,17 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(m => m.UpdatedById)
                   .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(m => m.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(m => m.DeletedById)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<SalaryPayment>(entity =>
         {
+            entity.HasQueryFilter(p => !p.IsDeleted);
+
             entity.HasOne(p => p.User)
                   .WithMany()
                   .HasForeignKey(p => p.UserId)
@@ -187,6 +231,11 @@ public class AppDbContext : DbContext
             entity.HasOne(p => p.UpdatedBy)
                   .WithMany()
                   .HasForeignKey(p => p.UpdatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(p => p.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(p => p.DeletedById)
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -202,6 +251,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<SalarySetup>(entity =>
         {
+            entity.HasQueryFilter(s => !s.IsDeleted);
             entity.HasIndex(s => s.UserId).IsUnique();
 
             entity.HasOne(s => s.User)
@@ -217,6 +267,11 @@ public class AppDbContext : DbContext
             entity.HasOne(s => s.UpdatedBy)
                   .WithMany()
                   .HasForeignKey(s => s.UpdatedById)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(s => s.DeletedBy)
+                  .WithMany()
+                  .HasForeignKey(s => s.DeletedById)
                   .OnDelete(DeleteBehavior.SetNull);
         });
     }

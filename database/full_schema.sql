@@ -32,7 +32,10 @@ CREATE TABLE "Roles" (
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT,
-    "UpdatedById"  INT
+    "UpdatedById"  INT,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT
 );
 
 -- -------------------------------------------------------------
@@ -47,6 +50,9 @@ CREATE TABLE "Vehicles" (
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT,
     "UpdatedById"  INT,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT,
     CONSTRAINT "UX_Vehicles_NumberPlate" UNIQUE ("NumberPlate")
 );
 
@@ -68,23 +74,29 @@ CREATE TABLE "Users" (
     "VehicleId"     INT,
     "CreatedById"   INT,
     "UpdatedById"   INT,
+    "IsDeleted"     BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"     TIMESTAMPTZ,
+    "DeletedById"   INT,
     CONSTRAINT "UX_Users_Username" UNIQUE ("Username"),
     CONSTRAINT "UX_Users_Email"    UNIQUE ("Email")
 );
 
 -- Cross-table FKs now that both Vehicles and Users exist
 ALTER TABLE "Users"
-    ADD CONSTRAINT "FK_Users_VehicleId"   FOREIGN KEY ("VehicleId")   REFERENCES "Vehicles"("Id") ON DELETE SET NULL,
-    ADD CONSTRAINT "FK_Users_CreatedById" FOREIGN KEY ("CreatedById")  REFERENCES "Users"("Id")    ON DELETE SET NULL,
-    ADD CONSTRAINT "FK_Users_UpdatedById" FOREIGN KEY ("UpdatedById")  REFERENCES "Users"("Id")    ON DELETE SET NULL;
+    ADD CONSTRAINT "FK_Users_VehicleId"    FOREIGN KEY ("VehicleId")    REFERENCES "Vehicles"("Id") ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Users_CreatedById"  FOREIGN KEY ("CreatedById")   REFERENCES "Users"("Id")    ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Users_UpdatedById"  FOREIGN KEY ("UpdatedById")   REFERENCES "Users"("Id")    ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Users_DeletedById"  FOREIGN KEY ("DeletedById")   REFERENCES "Users"("Id")    ON DELETE SET NULL;
 
 ALTER TABLE "Vehicles"
-    ADD CONSTRAINT "FK_Vehicles_CreatedById" FOREIGN KEY ("CreatedById") REFERENCES "Users"("Id") ON DELETE SET NULL,
-    ADD CONSTRAINT "FK_Vehicles_UpdatedById" FOREIGN KEY ("UpdatedById") REFERENCES "Users"("Id") ON DELETE SET NULL;
+    ADD CONSTRAINT "FK_Vehicles_CreatedById"  FOREIGN KEY ("CreatedById")  REFERENCES "Users"("Id") ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Vehicles_UpdatedById"  FOREIGN KEY ("UpdatedById")  REFERENCES "Users"("Id") ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Vehicles_DeletedById"  FOREIGN KEY ("DeletedById")  REFERENCES "Users"("Id") ON DELETE SET NULL;
 
 ALTER TABLE "Roles"
-    ADD CONSTRAINT "FK_Roles_CreatedById" FOREIGN KEY ("CreatedById") REFERENCES "Users"("Id") ON DELETE SET NULL,
-    ADD CONSTRAINT "FK_Roles_UpdatedById" FOREIGN KEY ("UpdatedById") REFERENCES "Users"("Id") ON DELETE SET NULL;
+    ADD CONSTRAINT "FK_Roles_CreatedById"  FOREIGN KEY ("CreatedById")  REFERENCES "Users"("Id") ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Roles_UpdatedById"  FOREIGN KEY ("UpdatedById")  REFERENCES "Users"("Id") ON DELETE SET NULL,
+    ADD CONSTRAINT "FK_Roles_DeletedById"  FOREIGN KEY ("DeletedById")  REFERENCES "Users"("Id") ON DELETE SET NULL;
 
 -- -------------------------------------------------------------
 -- Materials
@@ -95,7 +107,10 @@ CREATE TABLE "Materials" (
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------
@@ -108,7 +123,10 @@ CREATE TABLE "Vendors" (
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------
@@ -120,7 +138,10 @@ CREATE TABLE "Projects" (
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------
@@ -132,7 +153,10 @@ CREATE TABLE "Fuels" (
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------
@@ -155,6 +179,9 @@ CREATE TABLE "Transportations" (
     "UpdatedAt"        TIMESTAMPTZ,
     "CreatedById"      INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById"      INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"        BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"        TIMESTAMPTZ,
+    "DeletedById"      INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "chk_vendor"  CHECK (("VendorId"  IS NOT NULL) <> ("VendorOther"  IS NOT NULL)),
     CONSTRAINT "chk_project" CHECK (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL))
 );
@@ -173,7 +200,10 @@ CREATE TABLE "FuelLogs" (
     "CreatedAt"    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------
@@ -192,6 +222,9 @@ CREATE TABLE "DozerLogs" (
     "UpdatedAt"       TIMESTAMPTZ,
     "CreatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"       BOOLEAN        NOT NULL DEFAULT FALSE,
+    "DeletedOn"       TIMESTAMPTZ,
+    "DeletedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "chk_dozer_project" CHECK (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL))
 );
 
@@ -206,6 +239,9 @@ CREATE TABLE "Permissions" (
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN       NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "UX_Permissions_Name" UNIQUE ("Name")
 );
 
@@ -230,6 +266,9 @@ CREATE TABLE "SalarySetups" (
     "UpdatedAt"      TIMESTAMPTZ,
     "CreatedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"      BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"      TIMESTAMPTZ,
+    "DeletedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "UX_SalarySetups_UserId" UNIQUE ("UserId")
 );
 
@@ -247,6 +286,9 @@ CREATE TABLE "MonthlySalaries" (
     "UpdatedAt"   TIMESTAMPTZ,
     "CreatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
     "UpdatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"   BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"   TIMESTAMPTZ,
+    "DeletedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "UX_MonthlySalaries_UserId_Month_Year" UNIQUE ("UserId", "Month", "Year")
 );
 
@@ -262,7 +304,10 @@ CREATE TABLE "SalaryPayments" (
     "CreatedAt"   TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     "UpdatedAt"   TIMESTAMPTZ,
     "CreatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL
+    "UpdatedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"   BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"   TIMESTAMPTZ,
+    "DeletedById" INT             REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------

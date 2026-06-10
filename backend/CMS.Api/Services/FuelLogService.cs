@@ -98,11 +98,14 @@ public class FuelLogService : IFuelLogService
         return (ToDto(log), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var log = await _db.FuelLogs.FindAsync(id);
         if (log is null) return false;
-        _db.FuelLogs.Remove(log);
+
+        log.IsDeleted = true;
+        log.DeletedById = deletedById;
+        log.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

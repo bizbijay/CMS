@@ -70,12 +70,14 @@ public class MaterialService : IMaterialService
         return (ToDto(material), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var material = await _db.Materials.FindAsync(id);
         if (material is null) return false;
 
-        _db.Materials.Remove(material);
+        material.IsDeleted = true;
+        material.DeletedById = deletedById;
+        material.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

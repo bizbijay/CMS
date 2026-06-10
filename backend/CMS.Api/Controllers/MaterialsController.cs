@@ -67,7 +67,7 @@ public class MaterialsController : ControllerBase
     [Authorize(Policy = "materials.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _materials.DeleteAsync(id);
+        var deleted = await _materials.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

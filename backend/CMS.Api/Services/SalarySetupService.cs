@@ -40,18 +40,34 @@ public class SalarySetupService : ISalarySetupService
         var userExists = await _db.Users.AnyAsync(u => u.Id == request.UserId);
         if (!userExists) return (null, "User not found.");
 
-        var existing = await _db.SalarySetups.FirstOrDefaultAsync(s => s.UserId == request.UserId);
-        if (existing is not null) return (null, "A salary entry already exists for this employee.");
+        var existing = await _db.SalarySetups.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.UserId == request.UserId);
+        if (existing is not null && !existing.IsDeleted) return (null, "A salary entry already exists for this employee.");
 
-        var entry = new SalarySetup
+        SalarySetup entry;
+        if (existing is not null)
         {
-            UserId = request.UserId,
-            MonthlySalary = request.MonthlySalary,
-            CreatedById = createdById,
-            CreatedAt = DateTime.UtcNow
-        };
+            existing.IsDeleted = false;
+            existing.DeletedById = null;
+            existing.DeletedOn = null;
+            existing.MonthlySalary = request.MonthlySalary;
+            existing.CreatedById = createdById;
+            existing.CreatedAt = DateTime.UtcNow;
+            existing.UpdatedById = null;
+            existing.UpdatedAt = null;
+            entry = existing;
+        }
+        else
+        {
+            entry = new SalarySetup
+            {
+                UserId = request.UserId,
+                MonthlySalary = request.MonthlySalary,
+                CreatedById = createdById,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.SalarySetups.Add(entry);
+        }
 
-        _db.SalarySetups.Add(entry);
         await _db.SaveChangesAsync();
 
         await _db.Entry(entry).Reference(s => s.User).LoadAsync();
@@ -73,8 +89,8 @@ public class SalarySetupService : ISalarySetupService
         var userExists = await _db.Users.AnyAsync(u => u.Id == request.UserId);
         if (!userExists) return (null, "User not found.");
 
-        var duplicate = await _db.SalarySetups
-            .FirstOrDefaultAsync(s => s.UserId == request.UserId && s.Id != id);
+        var duplicate = await _db.SalarySetups.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(s => s.UserId == request.UserId && s.Id != id && !s.IsDeleted);
         if (duplicate is not null) return (null, "A salary entry already exists for this employee.");
 
         entry.UserId = request.UserId;
@@ -90,12 +106,14 @@ public class SalarySetupService : ISalarySetupService
         return (ToDto(entry), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var entry = await _db.SalarySetups.FindAsync(id);
         if (entry is null) return false;
 
-        _db.SalarySetups.Remove(entry);
+        entry.IsDeleted = true;
+        entry.DeletedById = deletedById;
+        entry.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

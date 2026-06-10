@@ -53,7 +53,7 @@ public class VendorsController : ControllerBase
     [Authorize(Policy = "vendors.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _vendors.DeleteAsync(id);
+        var deleted = await _vendors.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

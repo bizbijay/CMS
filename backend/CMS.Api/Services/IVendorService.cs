@@ -8,5 +8,5 @@ public interface IVendorService
     Task<VendorListItemDto?> GetByIdAsync(int id);
     Task<VendorListItemDto> CreateAsync(CreateVendorRequest request, int createdById);
     Task<(VendorListItemDto? Vendor, string? Error)> UpdateAsync(int id, UpdateVendorRequest request, int updatedById);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int deletedById);
 }

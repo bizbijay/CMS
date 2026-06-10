@@ -55,11 +55,14 @@ public class ProjectService : IProjectService
         return (ToDto(project), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var project = await _db.Projects.FindAsync(id);
         if (project is null) return false;
-        _db.Projects.Remove(project);
+
+        project.IsDeleted = true;
+        project.DeletedById = deletedById;
+        project.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

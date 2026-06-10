@@ -21,4 +21,9 @@ public class Material
 
     public int? UpdatedById { get; set; }
     public User? UpdatedBy { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedOn { get; set; }
+    public int? DeletedById { get; set; }
+    public User? DeletedBy { get; set; }
 }

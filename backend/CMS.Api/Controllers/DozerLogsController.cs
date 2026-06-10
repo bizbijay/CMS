@@ -54,7 +54,7 @@ public class DozerLogsController : ControllerBase
     [Authorize(Policy = "dozer_log.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var deleted = await _service.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

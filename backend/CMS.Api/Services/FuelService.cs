@@ -55,11 +55,14 @@ public class FuelService : IFuelService
         return (ToDto(fuel), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var fuel = await _db.Fuels.FindAsync(id);
         if (fuel is null) return false;
-        _db.Fuels.Remove(fuel);
+
+        fuel.IsDeleted = true;
+        fuel.DeletedById = deletedById;
+        fuel.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

@@ -8,5 +8,5 @@ public interface IVehicleService
     Task<VehicleListItemDto?> GetByIdAsync(int id);
     Task<(VehicleListItemDto? Vehicle, string? Error)> CreateAsync(CreateVehicleRequest request, int createdById);
     Task<(VehicleListItemDto? Vehicle, string? Error)> UpdateAsync(int id, UpdateVehicleRequest request, int updatedById);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int deletedById);
 }

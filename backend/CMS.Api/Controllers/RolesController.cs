@@ -53,7 +53,7 @@ public class RolesController : ControllerBase
     [Authorize(Policy = "roles.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _roles.DeleteAsync(id);
+        var deleted = await _roles.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

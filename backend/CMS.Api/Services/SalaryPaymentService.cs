@@ -83,11 +83,14 @@ public class SalaryPaymentService : ISalaryPaymentService
         return (ToDto(payment), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var payment = await _db.SalaryPayments.FindAsync(id);
         if (payment is null) return false;
-        _db.SalaryPayments.Remove(payment);
+
+        payment.IsDeleted = true;
+        payment.DeletedById = deletedById;
+        payment.DeletedOn = DateTime.UtcNow;
         await _salaryDetailService.AdjustAsync(payment.UserId, paidDelta: -payment.Amount);
         await _db.SaveChangesAsync();
         return true;

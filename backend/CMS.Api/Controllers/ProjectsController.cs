@@ -53,7 +53,7 @@ public class ProjectsController : ControllerBase
     [Authorize(Policy = "projects.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _projects.DeleteAsync(id);
+        var deleted = await _projects.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

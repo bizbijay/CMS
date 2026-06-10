@@ -8,5 +8,5 @@ public interface IMaterialService
     Task<MaterialListItemDto?> GetByIdAsync(int id);
     Task<MaterialListItemDto> CreateAsync(CreateMaterialRequest request, int createdById);
     Task<(MaterialListItemDto? Material, string? Error)> UpdateAsync(int id, UpdateMaterialRequest request, int updatedById);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int deletedById);
 }

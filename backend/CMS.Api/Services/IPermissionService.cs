@@ -8,5 +8,5 @@ public interface IPermissionService
     Task<PermissionListItemDto?> GetByIdAsync(int id);
     Task<PermissionListItemDto> CreateAsync(CreatePermissionRequest request, int createdById);
     Task<(PermissionListItemDto? Permission, string? Error)> UpdateAsync(int id, UpdatePermissionRequest request, int updatedById);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int deletedById);
 }

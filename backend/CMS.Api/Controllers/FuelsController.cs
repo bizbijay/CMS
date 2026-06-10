@@ -53,7 +53,7 @@ public class FuelsController : ControllerBase
     [Authorize(Policy = "fuel_types.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _fuels.DeleteAsync(id);
+        var deleted = await _fuels.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

@@ -56,23 +56,39 @@ public class MonthlySalaryService : IMonthlySalaryService
         if (setup is null) return (null, "No salary setup found for this employee.");
 
         var existing = await _db.MonthlySalaries
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(m => m.UserId == request.UserId && m.Month == request.Month && m.Year == request.Year);
 
         decimal totalSalaryDelta;
-        if (existing is null)
+        if (existing is null || existing.IsDeleted)
         {
             totalSalaryDelta = request.Amount;
-            existing = new MonthlySalary
+            if (existing is null)
             {
-                UserId = request.UserId,
-                Month = request.Month,
-                Year = request.Year,
-                Amount = request.Amount,
-                IsVerified = request.IsVerified,
-                CreatedById = actorId,
-                CreatedAt = DateTime.UtcNow
-            };
-            _db.MonthlySalaries.Add(existing);
+                existing = new MonthlySalary
+                {
+                    UserId = request.UserId,
+                    Month = request.Month,
+                    Year = request.Year,
+                    Amount = request.Amount,
+                    IsVerified = request.IsVerified,
+                    CreatedById = actorId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _db.MonthlySalaries.Add(existing);
+            }
+            else
+            {
+                existing.IsDeleted = false;
+                existing.DeletedById = null;
+                existing.DeletedOn = null;
+                existing.Amount = request.Amount;
+                existing.IsVerified = request.IsVerified;
+                existing.CreatedById = actorId;
+                existing.CreatedAt = DateTime.UtcNow;
+                existing.UpdatedById = null;
+                existing.UpdatedAt = null;
+            }
         }
         else
         {
@@ -107,6 +123,7 @@ public class MonthlySalaryService : IMonthlySalaryService
             .ToListAsync();
 
         var records = await _db.MonthlySalaries
+            .IgnoreQueryFilters()
             .Where(m => m.Month == month && m.Year == year)
             .ToListAsync();
 
@@ -114,12 +131,26 @@ public class MonthlySalaryService : IMonthlySalaryService
 
         foreach (var ss in setups)
         {
-            if (recordMap.TryGetValue(ss.UserId, out var existing))
+            if (recordMap.TryGetValue(ss.UserId, out var existing) && !existing.IsDeleted)
             {
                 existing.IsVerified = true;
                 existing.UpdatedById = actorId;
                 existing.UpdatedAt = DateTime.UtcNow;
                 // Existing record: amount unchanged, so no SalaryDetail adjustment needed.
+            }
+            else if (recordMap.TryGetValue(ss.UserId, out var deleted) && deleted.IsDeleted)
+            {
+                deleted.IsDeleted = false;
+                deleted.DeletedById = null;
+                deleted.DeletedOn = null;
+                deleted.Amount = ss.MonthlySalary;
+                deleted.IsVerified = true;
+                deleted.CreatedById = actorId;
+                deleted.CreatedAt = DateTime.UtcNow;
+                deleted.UpdatedById = null;
+                deleted.UpdatedAt = null;
+                recordMap[ss.UserId] = deleted;
+                await _salaryDetailService.AdjustAsync(ss.UserId, totalSalaryDelta: ss.MonthlySalary);
             }
             else
             {

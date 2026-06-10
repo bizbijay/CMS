@@ -54,7 +54,7 @@ public class SalaryPaymentController : ControllerBase
     [Authorize(Policy = "salary_payment.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var deleted = await _service.DeleteAsync(id, CurrentUserId);
         if (!deleted) return NotFound(new { message = "Payment record not found." });
         return NoContent();
     }

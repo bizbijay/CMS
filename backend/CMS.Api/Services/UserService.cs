@@ -59,7 +59,8 @@ public class UserService : IUserService
         var username = request.Username.Trim();
         var email = request.Email.Trim().ToLowerInvariant();
 
-        var exists = await _db.Users.AnyAsync(u => u.Username == username || u.Email == email);
+        var exists = await _db.Users.IgnoreQueryFilters()
+            .AnyAsync(u => (u.Username == username || u.Email == email) && !u.IsDeleted);
         if (exists)
             return (null, "A user with that username or email already exists.");
 
@@ -107,7 +108,8 @@ public class UserService : IUserService
         var username = request.Username.Trim();
         var email = request.Email.Trim().ToLowerInvariant();
 
-        var conflict = await _db.Users.AnyAsync(u => u.Id != id && (u.Username == username || u.Email == email));
+        var conflict = await _db.Users.IgnoreQueryFilters()
+            .AnyAsync(u => u.Id != id && (u.Username == username || u.Email == email) && !u.IsDeleted);
         if (conflict)
             return (null, "Another user already has that username or email.");
 
@@ -153,7 +155,9 @@ public class UserService : IUserService
         var user = await _db.Users.FindAsync(id);
         if (user is null) return (false, null);
 
-        _db.Users.Remove(user);
+        user.IsDeleted = true;
+        user.DeletedById = currentUserId;
+        user.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return (true, null);
     }

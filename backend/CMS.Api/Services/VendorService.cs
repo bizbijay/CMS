@@ -57,11 +57,14 @@ public class VendorService : IVendorService
         return (ToDto(vendor), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var vendor = await _db.Vendors.FindAsync(id);
         if (vendor is null) return false;
-        _db.Vendors.Remove(vendor);
+
+        vendor.IsDeleted = true;
+        vendor.DeletedById = deletedById;
+        vendor.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

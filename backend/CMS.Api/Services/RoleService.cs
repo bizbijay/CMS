@@ -48,11 +48,14 @@ public class RoleService : IRoleService
         return (ToDto(role), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var role = await _db.Roles.FindAsync(id);
         if (role is null) return false;
-        _db.Roles.Remove(role);
+
+        role.IsDeleted = true;
+        role.DeletedById = deletedById;
+        role.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

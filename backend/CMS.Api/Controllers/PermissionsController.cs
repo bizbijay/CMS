@@ -53,7 +53,7 @@ public class PermissionsController : ControllerBase
     [Authorize(Policy = "permissions.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var deleted = await _service.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }

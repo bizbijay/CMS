@@ -37,7 +37,7 @@ public class VehicleService : IVehicleService
     {
         var plate = request.NumberPlate.Trim().ToUpperInvariant();
 
-        var exists = await _db.Vehicles.AnyAsync(v => v.NumberPlate == plate);
+        var exists = await _db.Vehicles.IgnoreQueryFilters().AnyAsync(v => v.NumberPlate == plate && !v.IsDeleted);
         if (exists)
             return (null, "A vehicle with that number plate already exists.");
 
@@ -69,7 +69,7 @@ public class VehicleService : IVehicleService
 
         var plate = request.NumberPlate.Trim().ToUpperInvariant();
 
-        var conflict = await _db.Vehicles.AnyAsync(v => v.Id != id && v.NumberPlate == plate);
+        var conflict = await _db.Vehicles.IgnoreQueryFilters().AnyAsync(v => v.Id != id && v.NumberPlate == plate && !v.IsDeleted);
         if (conflict)
             return (null, "Another vehicle already has that number plate.");
 
@@ -86,12 +86,14 @@ public class VehicleService : IVehicleService
         return (ToDto(vehicle), null);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int deletedById)
     {
         var vehicle = await _db.Vehicles.FindAsync(id);
         if (vehicle is null) return false;
 
-        _db.Vehicles.Remove(vehicle);
+        vehicle.IsDeleted = true;
+        vehicle.DeletedById = deletedById;
+        vehicle.DeletedOn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return true;
     }

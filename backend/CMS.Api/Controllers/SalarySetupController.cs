@@ -69,7 +69,7 @@ public class SalarySetupController : ControllerBase
     [Authorize(Policy = "salary_setup.delete")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _salarySetup.DeleteAsync(id);
+        var deleted = await _salarySetup.DeleteAsync(id, CurrentUserId);
         return deleted ? NoContent() : NotFound();
     }
 }
