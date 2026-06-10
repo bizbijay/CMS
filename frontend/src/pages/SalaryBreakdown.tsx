@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { salaryDetailApi } from "../services/api";
 import type { SalaryBreakdownDto } from "../types/salaryDetail";
-import { NEPALI_MONTHS_EN, NEPALI_MONTHS_NP } from "../utils/nepaliDate";
+import { NEPALI_MONTHS_EN, NEPALI_MONTHS_NP, formatBSDate } from "../utils/nepaliDate";
 import { useCulture } from "../context/CultureContext";
 import { useT } from "../hooks/useT";
 
@@ -131,11 +131,9 @@ export default function SalaryBreakdown() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {data.wages.map((w) => {
-                  const [y, m, d] = w.date.split("-");
-                  return (
+                {data.wages.map((w) => (
                     <tr key={w.transportationId} className="hover:bg-slate-50">
-                      <td className="px-4 py-2.5 text-slate-600 whitespace-nowrap">{d}/{m}/{y}</td>
+                      <td className="px-4 py-2.5 text-slate-600 whitespace-nowrap">{formatBSDate(w.date)}</td>
                       <td className="px-4 py-2.5 text-slate-600">{w.projectName ?? "—"}</td>
                       {isOperator
                         ? <td className="px-4 py-2.5 text-slate-600">{w.operatedTimeMs != null ? formatMs(w.operatedTimeMs) : "—"}</td>
@@ -144,8 +142,7 @@ export default function SalaryBreakdown() {
                         {t.common.currencySymbol} {w.wages.toLocaleString()}
                       </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
               <tfoot className="border-t-2 border-slate-200 bg-slate-50">
                 <tr>

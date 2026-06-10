@@ -8,6 +8,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { dozerLogsApi, usersApi, getStoredUser } from "../services/api";
+import { formatBSDate } from "../utils/nepaliDate";
 import type { DozerLogListItem } from "../types/dozerLog";
 import DozerLogFormModal, { type DozerLogFormMode } from "../components/DozerLogFormModal";
 import IconButton from "../components/IconButton";
@@ -196,9 +197,7 @@ export default function DozerLog() {
 }
 
 function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString();
+  return formatBSDate(iso);
 }
 
 function formatTime(ms: number) {

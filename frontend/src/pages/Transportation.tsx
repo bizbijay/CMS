@@ -8,6 +8,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { transportationsApi, usersApi, getStoredUser } from "../services/api";
+import { formatBSDate } from "../utils/nepaliDate";
 import type { TransportationListItem } from "../types/transportation";
 import TransportationFormModal, { type TransportationFormMode } from "../components/TransportationFormModal";
 import IconButton from "../components/IconButton";
@@ -281,9 +282,7 @@ export default function Transportation() {
 }
 
 function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString();
+  return formatBSDate(iso);
 }
 
 function PencilIcon() {

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { fuelLogsApi, usersApi, fuelsApi, getStoredUser } from "../services/api";
+import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { FuelLogListItem } from "../types/fuelLog";
 import type { UserListItem } from "../types/users";
@@ -232,12 +233,9 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
             )}
 
             <Field label={t.common.date} required>
-              <input
-                type="date"
+              <NepaliCalendarPicker
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={setDate}
               />
             </Field>
           </>

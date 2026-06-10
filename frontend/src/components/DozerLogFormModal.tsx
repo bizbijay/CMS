@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { dozerLogsApi, usersApi, projectsApi, getStoredUser } from "../services/api";
+import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { DozerLogListItem } from "../types/dozerLog";
 import type { UserListItem } from "../types/users";
@@ -218,12 +219,9 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
             )}
 
             <Field label={tr.common.date} required>
-              <input
-                type="date"
+              <NepaliCalendarPicker
                 value={operationDate}
-                onChange={(e) => setOperationDate(e.target.value)}
-                required
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={setOperationDate}
               />
             </Field>
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,6 +9,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { salaryPaymentApi } from "../services/api";
+import { formatBSDate } from "../utils/nepaliDate";
 import type { SalaryPaymentListItem } from "../types/salaryPayment";
 import SalaryPaymentFormModal from "../components/SalaryPaymentFormModal";
 import IconButton from "../components/IconButton";
@@ -19,6 +21,8 @@ import { useT } from "../hooks/useT";
 export default function SalaryPayments() {
   const { addToast } = useToast();
   const t = useT();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [items, setItems] = useState<SalaryPaymentListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +32,30 @@ export default function SalaryPayments() {
   const [deleteTarget, setDeleteTarget] = useState<SalaryPaymentListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([{ id: "paidOn", desc: true }]);
+
+  // Employee filter — pre-populated from ?userId= query param
+  const [selectedUserId, setSelectedUserId] = useState<number | "">(() => {
+    const p = searchParams.get("userId");
+    return p ? Number(p) : "";
+  });
+
+  const employeeOptions = useMemo(
+    () => [...new Map(items.map((i) => [i.userId, i.userName])).entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [items]
+  );
+
+  const filtered = useMemo(
+    () => selectedUserId === "" ? items : items.filter((i) => i.userId === selectedUserId),
+    [items, selectedUserId]
+  );
+
+  function handleEmployeeFilter(userId: number | "") {
+    setSelectedUserId(userId);
+    if (userId === "") setSearchParams({});
+    else setSearchParams({ userId: String(userId) });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,10 +120,9 @@ export default function SalaryPayments() {
     {
       accessorKey: "paidOn",
       header: t.pages.salaryPayments.paidOn,
-      cell: ({ row }) => {
-        const [y, m, d] = row.original.paidOn.split("-");
-        return <span className="text-slate-600 text-sm">{d}/{m}/{y}</span>;
-      },
+      cell: ({ row }) => (
+        <span className="text-slate-600 text-sm">{formatBSDate(row.original.paidOn)}</span>
+      ),
     },
     {
       accessorKey: "remarks",
@@ -124,7 +151,7 @@ export default function SalaryPayments() {
   ], [t]);
 
   const table = useReactTable({
-    data: items,
+    data: filtered,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -136,9 +163,27 @@ export default function SalaryPayments() {
 
   return (
     <div className="space-y-5">
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+      >
+        <BackArrowIcon />
+        Back
+      </button>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-semibold text-slate-800">{t.pages.salaryPayments.title}</h2>
         <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={selectedUserId}
+            onChange={(e) => handleEmployeeFilter(e.target.value === "" ? "" : Number(e.target.value))}
+            className="py-2 pl-3 pr-8 text-sm rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700"
+          >
+            <option value="">All employees</option>
+            {employeeOptions.map((emp) => (
+              <option key={emp.id} value={emp.id}>{emp.name}</option>
+            ))}
+          </select>
           <button
             onClick={load}
             className="px-3 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
@@ -156,6 +201,7 @@ export default function SalaryPayments() {
           </Can>
         </div>
       </div>
+
 
       {error && <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>}
 
@@ -212,4 +258,13 @@ function TrashIcon() {
 
 function PlusIcon() {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
+}
+
+function BackArrowIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
 }

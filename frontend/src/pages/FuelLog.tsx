@@ -8,6 +8,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { fuelLogsApi, usersApi, getStoredUser } from "../services/api";
+import { formatBSDate } from "../utils/nepaliDate";
 import type { FuelLogListItem } from "../types/fuelLog";
 import FuelLogFormModal, { type FuelLogFormMode } from "../components/FuelLogFormModal";
 import IconButton from "../components/IconButton";
@@ -255,9 +256,7 @@ export default function FuelLog() {
 }
 
 function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString();
+  return formatBSDate(iso);
 }
 
 function PencilIcon() {

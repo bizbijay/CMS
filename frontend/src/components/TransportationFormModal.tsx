@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { transportationsApi, usersApi, vendorsApi, projectsApi, materialsApi, getStoredUser } from "../services/api";
+import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { TransportationListItem } from "../types/transportation";
 import type { UserListItem } from "../types/users";
@@ -327,12 +328,9 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             </Field>
 
             <Field label={tr.common.date} required>
-              <input
-                type="date"
+              <NepaliCalendarPicker
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={setDate}
               />
             </Field>
           </>
