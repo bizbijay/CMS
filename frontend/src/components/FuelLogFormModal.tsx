@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { fuelLogsApi, usersApi, fuelsApi, getStoredUser } from "../services/api";
+import { fuelLogsApi, usersApi, fuelsApi, fuelPricesApi, getStoredUser } from "../services/api";
 import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { FuelLogListItem } from "../types/fuelLog";
@@ -44,6 +44,28 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fetchingPrice, setFetchingPrice] = useState(false);
+
+  async function fetchFuelPrice(typeName: string) {
+    setFetchingPrice(true);
+    setError(null);
+    try {
+      const { price: p } = await fuelPricesApi.getCurrentPrice(typeName);
+      setPrice(String(p));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Could not fetch ${typeName} price.`);
+    } finally {
+      setFetchingPrice(false);
+    }
+  }
+
+  function handleFuelTypeChange(id: number) {
+    setFuelTypeId(id);
+    const typeName = fuelTypes.find(ft => ft.id === id)?.name?.toLowerCase() ?? "";
+    if (typeName === "diesel" || typeName === "petrol") {
+      fetchFuelPrice(typeName);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -68,11 +90,19 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
           setDate(mode.log.date.slice(0, 10));
         } else {
           setDriverId(selfMatch?.id ?? driverList[0]?.id ?? 0);
-          const diesel = f.find(ft => ft.name.toLowerCase() === 'diesel');
-          setFuelTypeId(diesel?.id ?? f[0]?.id ?? 0);
+          const defaultFuel = f.find(ft => ft.name.toLowerCase() === 'diesel') ?? f[0];
+          setFuelTypeId(defaultFuel?.id ?? 0);
           setQuantity("");
           setPrice("");
           setDate(todayIso());
+          const defaultTypeName = defaultFuel?.name?.toLowerCase() ?? "";
+          if (defaultTypeName === "diesel" || defaultTypeName === "petrol") {
+            setFetchingPrice(true);
+            fuelPricesApi.getCurrentPrice(defaultTypeName)
+              .then(({ price: p }) => setPrice(String(p)))
+              .catch(() => {})
+              .finally(() => setFetchingPrice(false));
+          }
         }
       })
       .catch(() => setError(t.modal.loadError))
@@ -81,6 +111,9 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   }, [open, mode]);
 
   if (!open) return null;
+
+  const selectedFuelTypeName = fuelTypes.find(ft => ft.id === fuelTypeId)?.name?.toLowerCase() ?? "";
+  const isSupportedFuelType = selectedFuelTypeName === "diesel" || selectedFuelTypeName === "petrol";
 
   function handleClose() {
     if (saving) return;
@@ -184,7 +217,7 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
               ) : (
                 <select
                   value={fuelTypeId}
-                  onChange={(e) => setFuelTypeId(Number(e.target.value))}
+                  onChange={(e) => handleFuelTypeChange(Number(e.target.value))}
                   required
                   className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
@@ -210,16 +243,29 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
               </Field>
 
               <Field label={t.common.price} required>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
-                  min="0.01"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex gap-1.5">
+                  <input
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    required
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {isSupportedFuelType && (
+                    <button
+                      type="button"
+                      onClick={() => fetchFuelPrice(selectedFuelTypeName)}
+                      disabled={fetchingPrice}
+                      title={`Fetch current NOC ${selectedFuelTypeName} price`}
+                      className="shrink-0 px-2 py-2 rounded border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {fetchingPrice ? <SpinIcon /> : <FetchPriceIcon />}
+                    </button>
+                  )}
+                </div>
               </Field>
             </div>
 
@@ -264,5 +310,32 @@ function Field({ label, required, children }: { label: string; required?: boolea
       </label>
       {children}
     </div>
+  );
+}
+
+function FetchPriceIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+      <polyline points="23 4 23 10 17 10" />
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+    </svg>
+  );
+}
+
+function SpinIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+      className="w-4 h-4 animate-spin">
+      <line x1="12" y1="2" x2="12" y2="6" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+      <line x1="2" y1="12" x2="6" y2="12" />
+      <line x1="18" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+    </svg>
   );
 }

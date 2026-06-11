@@ -292,3 +292,8 @@ export const vehiclesApi = {
   remove: (id: number) =>
     request<void>(`/api/vehicles/${id}`, { method: "DELETE" }),
 };
+
+export const fuelPricesApi = {
+  getCurrentPrice: (fuelType: string) =>
+    request<{ price: number }>(`/api/fuel-prices/current?fuelType=${encodeURIComponent(fuelType)}`),
+};

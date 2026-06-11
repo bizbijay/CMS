@@ -78,6 +78,11 @@ builder.Services.AddScoped<ISalaryPaymentService, SalaryPaymentService>();
 builder.Services.AddScoped<ISalaryDetailService, SalaryDetailService>();
 
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient("noc", c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(10);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; CMS/1.0)");
+});
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 builder.Services
