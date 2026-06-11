@@ -1,0 +1,61 @@
+name: Nightly Supabase backup
+
+# Runs every day at 18:00 UTC (≈ 23:45 Nepal time) and is also
+# manually triggerable from the Actions tab via "Run workflow".
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+# Non-sensitive Supabase connection details live in the workflow.
+# Only the database password is stored in repository Secrets.
+env:
+  SUPABASE_DB_HOST: aws-1-ap-northeast-1.pooler.supabase.com
+  SUPABASE_DB_PORT: "5432"
+  SUPABASE_DB_USER: postgres.truknbbypjimsjxevwoj
+  SUPABASE_DB_NAME: postgres
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Install postgresql-client 16 (matches Supabase's server version) so
+      # pg_dump understands the latest features without warnings.
+      - name: Install postgresql-client 16
+        run: |
+          sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Dump database
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGSSLMODE: require
+        run: |
+          mkdir -p backups
+          STAMP=$(date -u +'%Y-%m-%d_%H%M')
+          FILE="backups/cms-${STAMP}.sql"
+
+          pg_dump \
+            -h "$SUPABASE_DB_HOST" \
+            -p "$SUPABASE_DB_PORT" \
+            -U "$SUPABASE_DB_USER" \
+            -d "$SUPABASE_DB_NAME" \
+            --no-owner \
+            --no-privileges \
+            --format=plain \
+            > "$FILE"
+
+          gzip "$FILE"
+          echo "--- backup files ---"
+          ls -lh backups/
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_number }}-${{ github.run_attempt }}
+          path: backups/*.sql.gz
+          retention-days: 30
