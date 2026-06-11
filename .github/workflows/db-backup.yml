@@ -21,14 +21,16 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # Install postgresql-client 16 (matches Supabase's server version) so
-      # pg_dump understands the latest features without warnings.
-      - name: Install postgresql-client 16
+      # Install postgresql-client 17 (matches Supabase's server version) so
+      # pg_dump can read from the upstream server. pg_dump refuses to operate
+      # against a newer server than its own version, so bump this when
+      # Supabase upgrades.
+      - name: Install postgresql-client 17
         run: |
           sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
           sudo apt-get update
-          sudo apt-get install -y postgresql-client-16
+          sudo apt-get install -y postgresql-client-17
 
       - name: Dump database
         env:
