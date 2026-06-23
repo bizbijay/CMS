@@ -14,3 +14,11 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest {
   name: string;
 }
+
+export interface ProjectExpenseSummary {
+  projectId: number;
+  expensesTotal: number;
+  wagesTotal: number;
+  transportationTotal: number;
+  grandTotal: number;
+}

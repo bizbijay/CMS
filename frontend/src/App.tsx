@@ -20,6 +20,10 @@ import MonthlySalary from "./pages/MonthlySalary";
 import SalaryPayments from "./pages/SalaryPayments";
 import SalaryDetails from "./pages/SalaryDetails";
 import SalaryBreakdown from "./pages/SalaryBreakdown";
+import ProjectDetails from "./pages/ProjectDetails";
+import ProjectExpenses from "./pages/ProjectExpenses";
+import ProjectWages from "./pages/ProjectWages";
+import ProjectBreakdown from "./pages/ProjectBreakdown";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -176,6 +180,38 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="salary_detail.view">
               <SalaryBreakdown />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-details"
+          element={
+            <ProtectedRoute policy="projects.view">
+              <ProjectDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-details/:projectId/expenses"
+          element={
+            <ProtectedRoute policy="project_expenses.view">
+              <ProjectExpenses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-details/:projectId/wages"
+          element={
+            <ProtectedRoute policy="project_wages.view">
+              <ProjectWages />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-details/:projectId/breakdown"
+          element={
+            <ProtectedRoute policy="projects.view">
+              <ProjectBreakdown />
             </ProtectedRoute>
           }
         />

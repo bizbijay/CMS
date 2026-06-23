@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<MonthlySalary> MonthlySalaries => Set<MonthlySalary>();
     public DbSet<SalaryPayment> SalaryPayments => Set<SalaryPayment>();
     public DbSet<SalaryDetail> SalaryDetails => Set<SalaryDetail>();
+    public DbSet<ProjectExpense> ProjectExpenses => Set<ProjectExpense>();
+    public DbSet<ProjectWage> ProjectWages => Set<ProjectWage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -247,6 +249,26 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(d => d.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProjectWage>(entity =>
+        {
+            entity.HasQueryFilter(w => !w.IsDeleted);
+            entity.HasOne(w => w.Project).WithMany().HasForeignKey(w => w.ProjectId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(w => w.CreatedBy).WithMany().HasForeignKey(w => w.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(w => w.UpdatedBy).WithMany().HasForeignKey(w => w.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(w => w.DeletedBy).WithMany().HasForeignKey(w => w.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ProjectExpense>(entity =>
+        {
+            entity.HasQueryFilter(e => !e.IsDeleted);
+            entity.HasOne(e => e.Project).WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Material).WithMany().HasForeignKey(e => e.MaterialId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Vendor).WithMany().HasForeignKey(e => e.VendorId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.CreatedBy).WithMany().HasForeignKey(e => e.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.UpdatedBy).WithMany().HasForeignKey(e => e.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.DeletedBy).WithMany().HasForeignKey(e => e.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<SalarySetup>(entity =>

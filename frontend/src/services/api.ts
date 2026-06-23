@@ -24,11 +24,13 @@ import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from
 import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
 import type { CreateDozerLogRequest, UpdateDozerLogRequest, DozerLogListItem } from "../types/dozerLog";
 import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
-import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem } from "../types/projects";
+import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem, ProjectExpenseSummary } from "../types/projects";
 import type { CreateSalarySetupRequest, UpdateSalarySetupRequest, SalarySetupListItem } from "../types/salarySetup";
 import type { MonthlySalaryRow, SaveMonthlySalaryRequest } from "../types/monthlySalary";
 import type { SalaryPaymentListItem, CreateSalaryPaymentRequest, UpdateSalaryPaymentRequest } from "../types/salaryPayment";
 import type { SalaryDetailDto, SalaryBreakdownDto } from "../types/salaryDetail";
+import type { ProjectExpenseListItem, CreateProjectExpenseRequest, UpdateProjectExpenseRequest } from "../types/projectExpenses";
+import type { ProjectWageListItem, CreateProjectWageRequest, UpdateProjectWageRequest } from "../types/projectWages";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -187,6 +189,8 @@ export const fuelsApi = {
 
 export const transportationsApi = {
   list: () => request<TransportationListItem[]>("/api/transportations", { method: "GET" }),
+  listByProject: (projectId: number) =>
+    request<TransportationListItem[]>(`/api/transportations?projectId=${projectId}`, { method: "GET" }),
   create: (body: CreateTransportationRequest) =>
     request<TransportationListItem>("/api/transportations", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdateTransportationRequest) =>
@@ -210,6 +214,7 @@ export const projectsApi = {
   update: (id: number, body: UpdateProjectRequest) =>
     request<ProjectListItem>(`/api/projects/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/projects/${id}`, { method: "DELETE" }),
+  expenseSummary: () => request<ProjectExpenseSummary[]>("/api/projects/expense-summary", { method: "GET" }),
 };
 
 export const monthlySalaryApi = {
@@ -296,4 +301,26 @@ export const vehiclesApi = {
 export const fuelPricesApi = {
   getCurrentPrice: (fuelType: string) =>
     request<{ price: number }>(`/api/fuel-prices/current?fuelType=${encodeURIComponent(fuelType)}`),
+};
+
+export const projectExpensesApi = {
+  listByProject: (projectId: number) =>
+    request<ProjectExpenseListItem[]>(`/api/project-expenses?projectId=${projectId}`, { method: "GET" }),
+  create: (body: CreateProjectExpenseRequest) =>
+    request<ProjectExpenseListItem>("/api/project-expenses", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateProjectExpenseRequest) =>
+    request<ProjectExpenseListItem>(`/api/project-expenses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/project-expenses/${id}`, { method: "DELETE" }),
+};
+
+export const projectWagesApi = {
+  listByProject: (projectId: number) =>
+    request<ProjectWageListItem[]>(`/api/project-wages?projectId=${projectId}`, { method: "GET" }),
+  create: (body: CreateProjectWageRequest) =>
+    request<ProjectWageListItem>("/api/project-wages", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateProjectWageRequest) =>
+    request<ProjectWageListItem>(`/api/project-wages/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/project-wages/${id}`, { method: "DELETE" }),
 };

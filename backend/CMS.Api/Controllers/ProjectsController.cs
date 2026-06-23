@@ -21,6 +21,11 @@ public class ProjectsController : ControllerBase
     public async Task<ActionResult<IEnumerable<ProjectListItemDto>>> GetAll() =>
         Ok(await _projects.GetAllAsync());
 
+    [HttpGet("expense-summary")]
+    [Authorize(Policy = "projects.view")]
+    public async Task<ActionResult<IEnumerable<ProjectExpenseSummaryDto>>> GetExpenseSummary() =>
+        Ok(await _projects.GetExpenseSummaryAsync());
+
     [HttpGet("{id:int}")]
     [Authorize]
     public async Task<ActionResult<ProjectListItemDto>> GetById(int id)

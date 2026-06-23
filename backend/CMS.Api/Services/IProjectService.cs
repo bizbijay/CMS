@@ -9,4 +9,5 @@ public interface IProjectService
     Task<ProjectListItemDto> CreateAsync(CreateProjectRequest request, int createdById);
     Task<(ProjectListItemDto? Project, string? Error)> UpdateAsync(int id, UpdateProjectRequest request, int updatedById);
     Task<bool> DeleteAsync(int id, int deletedById);
+    Task<IEnumerable<ProjectExpenseSummaryDto>> GetExpenseSummaryAsync();
 }

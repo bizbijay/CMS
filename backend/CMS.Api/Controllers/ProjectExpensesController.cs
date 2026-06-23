@@ -7,35 +7,31 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMS.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class TransportationsController : ControllerBase
+[Route("api/project-expenses")]
+public class ProjectExpensesController : ControllerBase
 {
-    private readonly ITransportationService _service;
-    public TransportationsController(ITransportationService service) => _service = service;
+    private readonly IProjectExpenseService _service;
+    public ProjectExpensesController(IProjectExpenseService service) => _service = service;
 
     private int CurrentUserId =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet]
-    [Authorize(Policy = "transportation.view")]
-    public async Task<ActionResult<IEnumerable<TransportationListItemDto>>> GetAll([FromQuery] int? projectId = null)
-    {
-        if (projectId.HasValue)
-            return Ok(await _service.GetByProjectAsync(projectId.Value));
-        return Ok(await _service.GetAllAsync());
-    }
+    [Authorize(Policy = "project_expenses.view")]
+    public async Task<ActionResult<IEnumerable<ProjectExpenseListItemDto>>> GetByProject([FromQuery] int projectId) =>
+        Ok(await _service.GetByProjectAsync(projectId));
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = "transportation.view")]
-    public async Task<ActionResult<TransportationListItemDto>> GetById(int id)
+    [Authorize(Policy = "project_expenses.view")]
+    public async Task<ActionResult<ProjectExpenseListItemDto>> GetById(int id)
     {
         var item = await _service.GetByIdAsync(id);
         return item is null ? NotFound() : Ok(item);
     }
 
     [HttpPost]
-    [Authorize(Policy = "transportation.add")]
-    public async Task<ActionResult<TransportationListItemDto>> Create([FromBody] CreateTransportationRequest request)
+    [Authorize(Policy = "project_expenses.add")]
+    public async Task<ActionResult<ProjectExpenseListItemDto>> Create([FromBody] CreateProjectExpenseRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var (item, error) = await _service.CreateAsync(request, CurrentUserId);
@@ -44,8 +40,8 @@ public class TransportationsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Policy = "transportation.edit")]
-    public async Task<ActionResult<TransportationListItemDto>> Update(int id, [FromBody] UpdateTransportationRequest request)
+    [Authorize(Policy = "project_expenses.edit")]
+    public async Task<ActionResult<ProjectExpenseListItemDto>> Update(int id, [FromBody] UpdateProjectExpenseRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var (item, error) = await _service.UpdateAsync(id, request, CurrentUserId);
@@ -55,7 +51,7 @@ public class TransportationsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = "transportation.delete")]
+    [Authorize(Policy = "project_expenses.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id, CurrentUserId);

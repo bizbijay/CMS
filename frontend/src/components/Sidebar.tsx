@@ -25,6 +25,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/transportation", label: t.nav.transportation, icon: TransportationIcon, policy: "transportation.view" },
     { to: "/fuel-log", label: t.nav.fuelLog, icon: FuelLogIcon, policy: "fuel_log.view" },
     { to: "/dozer-log", label: t.nav.dozerLog, icon: DozerLogIcon, policy: "dozer_log.view" },
+    { to: "/project-details", label: t.nav.projectDetails, icon: ProjectDetailsIcon, policy: "projects.view" },
     { to: "/monthly-salary", label: t.nav.monthlySalary, icon: MonthlySalaryIcon, policy: "monthly_salary.view" },
     { to: "/salary-details", label: t.nav.salaryDetails, icon: SalaryDetailIcon, policy: "salary_detail.view" },
   ];
@@ -446,6 +447,18 @@ function SalarySetupIcon({ className }: { className?: string }) {
   );
 }
 
+
+function ProjectDetailsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <line x1="2" y1="10" x2="22" y2="10" />
+      <line x1="6" y1="15" x2="10" y2="15" />
+      <line x1="14" y1="15" x2="18" y2="15" />
+    </svg>
+  );
+}
 
 function SalaryDetailIcon({ className }: { className?: string }) {
   return (

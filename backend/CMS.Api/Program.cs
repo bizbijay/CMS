@@ -76,6 +76,8 @@ builder.Services.AddScoped<ISalarySetupService, SalarySetupService>();
 builder.Services.AddScoped<IMonthlySalaryService, MonthlySalaryService>();
 builder.Services.AddScoped<ISalaryPaymentService, SalaryPaymentService>();
 builder.Services.AddScoped<ISalaryDetailService, SalaryDetailService>();
+builder.Services.AddScoped<IProjectExpenseService, ProjectExpenseService>();
+builder.Services.AddScoped<IProjectWageService, ProjectWageService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("noc", c =>
@@ -139,6 +141,10 @@ builder.Services.AddAuthorization(options =>
         "salary_payment.view", "salary_payment.add", "salary_payment.edit", "salary_payment.delete",
 
         "salary_detail.view",
+
+        "project_expenses.view", "project_expenses.add", "project_expenses.edit", "project_expenses.delete",
+
+        "project_wages.view", "project_wages.add", "project_wages.edit", "project_wages.delete",
     ];
 
     foreach (var perm in permissions)

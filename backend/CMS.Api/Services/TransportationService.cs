@@ -32,6 +32,23 @@ public class TransportationService : ITransportationService
         return items.Select(ToDto);
     }
 
+    public async Task<IEnumerable<TransportationListItemDto>> GetByProjectAsync(int projectId)
+    {
+        var items = await _db.Transportations
+            .Include(t => t.TransportedBy)
+            .Include(t => t.Vehicle)
+            .Include(t => t.Material)
+            .Include(t => t.Vendor)
+            .Include(t => t.Project)
+            .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
+            .Where(t => t.ProjectId == projectId)
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.CreatedAt)
+            .ToListAsync();
+        return items.Select(ToDto);
+    }
+
     public async Task<TransportationListItemDto?> GetByIdAsync(int id)
     {
         var item = await _db.Transportations
