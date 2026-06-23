@@ -122,7 +122,7 @@ export default function FuelLog() {
     },
     {
       accessorKey: "quantity",
-      header: t.common.quantity,
+      header: t.common.quantityL,
       cell: ({ row }) => row.original.quantity.toFixed(2),
     },
     {

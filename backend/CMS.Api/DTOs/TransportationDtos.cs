@@ -5,10 +5,12 @@ namespace CMS.Api.DTOs;
 public class TransportationListItemDto
 {
     public int Id { get; set; }
-    public int TransportedById { get; set; }
+    public int? TransportedById { get; set; }
     public string TransportedByName { get; set; } = string.Empty;
+    public string? TransportedByOther { get; set; }
     public int? VehicleId { get; set; }
     public string? VehicleName { get; set; }
+    public string? VehicleOther { get; set; }
     public int? MaterialId { get; set; }
     public string? MaterialName { get; set; }
     public int? VendorId { get; set; }
@@ -17,6 +19,8 @@ public class TransportationListItemDto
     public int? ProjectId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public string? ProjectOther { get; set; }
+    public decimal? Quantity { get; set; }
+    public decimal? PerUnitCost { get; set; }
     public decimal? MaterialCost { get; set; }
     public decimal? Tax { get; set; }
     public decimal? Wages { get; set; }
@@ -29,10 +33,15 @@ public class TransportationListItemDto
 
 public class CreateTransportationRequest
 {
-    [Required]
-    public int TransportedById { get; set; }
+    public int? TransportedById { get; set; }
+
+    [MaxLength(200)]
+    public string? TransportedByOther { get; set; }
 
     public int? VehicleId { get; set; }
+
+    [MaxLength(200)]
+    public string? VehicleOther { get; set; }
 
     public int? MaterialId { get; set; }
 
@@ -46,7 +55,9 @@ public class CreateTransportationRequest
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
-    public decimal? MaterialCost { get; set; }
+    public decimal? Quantity { get; set; }
+
+    public decimal? PerUnitCost { get; set; }
 
     public decimal? Tax { get; set; }
 
@@ -58,10 +69,15 @@ public class CreateTransportationRequest
 
 public class UpdateTransportationRequest
 {
-    [Required]
-    public int TransportedById { get; set; }
+    public int? TransportedById { get; set; }
+
+    [MaxLength(200)]
+    public string? TransportedByOther { get; set; }
 
     public int? VehicleId { get; set; }
+
+    [MaxLength(200)]
+    public string? VehicleOther { get; set; }
 
     public int? MaterialId { get; set; }
 
@@ -75,7 +91,9 @@ public class UpdateTransportationRequest
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
-    public decimal? MaterialCost { get; set; }
+    public decimal? Quantity { get; set; }
+
+    public decimal? PerUnitCost { get; set; }
 
     public decimal? Tax { get; set; }
 

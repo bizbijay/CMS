@@ -9,12 +9,18 @@ public class Transportation
     [Key]
     public int Id { get; set; }
 
-    [Required]
-    public int TransportedById { get; set; }
+    // Either TransportedById (FK) or TransportedByOther (free text) must be set
+    public int? TransportedById { get; set; }
     public User? TransportedBy { get; set; }
+
+    [MaxLength(200)]
+    public string? TransportedByOther { get; set; }
 
     public int? VehicleId { get; set; }
     public Vehicle? Vehicle { get; set; }
+
+    [MaxLength(200)]
+    public string? VehicleOther { get; set; }
 
     public int? MaterialId { get; set; }
     public Material? Material { get; set; }
@@ -33,6 +39,13 @@ public class Transportation
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal? Quantity { get; set; }
+
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal? PerUnitCost { get; set; }
+
+    // Computed and stored: Quantity * PerUnitCost
     [Column(TypeName = "numeric(18,2)")]
     public decimal? MaterialCost { get; set; }
 

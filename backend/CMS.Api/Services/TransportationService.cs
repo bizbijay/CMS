@@ -48,19 +48,25 @@ public class TransportationService : ITransportationService
 
     public async Task<(TransportationListItemDto? Item, string? Error)> CreateAsync(CreateTransportationRequest request, int createdById)
     {
-        var error = await ValidateRequest(request.TransportedById, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
         if (error is not null) return (null, error);
 
         var item = new Transportation
         {
             TransportedById = request.TransportedById,
+            TransportedByOther = request.TransportedById is null ? request.TransportedByOther?.Trim() : null,
             VehicleId = request.VehicleId,
+            VehicleOther = request.VehicleId is null ? request.VehicleOther?.Trim() : null,
             MaterialId = request.MaterialId,
             VendorId = request.VendorId,
             VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null,
             ProjectId = request.ProjectId,
             ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
-            MaterialCost = request.MaterialCost,
+            Quantity = request.Quantity,
+            PerUnitCost = request.PerUnitCost,
+            MaterialCost = (request.Quantity.HasValue && request.PerUnitCost.HasValue)
+                ? request.Quantity.Value * request.PerUnitCost.Value
+                : null,
             Tax = request.Tax,
             Wages = request.Wages,
             Date = request.Date,
@@ -70,8 +76,8 @@ public class TransportationService : ITransportationService
 
         _db.Transportations.Add(item);
 
-        if (request.Wages > 0)
-            await _salaryDetailService.AdjustAsync(request.TransportedById, totalSalaryDelta: request.Wages ?? 0m);
+        if (request.TransportedById.HasValue && request.Wages > 0)
+            await _salaryDetailService.AdjustAsync(request.TransportedById.Value, totalSalaryDelta: request.Wages ?? 0m);
 
         await _db.SaveChangesAsync();
 
@@ -98,20 +104,26 @@ public class TransportationService : ITransportationService
 
         if (item is null) return (null, null);
 
-        var error = await ValidateRequest(request.TransportedById, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
         if (error is not null) return (null, error);
 
         var oldTransportedById = item.TransportedById;
         var oldWages = item.Wages;
 
         item.TransportedById = request.TransportedById;
+        item.TransportedByOther = request.TransportedById is null ? request.TransportedByOther?.Trim() : null;
         item.VehicleId = request.VehicleId;
+        item.VehicleOther = request.VehicleId is null ? request.VehicleOther?.Trim() : null;
         item.MaterialId = request.MaterialId;
         item.VendorId = request.VendorId;
         item.VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null;
         item.ProjectId = request.ProjectId;
         item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
-        item.MaterialCost = request.MaterialCost;
+        item.Quantity = request.Quantity;
+        item.PerUnitCost = request.PerUnitCost;
+        item.MaterialCost = (request.Quantity.HasValue && request.PerUnitCost.HasValue)
+            ? request.Quantity.Value * request.PerUnitCost.Value
+            : null;
         item.Tax = request.Tax;
         item.Wages = request.Wages;
         item.Date = request.Date;
@@ -121,19 +133,19 @@ public class TransportationService : ITransportationService
         var oldWagesValue = oldWages ?? 0m;
         var newWagesValue = request.Wages ?? 0m;
 
-        if (oldTransportedById == request.TransportedById)
+        // Only adjust salary when both old and new entries reference actual users
+        if (oldTransportedById.HasValue && request.TransportedById.HasValue && oldTransportedById == request.TransportedById)
         {
             var delta = newWagesValue - oldWagesValue;
             if (delta != 0)
-                await _salaryDetailService.AdjustAsync(request.TransportedById, totalSalaryDelta: delta);
+                await _salaryDetailService.AdjustAsync(request.TransportedById.Value, totalSalaryDelta: delta);
         }
         else
         {
-            // Driver changed: reverse old wages from old driver, apply new wages to new driver.
-            if (oldWagesValue != 0)
-                await _salaryDetailService.AdjustAsync(oldTransportedById, totalSalaryDelta: -oldWagesValue);
-            if (newWagesValue != 0)
-                await _salaryDetailService.AdjustAsync(request.TransportedById, totalSalaryDelta: newWagesValue);
+            if (oldTransportedById.HasValue && oldWagesValue != 0)
+                await _salaryDetailService.AdjustAsync(oldTransportedById.Value, totalSalaryDelta: -oldWagesValue);
+            if (request.TransportedById.HasValue && newWagesValue != 0)
+                await _salaryDetailService.AdjustAsync(request.TransportedById.Value, totalSalaryDelta: newWagesValue);
         }
 
         await _db.SaveChangesAsync();
@@ -152,8 +164,8 @@ public class TransportationService : ITransportationService
     {
         var item = await _db.Transportations.FindAsync(id);
         if (item is null) return false;
-        if (item.Wages is { } wages && wages != 0)
-            await _salaryDetailService.AdjustAsync(item.TransportedById, totalSalaryDelta: -wages);
+        if (item.TransportedById.HasValue && item.Wages is { } wages && wages != 0)
+            await _salaryDetailService.AdjustAsync(item.TransportedById.Value, totalSalaryDelta: -wages);
 
         item.IsDeleted = true;
         item.DeletedById = deletedById;
@@ -162,10 +174,17 @@ public class TransportationService : ITransportationService
         return true;
     }
 
-    private async Task<string?> ValidateRequest(int transportedById, int? vehicleId, int? materialId, int? vendorId, string? vendorOther, int? projectId, string? projectOther)
+    private async Task<string?> ValidateRequest(int? transportedById, string? transportedByOther, int? vehicleId, int? materialId, int? vendorId, string? vendorOther, int? projectId, string? projectOther)
     {
-        if (!await _db.Users.AnyAsync(u => u.Id == transportedById))
-            return "Selected user does not exist.";
+        if (transportedById.HasValue)
+        {
+            if (!await _db.Users.AnyAsync(u => u.Id == transportedById.Value))
+                return "Selected user does not exist.";
+        }
+        else if (string.IsNullOrWhiteSpace(transportedByOther))
+        {
+            return "Transported by is required.";
+        }
 
         if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
             return "Selected vehicle does not exist.";
@@ -206,9 +225,11 @@ public class TransportationService : ITransportationService
     {
         Id = t.Id,
         TransportedById = t.TransportedById,
-        TransportedByName = UserDisplayName(t.TransportedBy),
+        TransportedByName = t.TransportedBy is not null ? UserDisplayName(t.TransportedBy) : t.TransportedByOther ?? "—",
+        TransportedByOther = t.TransportedByOther,
         VehicleId = t.VehicleId,
         VehicleName = t.Vehicle is null ? null : $"{t.Vehicle.Name} ({t.Vehicle.NumberPlate})",
+        VehicleOther = t.VehicleOther,
         MaterialId = t.MaterialId,
         MaterialName = t.Material?.Name,
         VendorId = t.VendorId,
@@ -217,6 +238,8 @@ public class TransportationService : ITransportationService
         ProjectId = t.ProjectId,
         ProjectName = t.Project?.Name ?? t.ProjectOther ?? string.Empty,
         ProjectOther = t.ProjectOther,
+        Quantity = t.Quantity,
+        PerUnitCost = t.PerUnitCost,
         MaterialCost = t.MaterialCost,
         Tax = t.Tax,
         Wages = t.Wages,

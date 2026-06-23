@@ -42,15 +42,22 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
 
-  const [transportedById, setTransportedById] = useState<number>(0);
+  // "other" = manual entry; any string number = driver id
+  const [transportedBySel, setTransportedBySel] = useState<string>("");
+  const [transportedByOther, setTransportedByOther] = useState("");
 
   const [vendorSel, setVendorSel] = useState<string>("");
   const [vendorOther, setVendorOther] = useState("");
 
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
+
+  // vehicleOther is only used when transportedBySel === OTHER
+  const [vehicleOther, setVehicleOther] = useState("");
+
   const [materialId, setMaterialId] = useState<number | null>(null);
-  const [materialCost, setMaterialCost] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [perUnitCost, setPerUnitCost] = useState("");
   const [tax, setTax] = useState("");
   const [wages, setWages] = useState("");
 
@@ -58,8 +65,14 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Derive vehicle from the selected driver — no separate state needed.
-  const selectedUser = drivers.find((u) => u.id === transportedById);
+  const computedMaterialCost =
+    quantity !== "" && perUnitCost !== ""
+      ? Number(quantity) * Number(perUnitCost)
+      : null;
+
+  // Derive vehicle from the selected driver when a registered driver is chosen.
+  const isOtherTransporter = transportedBySel === OTHER;
+  const selectedUser = isOtherTransporter ? undefined : drivers.find((u) => u.id === Number(transportedBySel));
   const assignedVehicleId = selectedUser?.vehicleId ?? null;
   const assignedVehicleName = selectedUser?.assignedVehicleName ?? null;
 
@@ -83,10 +96,20 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
 
         if (mode.kind === "edit") {
           const t = mode.transportation;
-          setTransportedById(t.transportedById);
+
+          if (t.transportedById) {
+            setTransportedBySel(String(t.transportedById));
+            setTransportedByOther("");
+          } else {
+            setTransportedBySel(OTHER);
+            setTransportedByOther(t.transportedByOther ?? "");
+          }
+
+          setVehicleOther(t.vehicleOther ?? "");
           setDate(t.date.slice(0, 10));
           setMaterialId(t.materialId ?? null);
-          setMaterialCost(t.materialCost != null ? String(t.materialCost) : "");
+          setQuantity(t.quantity != null ? String(t.quantity) : "");
+          setPerUnitCost(t.perUnitCost != null ? String(t.perUnitCost) : "");
           setTax(t.tax != null ? String(t.tax) : "");
           setWages(t.wages != null ? String(t.wages) : "");
 
@@ -106,9 +129,16 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             setProjectOther(t.projectOther ?? "");
           }
         } else {
-          setTransportedById(selfMatch?.id ?? safeD[0]?.id ?? 0);
+          if (selfMatch) {
+            setTransportedBySel(String(selfMatch.id));
+          } else {
+            setTransportedBySel(safeD[0] ? String(safeD[0].id) : OTHER);
+          }
+          setTransportedByOther("");
+          setVehicleOther("");
           setMaterialId(null);
-          setMaterialCost("");
+          setQuantity("1");
+          setPerUnitCost("");
           setTax("");
           setWages("");
           setVendorSel(safeV[0] ? String(safeV[0].id) : OTHER);
@@ -134,6 +164,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     e.preventDefault();
     setError(null);
 
+    if (isOtherTransporter && !transportedByOther.trim()) {
+      setError(tr.modal.transportation.errorNoTransportedBy);
+      return;
+    }
     if (vendorSel === OTHER && !vendorOther.trim()) {
       setError(tr.modal.transportation.errorNoVendor);
       return;
@@ -144,14 +178,17 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     }
 
     const body = {
-      transportedById,
-      vehicleId: assignedVehicleId,
+      transportedById: isOtherTransporter ? null : Number(transportedBySel),
+      transportedByOther: isOtherTransporter ? transportedByOther.trim() : null,
+      vehicleId: isOtherTransporter ? null : assignedVehicleId,
+      vehicleOther: isOtherTransporter ? (vehicleOther.trim() || null) : null,
       materialId,
       vendorId: vendorSel !== OTHER ? Number(vendorSel) : null,
       vendorOther: vendorSel === OTHER ? vendorOther.trim() : null,
       projectId: projectSel !== OTHER ? Number(projectSel) : null,
       projectOther: projectSel === OTHER ? projectOther.trim() : null,
-      materialCost: materialCost !== "" ? Number(materialCost) : null,
+      quantity: quantity !== "" ? Number(quantity) : null,
+      perUnitCost: perUnitCost !== "" ? Number(perUnitCost) : null,
       tax: tax !== "" ? Number(tax) : null,
       wages: wages !== "" ? Number(wages) : null,
       date,
@@ -178,7 +215,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4"
+        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-3 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -207,26 +244,47 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             {!isCurrentUserDriver && (
               <Field label={tr.common.transportedBy} required>
                 <select
-                  value={transportedById}
-                  onChange={(e) => setTransportedById(Number(e.target.value))}
-                  required
+                  value={transportedBySel}
+                  onChange={(e) => { setTransportedBySel(e.target.value); setTransportedByOther(""); setVehicleOther(""); }}
+                  required={!isOtherTransporter}
                   className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {drivers.map((u) => (
-                    <option key={u.id} value={u.id}>{displayName(u)}</option>
+                    <option key={u.id} value={String(u.id)}>{displayName(u)}</option>
                   ))}
+                  <option value={OTHER}>{tr.modal.transportation.otherOption}</option>
                 </select>
+                {isOtherTransporter && (
+                  <input
+                    type="text"
+                    value={transportedByOther}
+                    onChange={(e) => setTransportedByOther(e.target.value)}
+                    placeholder={tr.modal.transportation.enterTransportedByName}
+                    required
+                    className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
               </Field>
             )}
 
             {!isCurrentUserDriver && (
               <Field label={tr.common.vehicle}>
-                <input
-                  type="text"
-                  value={assignedVehicleName ?? tr.common.noVehicleAssigned}
-                  disabled
-                  className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
-                />
+                {isOtherTransporter ? (
+                  <input
+                    type="text"
+                    value={vehicleOther}
+                    onChange={(e) => setVehicleOther(e.target.value)}
+                    placeholder={tr.modal.transportation.enterVehicleName}
+                    className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={assignedVehicleName ?? tr.common.noVehicleAssigned}
+                    disabled
+                    className="w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 cursor-not-allowed"
+                  />
+                )}
               </Field>
             )}
 
@@ -244,18 +302,39 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
             </Field>
 
             {canViewCosts && (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={tr.common.materialCost}>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={materialCost}
-                    onChange={(e) => setMaterialCost(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </Field>
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={tr.common.quantity}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      placeholder="0"
+                      className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </Field>
+                  <Field label={tr.common.perUnitCost}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={perUnitCost}
+                      onChange={(e) => setPerUnitCost(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </Field>
+                </div>
+                {computedMaterialCost !== null && (
+                  <div className="flex items-center justify-between rounded bg-slate-50 border border-slate-200 px-3 py-2 text-sm">
+                    <span className="text-slate-500">{tr.common.materialCost}</span>
+                    <span className="font-semibold text-slate-800">
+                      {tr.common.currencySymbol} {computedMaterialCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
                 <Field label={tr.common.tax}>
                   <input
                     type="number"
@@ -267,7 +346,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
                     className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </Field>
-              </div>
+              </>
             )}
 
             <Field label={tr.common.wages}>

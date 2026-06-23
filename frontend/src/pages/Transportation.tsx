@@ -90,7 +90,7 @@ export default function Transportation() {
 
   const driverOptions = useMemo(() => {
     const seen = new Map<number, string>();
-    items.forEach(i => { if (!seen.has(i.transportedById)) seen.set(i.transportedById, i.transportedByName); });
+    items.forEach(i => { if (i.transportedById != null && !seen.has(i.transportedById)) seen.set(i.transportedById, i.transportedByName); });
     return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [items]);
 

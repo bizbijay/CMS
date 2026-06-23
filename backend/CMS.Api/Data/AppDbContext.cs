@@ -96,7 +96,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Transportation>(entity =>
         {
             entity.HasQueryFilter(t => !t.IsDeleted);
-            entity.HasOne(t => t.TransportedBy).WithMany().HasForeignKey(t => t.TransportedById).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(t => t.TransportedBy).WithMany().HasForeignKey(t => t.TransportedById).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.Vehicle).WithMany().HasForeignKey(t => t.VehicleId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.Material).WithMany().HasForeignKey(t => t.MaterialId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(t => t.Vendor).WithMany().HasForeignKey(t => t.VendorId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
