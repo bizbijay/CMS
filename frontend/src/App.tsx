@@ -24,6 +24,7 @@ import ProjectDetails from "./pages/ProjectDetails";
 import ProjectExpenses from "./pages/ProjectExpenses";
 import ProjectWages from "./pages/ProjectWages";
 import ProjectBreakdown from "./pages/ProjectBreakdown";
+import GovernmentOffice from "./pages/GovernmentOffice";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -212,6 +213,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="projects.view">
               <ProjectBreakdown />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/government-office"
+          element={
+            <ProtectedRoute policy="govt_offices.view">
+              <GovernmentOffice />
             </ProtectedRoute>
           }
         />

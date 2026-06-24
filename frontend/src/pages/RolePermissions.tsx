@@ -6,10 +6,12 @@ import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { usePolicy } from "../hooks/usePolicy";
 import { useT } from "../hooks/useT";
+import { useAuth } from "../context/AuthContext";
 
 export default function RolePermissions() {
   const { addToast } = useToast();
   const t = useT();
+  const { refreshPermissions } = useAuth();
   const canEdit = usePolicy("role_permissions.edit");
   const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionListItem[]>([]);
@@ -63,6 +65,7 @@ export default function RolePermissions() {
     setError(null);
     try {
       await rolePermissionsApi.set(selectedRoleId, { permissionIds: Array.from(assignedIds) });
+      await refreshPermissions();
       addToast("Permissions saved.", "success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");

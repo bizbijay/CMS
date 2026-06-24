@@ -31,6 +31,7 @@ import type { SalaryPaymentListItem, CreateSalaryPaymentRequest, UpdateSalaryPay
 import type { SalaryDetailDto, SalaryBreakdownDto } from "../types/salaryDetail";
 import type { ProjectExpenseListItem, CreateProjectExpenseRequest, UpdateProjectExpenseRequest } from "../types/projectExpenses";
 import type { ProjectWageListItem, CreateProjectWageRequest, UpdateProjectWageRequest } from "../types/projectWages";
+import type { GovernmentOfficeListItem, CreateGovernmentOfficeRequest, UpdateGovernmentOfficeRequest } from "../types/governmentOffice";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -323,4 +324,14 @@ export const projectWagesApi = {
     request<ProjectWageListItem>(`/api/project-wages/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) =>
     request<void>(`/api/project-wages/${id}`, { method: "DELETE" }),
+};
+
+export const governmentOfficesApi = {
+  list: () => request<GovernmentOfficeListItem[]>("/api/government-offices", { method: "GET" }),
+  create: (body: CreateGovernmentOfficeRequest) =>
+    request<GovernmentOfficeListItem>("/api/government-offices", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateGovernmentOfficeRequest) =>
+    request<GovernmentOfficeListItem>(`/api/government-offices/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/government-offices/${id}`, { method: "DELETE" }),
 };

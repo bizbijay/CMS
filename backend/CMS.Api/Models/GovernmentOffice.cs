@@ -3,25 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CMS.Api.Models;
 
-[Table("Projects")]
-public class Project
+[Table("GovernmentOffices")]
+public class GovernmentOffice
 {
     [Key]
     public int Id { get; set; }
 
     [Required, MaxLength(200)]
     public string Name { get; set; } = string.Empty;
-
-    [MaxLength(500)]
-    public string? Address { get; set; }
-
-    public int? IssuedOfficeId { get; set; }
-    public GovernmentOffice? IssuedOffice { get; set; }
-
-    public DateOnly? StartDate { get; set; }
-    public DateOnly? EndDate { get; set; }
-
-    public decimal? ProjectCost { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

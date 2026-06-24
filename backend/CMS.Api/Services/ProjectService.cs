@@ -14,6 +14,7 @@ public class ProjectService : IProjectService
     {
         var projects = await _db.Projects
             .Include(p => p.CreatedBy).Include(p => p.UpdatedBy)
+            .Include(p => p.IssuedOffice)
             .OrderByDescending(p => p.CreatedAt).ToListAsync();
         return projects.Select(ToDto);
     }
@@ -22,6 +23,7 @@ public class ProjectService : IProjectService
     {
         var project = await _db.Projects
             .Include(p => p.CreatedBy).Include(p => p.UpdatedBy)
+            .Include(p => p.IssuedOffice)
             .FirstOrDefaultAsync(p => p.Id == id);
         return project is null ? null : ToDto(project);
     }
@@ -31,12 +33,19 @@ public class ProjectService : IProjectService
         var project = new Project
         {
             Name = request.Name.Trim(),
+            Address = request.Address?.Trim(),
+            IssuedOfficeId = request.IssuedOfficeId,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            ProjectCost = request.ProjectCost,
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
         };
         _db.Projects.Add(project);
         await _db.SaveChangesAsync();
         await _db.Entry(project).Reference(p => p.CreatedBy).LoadAsync();
+        if (project.IssuedOfficeId.HasValue)
+            await _db.Entry(project).Reference(p => p.IssuedOffice).LoadAsync();
         return ToDto(project);
     }
 
@@ -44,14 +53,22 @@ public class ProjectService : IProjectService
     {
         var project = await _db.Projects
             .Include(p => p.CreatedBy).Include(p => p.UpdatedBy)
+            .Include(p => p.IssuedOffice)
             .FirstOrDefaultAsync(p => p.Id == id);
         if (project is null) return (null, null);
 
         project.Name = request.Name.Trim();
+        project.Address = request.Address?.Trim();
+        project.IssuedOfficeId = request.IssuedOfficeId;
+        project.StartDate = request.StartDate;
+        project.EndDate = request.EndDate;
+        project.ProjectCost = request.ProjectCost;
         project.UpdatedById = updatedById;
         project.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         await _db.Entry(project).Reference(p => p.UpdatedBy).LoadAsync();
+        if (project.IssuedOfficeId.HasValue)
+            await _db.Entry(project).Reference(p => p.IssuedOffice).LoadAsync();
         return (ToDto(project), null);
     }
 
@@ -110,6 +127,12 @@ public class ProjectService : IProjectService
     {
         Id = p.Id,
         Name = p.Name,
+        Address = p.Address,
+        IssuedOfficeId = p.IssuedOfficeId,
+        IssuedOfficeName = p.IssuedOffice?.Name,
+        StartDate = p.StartDate,
+        EndDate = p.EndDate,
+        ProjectCost = p.ProjectCost,
         CreatedBy = p.CreatedBy?.Username,
         UpdatedBy = p.UpdatedBy?.Username,
         CreatedAt = p.CreatedAt,

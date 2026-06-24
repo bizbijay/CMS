@@ -1,7 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
-import { projectsApi } from "../services/api";
+import { projectsApi, governmentOfficesApi } from "../services/api";
 import { useT } from "../hooks/useT";
 import type { ProjectListItem } from "../types/projects";
+import type { GovernmentOfficeListItem } from "../types/governmentOffice";
+import NepaliCalendarPicker from "./NepaliCalendarPicker";
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export type ProjectFormMode =
   | { kind: "add" }
@@ -17,13 +23,36 @@ interface Props {
 export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props) {
   const t = useT();
   const isEdit = mode.kind === "edit";
+
   const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [issuedOfficeId, setIssuedOfficeId] = useState<string>("");
+  const [startDate, setStartDate] = useState(todayIso());
+  const [endDate, setEndDate] = useState("");
+  const [projectCost, setProjectCost] = useState("");
+  const [offices, setOffices] = useState<GovernmentOfficeListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setName(mode.kind === "edit" ? mode.project.name : "");
+    governmentOfficesApi.list().then(setOffices).catch(() => {});
+    if (mode.kind === "edit") {
+      const p = mode.project;
+      setName(p.name);
+      setAddress(p.address ?? "");
+      setIssuedOfficeId(p.issuedOfficeId?.toString() ?? "");
+      setStartDate(p.startDate ?? todayIso());
+      setEndDate(p.endDate ?? "");
+      setProjectCost(p.projectCost?.toString() ?? "");
+    } else {
+      setName("");
+      setAddress("");
+      setIssuedOfficeId("");
+      setStartDate(todayIso());
+      setEndDate("");
+      setProjectCost("");
+    }
     setError(null);
   }, [open, mode]);
 
@@ -37,7 +66,14 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const body = { name: name.trim() };
+    const body = {
+      name: name.trim(),
+      address: address.trim() || null,
+      issuedOfficeId: issuedOfficeId ? Number(issuedOfficeId) : null,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      projectCost: projectCost ? parseFloat(projectCost) : null,
+    };
     setSaving(true);
     try {
       if (mode.kind === "add") {
@@ -59,7 +95,7 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4"
+        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -81,6 +117,7 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
           <div className="rounded bg-red-50 text-red-700 text-sm p-3 border border-red-200">{error}</div>
         )}
 
+        {/* Project Name */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             {t.modal.projects.nameLabel}<span className="text-red-500 ml-0.5">*</span>
@@ -91,6 +128,59 @@ export default function ProjectFormModal({ open, mode, onClose, onSaved }: Props
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="e.g. Site A Development"
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Address */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">{t.common.address}</label>
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="e.g. Kathmandu, Bagmati Province"
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Issued Office */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">{t.common.issuedOffice}</label>
+          <select
+            value={issuedOfficeId}
+            onChange={(e) => setIssuedOfficeId(e.target.value)}
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">— {t.common.select} —</option>
+            {offices.map((o) => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Start Date / End Date */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t.common.startDate}</label>
+            <NepaliCalendarPicker value={startDate} onChange={setStartDate} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t.common.endDate}</label>
+            <NepaliCalendarPicker value={endDate} onChange={setEndDate} />
+          </div>
+        </div>
+
+        {/* Project Cost */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">{t.common.projectCost}</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={projectCost}
+            onChange={(e) => setProjectCost(e.target.value)}
+            placeholder="0.00"
             className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

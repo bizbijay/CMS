@@ -16,6 +16,7 @@ import DataTable from "../components/DataTable";
 import { useToast } from "../components/Toaster";
 import Can from "../components/Can";
 import { useT } from "../hooks/useT";
+import { formatBSDate } from "../utils/nepaliDate";
 
 export default function Projects() {
   const { addToast } = useToast();
@@ -73,6 +74,31 @@ export default function Projects() {
       accessorKey: "name",
       header: t.common.name,
       cell: ({ row }) => <span className="font-medium text-slate-800">{row.original.name}</span>,
+    },
+    {
+      accessorKey: "address",
+      header: t.common.address,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.address ?? "—"}</span>,
+    },
+    {
+      accessorKey: "issuedOfficeName",
+      header: t.common.issuedOffice,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.issuedOfficeName ?? "—"}</span>,
+    },
+    {
+      accessorKey: "startDate",
+      header: t.common.startDate,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.startDate ? formatBSDate(row.original.startDate) : "—"}</span>,
+    },
+    {
+      accessorKey: "endDate",
+      header: t.common.endDate,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.endDate ? formatBSDate(row.original.endDate) : "—"}</span>,
+    },
+    {
+      accessorKey: "projectCost",
+      header: t.common.projectCost,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.projectCost != null ? row.original.projectCost.toLocaleString() : "—"}</span>,
     },
     {
       id: "actions",

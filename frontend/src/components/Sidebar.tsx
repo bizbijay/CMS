@@ -10,7 +10,7 @@ interface Props {
 
 const settingsPaths = [
   "/vehicles", "/materials", "/vendors", "/projects",
-  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup",
+  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office",
 ];
 
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
@@ -36,6 +36,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/vendors", label: t.nav.vendors, icon: VendorsIcon, policy: "vendors.view" },
     { to: "/projects", label: t.nav.projects, icon: ProjectsIcon, policy: "projects.view" },
     { to: "/fuels", label: t.nav.fuelTypes, icon: FuelIcon, policy: "fuel_types.view" },
+    { to: "/government-office", label: t.nav.governmentOffice, icon: GovernmentOfficeIcon, policy: "govt_offices.view" },
     { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
     { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
     { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
@@ -470,6 +471,19 @@ function SalaryDetailIcon({ className }: { className?: string }) {
       <line x1="16" y1="3" x2="16" y2="9" />
       <line x1="6" y1="14" x2="12" y2="14" />
       <line x1="6" y1="18" x2="10" y2="18" />
+    </svg>
+  );
+}
+
+function GovernmentOfficeIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 21h18" />
+      <path d="M5 21V7l7-4 7 4v14" />
+      <rect x="9" y="13" width="6" height="8" />
+      <line x1="9" y1="10" x2="9" y2="10.01" />
+      <line x1="15" y1="10" x2="15" y2="10.01" />
     </svg>
   );
 }
