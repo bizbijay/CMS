@@ -5,11 +5,13 @@ import {
   projectExpensesApi,
   projectWagesApi,
   transportationsApi,
+  projectCommissionsApi,
 } from "../services/api";
 import type { ProjectExpenseSummary } from "../types/projects";
 import type { ProjectExpenseListItem } from "../types/projectExpenses";
 import type { ProjectWageListItem } from "../types/projectWages";
 import type { TransportationListItem } from "../types/transportation";
+import type { ProjectCommissionListItem } from "../types/projectCommissions";
 import { useT } from "../hooks/useT";
 import { formatBSDate } from "../utils/nepaliDate";
 
@@ -25,6 +27,7 @@ export default function ProjectBreakdown() {
   const [expenses, setExpenses] = useState<ProjectExpenseListItem[]>([]);
   const [wages, setWages] = useState<ProjectWageListItem[]>([]);
   const [transports, setTransports] = useState<TransportationListItem[]>([]);
+  const [commissions, setCommissions] = useState<ProjectCommissionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,12 +35,13 @@ export default function ProjectBreakdown() {
     setLoading(true);
     setError(null);
     try {
-      const [projects, summaries, exp, wag, trans] = await Promise.all([
+      const [projects, summaries, exp, wag, trans, com] = await Promise.all([
         projectsApi.list(),
         projectsApi.expenseSummary(),
         projectExpensesApi.listByProject(pid),
         projectWagesApi.listByProject(pid),
         transportationsApi.listByProject(pid),
+        projectCommissionsApi.listByProject(pid),
       ]);
       const project = projects.find((p) => p.id === pid);
       setProjectName(project?.name ?? `Project #${pid}`);
@@ -45,6 +49,7 @@ export default function ProjectBreakdown() {
       setExpenses(exp);
       setWages(wag);
       setTransports(trans);
+      setCommissions(com);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load breakdown.");
     } finally {
@@ -84,7 +89,8 @@ export default function ProjectBreakdown() {
     (sum, t) => sum + (t.materialCost ?? 0) + (t.tax ?? 0) + (t.wages ?? 0),
     0
   );
-  const grandTotal = summary?.grandTotal ?? expensesSubtotal + wagesSubtotal + transSubtotal;
+  const commissionsSubtotal = commissions.reduce((sum, c) => sum + c.amount, 0);
+  const grandTotal = summary?.grandTotal ?? expensesSubtotal + wagesSubtotal + transSubtotal + commissionsSubtotal;
 
   return (
     <div className="space-y-6">
@@ -108,7 +114,7 @@ export default function ProjectBreakdown() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <SummaryCard
           label={t.pages.projectExpenses.title}
           value={fmt(summary?.expensesTotal ?? expensesSubtotal)}
@@ -123,6 +129,11 @@ export default function ProjectBreakdown() {
           label={t.pages.projectWages.title}
           value={fmt(summary?.wagesTotal ?? wagesSubtotal)}
           color="emerald"
+        />
+        <SummaryCard
+          label={t.pages.projectCommissions.title}
+          value={fmt(summary?.commissionsTotal ?? commissionsSubtotal)}
+          color="purple"
         />
         <SummaryCard
           label={t.common.totalExpenses}
@@ -248,6 +259,40 @@ export default function ProjectBreakdown() {
         )}
       </Section>
 
+      {/* Commissions Section */}
+      <Section
+        title={t.pages.projectCommissions.title}
+        subtotal={fmt(summary?.commissionsTotal ?? commissionsSubtotal)}
+        color="purple"
+        count={commissions.length}
+      >
+        {commissions.length === 0 ? (
+          <EmptyRow message={t.pages.projectBreakdown.noCommissions} colSpan={4} />
+        ) : (
+          <>
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <Th>S.N.</Th>
+                <Th>{t.common.issuedOffice}</Th>
+                <Th right>{t.common.amount}</Th>
+                <Th>{t.common.remarks}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {commissions.map((c, i) => (
+                <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <Td>{i + 1}</Td>
+                  <Td>{c.officeName ?? c.otherOption ?? "—"}</Td>
+                  <Td right bold>{fmt(c.amount)}</Td>
+                  <Td>{c.remarks ?? "—"}</Td>
+                </tr>
+              ))}
+              <SubtotalRow colSpan={2} value={fmt(commissionsSubtotal)} totalCols={4} color="purple" />
+            </tbody>
+          </>
+        )}
+      </Section>
+
       {/* Grand Total Row */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-5 py-4 flex items-center justify-between">
         <span className="text-base font-bold text-slate-700">{t.common.totalExpenses}</span>
@@ -267,7 +312,7 @@ function SummaryCard({
 }: {
   label: string;
   value: string;
-  color: "blue" | "emerald" | "amber" | "slate";
+  color: "blue" | "emerald" | "amber" | "slate" | "purple";
   grand?: boolean;
 }) {
   const colorMap = {
@@ -275,6 +320,7 @@ function SummaryCard({
     emerald: "bg-emerald-50 border-emerald-200 text-emerald-700",
     amber: "bg-amber-50 border-amber-200 text-amber-700",
     slate: "bg-slate-100 border-slate-300 text-slate-700",
+    purple: "bg-purple-50 border-purple-200 text-purple-700",
   };
   return (
     <div className={`rounded-lg border p-4 ${colorMap[color]}`}>
@@ -293,7 +339,7 @@ function Section({
 }: {
   title: string;
   subtotal: string;
-  color: "blue" | "emerald" | "amber";
+  color: "blue" | "emerald" | "amber" | "purple";
   count: number;
   children: ReactNode;
 }) {
@@ -301,12 +347,14 @@ function Section({
     blue: "bg-blue-50 border-blue-200 text-blue-800",
     emerald: "bg-emerald-50 border-emerald-200 text-emerald-800",
     amber: "bg-amber-50 border-amber-200 text-amber-800",
+    purple: "bg-purple-50 border-purple-200 text-purple-800",
   }[color];
 
   const badgeColor = {
     blue: "bg-blue-100 text-blue-700",
     emerald: "bg-emerald-100 text-emerald-700",
     amber: "bg-amber-100 text-amber-700",
+    purple: "bg-purple-100 text-purple-700",
   }[color];
 
   return (
@@ -348,12 +396,13 @@ function SubtotalRow({
   colSpan: number;
   value: string;
   totalCols: number;
-  color: "blue" | "emerald" | "amber";
+  color: "blue" | "emerald" | "amber" | "purple";
 }) {
   const bgColor = {
     blue: "bg-blue-50 text-blue-800",
     emerald: "bg-emerald-50 text-emerald-800",
     amber: "bg-amber-50 text-amber-800",
+    purple: "bg-purple-50 text-purple-800",
   }[color];
 
   const remainingCols = totalCols - colSpan - 1;

@@ -36,5 +36,6 @@ export interface ProjectExpenseSummary {
   expensesTotal: number;
   wagesTotal: number;
   transportationTotal: number;
+  commissionsTotal: number;
   grandTotal: number;
 }

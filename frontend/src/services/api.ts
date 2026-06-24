@@ -32,6 +32,7 @@ import type { SalaryDetailDto, SalaryBreakdownDto } from "../types/salaryDetail"
 import type { ProjectExpenseListItem, CreateProjectExpenseRequest, UpdateProjectExpenseRequest } from "../types/projectExpenses";
 import type { ProjectWageListItem, CreateProjectWageRequest, UpdateProjectWageRequest } from "../types/projectWages";
 import type { GovernmentOfficeListItem, CreateGovernmentOfficeRequest, UpdateGovernmentOfficeRequest } from "../types/governmentOffice";
+import type { ProjectCommissionListItem, CreateProjectCommissionRequest, UpdateProjectCommissionRequest } from "../types/projectCommissions";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -334,4 +335,15 @@ export const governmentOfficesApi = {
     request<GovernmentOfficeListItem>(`/api/government-offices/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) =>
     request<void>(`/api/government-offices/${id}`, { method: "DELETE" }),
+};
+
+export const projectCommissionsApi = {
+  listByProject: (projectId: number) =>
+    request<ProjectCommissionListItem[]>(`/api/project-commissions?projectId=${projectId}`, { method: "GET" }),
+  create: (body: CreateProjectCommissionRequest) =>
+    request<ProjectCommissionListItem>("/api/project-commissions", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateProjectCommissionRequest) =>
+    request<ProjectCommissionListItem>(`/api/project-commissions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/project-commissions/${id}`, { method: "DELETE" }),
 };

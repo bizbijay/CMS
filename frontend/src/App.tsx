@@ -24,6 +24,7 @@ import ProjectDetails from "./pages/ProjectDetails";
 import ProjectExpenses from "./pages/ProjectExpenses";
 import ProjectWages from "./pages/ProjectWages";
 import ProjectBreakdown from "./pages/ProjectBreakdown";
+import ProjectCommissions from "./pages/ProjectCommissions";
 import GovernmentOffice from "./pages/GovernmentOffice";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -205,6 +206,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="project_wages.view">
               <ProjectWages />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-details/:projectId/commissions"
+          element={
+            <ProtectedRoute policy="project_commissions.view">
+              <ProjectCommissions />
             </ProtectedRoute>
           }
         />

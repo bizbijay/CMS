@@ -8,6 +8,7 @@ public class ProjectExpenseSummaryDto
     public decimal ExpensesTotal { get; set; }
     public decimal WagesTotal { get; set; }
     public decimal TransportationTotal { get; set; }
+    public decimal CommissionsTotal { get; set; }
     public decimal GrandTotal { get; set; }
 }
 

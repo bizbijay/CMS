@@ -96,6 +96,8 @@ const en = {
     startDate: "Start Date",
     endDate: "End Date",
     projectCost: "Project Cost (NRS)",
+    commission: "Commission",
+    amount: "Amount (NRS)",
   },
   auth: {
     signOut: "Sign out",
@@ -250,6 +252,15 @@ const en = {
       noExpenses: "No expense records for this project.",
       noWages: "No wage records for this project.",
       noTransportation: "No transportation records for this project.",
+      noCommissions: "No commission records for this project.",
+    },
+    projectCommissions: {
+      title: "Commissions",
+      addButton: "Add commission",
+      noData: 'No commissions yet. Click "Add commission" to log one.',
+      addedToast: "Commission added successfully.",
+      updatedToast: "Commission updated successfully.",
+      deletedToast: "Commission deleted.",
     },
     salaryBreakdown: {
       title: "Salary Breakdown",
@@ -438,6 +449,16 @@ const en = {
       deleteTitle: "Delete Wage Record",
       deleteMessage: "Are you sure you want to delete this wage record? This action cannot be undone.",
     },
+    projectCommissions: {
+      addTitle: "Add Commission",
+      editTitle: "Edit Commission",
+      addSubtitle: "Log a commission entry for this project.",
+      editSubtitle: "Update the commission details.",
+      remarksPlaceholder: "Optional notes",
+      otherPlaceholder: "Enter office or payee name",
+      deleteTitle: "Delete Commission",
+      deleteMessage: "Are you sure you want to delete this commission record? This action cannot be undone.",
+    },
     changePassword: {
       title: "Change password",
       subtitle: "Enter your current password and choose a new one.",
@@ -544,6 +565,8 @@ const np: typeof en = {
     startDate: "सुरु मिति",
     endDate: "अन्त्य मिति",
     projectCost: "परियोजना लागत (रु)",
+    commission: "कमिसन",
+    amount: "रकम (रु)",
   },
   auth: {
     signOut: "बाहिर निस्कनुहोस्",
@@ -698,6 +721,15 @@ const np: typeof en = {
       noExpenses: "यस परियोजनाको कुनै खर्च रेकर्ड छैन।",
       noWages: "यस परियोजनाको कुनै ज्याला रेकर्ड छैन।",
       noTransportation: "यस परियोजनाको कुनै यातायात रेकर्ड छैन।",
+      noCommissions: "यस परियोजनाको कुनै कमिसन रेकर्ड छैन।",
+    },
+    projectCommissions: {
+      title: "कमिसन",
+      addButton: "कमिसन थप्नुहोस्",
+      noData: '"कमिसन थप्नुहोस्" मा क्लिक गरेर लग गर्नुहोस्।',
+      addedToast: "कमिसन सफलतापूर्वक थपियो।",
+      updatedToast: "कमिसन सफलतापूर्वक अद्यावधिक गरियो।",
+      deletedToast: "कमिसन मेटाइयो।",
     },
     salaryBreakdown: {
       title: "तलब विवरण",
@@ -872,6 +904,16 @@ const np: typeof en = {
       remarksPlaceholder: "वैकल्पिक टिप्पणी",
       deleteTitle: "ज्याला मेटाउनुहोस्",
       deleteMessage: "के तपाईं यो ज्याला अभिलेख मेटाउन निश्चित हुनुहुन्छ? यो कार्य पूर्ववत् गर्न सकिँदैन।",
+    },
+    projectCommissions: {
+      addTitle: "कमिसन थप्नुहोस्",
+      editTitle: "कमिसन सम्पादन",
+      addSubtitle: "यस परियोजनाको नयाँ कमिसन लग गर्नुहोस्।",
+      editSubtitle: "कमिसनको विवरण अद्यावधिक गर्नुहोस्।",
+      remarksPlaceholder: "वैकल्पिक टिप्पणी",
+      otherPlaceholder: "कार्यालय वा भुक्तानीकर्ताको नाम लेख्नुहोस्",
+      deleteTitle: "कमिसन मेटाउनुहोस्",
+      deleteMessage: "के तपाईं यो कमिसन अभिलेख मेटाउन निश्चित हुनुहुन्छ? यो कार्य पूर्ववत् गर्न सकिँदैन।",
     },
     salaryPayment: {
       addTitle: "भुक्तानी थप्नुहोस्",

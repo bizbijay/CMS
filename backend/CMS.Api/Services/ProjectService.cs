@@ -102,9 +102,15 @@ public class ProjectService : IProjectService
             .Select(g => new { ProjectId = g.Key, Total = g.Sum(t => (t.MaterialCost ?? 0m) + (t.Tax ?? 0m) + (t.Wages ?? 0m)) })
             .ToListAsync();
 
+        var commissionTotals = await _db.ProjectCommissions
+            .GroupBy(c => c.ProjectId)
+            .Select(g => new { ProjectId = g.Key, Total = g.Sum(c => c.Amount) })
+            .ToListAsync();
+
         var projectIds = expenseTotals.Select(e => e.ProjectId)
             .Union(wageTotals.Select(w => w.ProjectId))
             .Union(transportTotals.Select(t => t.ProjectId))
+            .Union(commissionTotals.Select(c => c.ProjectId))
             .Distinct();
 
         return projectIds.Select(id =>
@@ -112,13 +118,15 @@ public class ProjectService : IProjectService
             var exp = expenseTotals.FirstOrDefault(e => e.ProjectId == id)?.Total ?? 0m;
             var wag = wageTotals.FirstOrDefault(w => w.ProjectId == id)?.Total ?? 0m;
             var tra = transportTotals.FirstOrDefault(t => t.ProjectId == id)?.Total ?? 0m;
+            var com = commissionTotals.FirstOrDefault(c => c.ProjectId == id)?.Total ?? 0m;
             return new ProjectExpenseSummaryDto
             {
                 ProjectId = id,
                 ExpensesTotal = exp,
                 WagesTotal = wag,
                 TransportationTotal = tra,
-                GrandTotal = exp + wag + tra
+                CommissionsTotal = com,
+                GrandTotal = exp + wag + tra + com
             };
         });
     }

@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectExpense> ProjectExpenses => Set<ProjectExpense>();
     public DbSet<ProjectWage> ProjectWages => Set<ProjectWage>();
     public DbSet<GovernmentOffice> GovernmentOffices => Set<GovernmentOffice>();
+    public DbSet<ProjectCommission> ProjectCommissions => Set<ProjectCommission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -305,6 +306,16 @@ public class AppDbContext : DbContext
             entity.HasOne(o => o.CreatedBy).WithMany().HasForeignKey(o => o.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(o => o.UpdatedBy).WithMany().HasForeignKey(o => o.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(o => o.DeletedBy).WithMany().HasForeignKey(o => o.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ProjectCommission>(entity =>
+        {
+            entity.HasQueryFilter(c => !c.IsDeleted);
+            entity.HasOne(c => c.Project).WithMany().HasForeignKey(c => c.ProjectId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(c => c.Office).WithMany().HasForeignKey(c => c.OfficeId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(c => c.CreatedBy).WithMany().HasForeignKey(c => c.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(c => c.UpdatedBy).WithMany().HasForeignKey(c => c.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(c => c.DeletedBy).WithMany().HasForeignKey(c => c.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

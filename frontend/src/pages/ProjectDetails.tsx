@@ -99,6 +99,13 @@ export default function ProjectDetails() {
             <WagesIcon />
             {t.common.wages}
           </button>
+          <button
+            onClick={() => navigate(`/project-details/${row.original.id}/commissions`)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors"
+          >
+            <CommissionIcon />
+            {t.common.commission}
+          </button>
         </div>
       ),
     },
@@ -149,6 +156,16 @@ function WagesIcon() {
       <circle cx="9" cy="7" r="4" />
       <line x1="23" y1="11" x2="17" y2="11" />
       <line x1="20" y1="8" x2="20" y2="14" />
+    </svg>
+  );
+}
+
+function CommissionIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
   );
 }
