@@ -213,5 +213,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapGet("/", () => Results.Ok(new { service = "CMS.Api", status = "running" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
 app.Run();
