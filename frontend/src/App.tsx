@@ -25,7 +25,11 @@ import ProjectExpenses from "./pages/ProjectExpenses";
 import ProjectWages from "./pages/ProjectWages";
 import ProjectBreakdown from "./pages/ProjectBreakdown";
 import ProjectCommissions from "./pages/ProjectCommissions";
+import VehicleMaintenanceVehicles from "./pages/VehicleMaintenanceVehicles";
+import VehicleMaintenanceLogs from "./pages/VehicleMaintenanceLogs";
+import VehicleMaintenanceDetail from "./pages/VehicleMaintenanceDetail";
 import GovernmentOffice from "./pages/GovernmentOffice";
+import MaintenanceParts from "./pages/MaintenanceParts";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -226,10 +230,42 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/vehicle-maintenance"
+          element={
+            <ProtectedRoute policy="vehicle_maintenance.view">
+              <VehicleMaintenanceVehicles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vehicle-maintenance/:vehicleId"
+          element={
+            <ProtectedRoute policy="vehicle_maintenance.view">
+              <VehicleMaintenanceLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vehicle-maintenance/:vehicleId/:logId"
+          element={
+            <ProtectedRoute policy="vehicle_maintenance.view">
+              <VehicleMaintenanceDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/government-office"
           element={
             <ProtectedRoute policy="govt_offices.view">
               <GovernmentOffice />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance-parts"
+          element={
+            <ProtectedRoute policy="maintenance_parts.view">
+              <MaintenanceParts />
             </ProtectedRoute>
           }
         />

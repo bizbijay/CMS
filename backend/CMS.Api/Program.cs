@@ -80,6 +80,10 @@ builder.Services.AddScoped<IProjectExpenseService, ProjectExpenseService>();
 builder.Services.AddScoped<IProjectWageService, ProjectWageService>();
 builder.Services.AddScoped<IGovernmentOfficeService, GovernmentOfficeService>();
 builder.Services.AddScoped<IProjectCommissionService, ProjectCommissionService>();
+builder.Services.AddScoped<IVehicleMaintenanceLogService, VehicleMaintenanceLogService>();
+builder.Services.AddScoped<IVehicleMaintenancePartService, VehicleMaintenancePartService>();
+builder.Services.AddScoped<IVehicleMaintenanceWageService, VehicleMaintenanceWageService>();
+builder.Services.AddScoped<IMaintenancePartService, MaintenancePartService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("noc", c =>
@@ -151,6 +155,10 @@ builder.Services.AddAuthorization(options =>
         "govt_offices.view", "govt_offices.add", "govt_offices.edit", "govt_offices.delete",
 
         "project_commissions.view", "project_commissions.add", "project_commissions.edit", "project_commissions.delete",
+
+        "vehicle_maintenance.view", "vehicle_maintenance.add", "vehicle_maintenance.edit", "vehicle_maintenance.delete",
+
+        "maintenance_parts.view", "maintenance_parts.add", "maintenance_parts.edit", "maintenance_parts.delete",
     ];
 
     foreach (var perm in permissions)

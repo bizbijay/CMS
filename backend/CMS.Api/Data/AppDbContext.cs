@@ -27,6 +27,10 @@ public class AppDbContext : DbContext
     public DbSet<ProjectWage> ProjectWages => Set<ProjectWage>();
     public DbSet<GovernmentOffice> GovernmentOffices => Set<GovernmentOffice>();
     public DbSet<ProjectCommission> ProjectCommissions => Set<ProjectCommission>();
+    public DbSet<VehicleMaintenanceLog> VehicleMaintenanceLogs => Set<VehicleMaintenanceLog>();
+    public DbSet<VehicleMaintenancePart> VehicleMaintenanceParts => Set<VehicleMaintenancePart>();
+    public DbSet<VehicleMaintenanceWage> VehicleMaintenanceWages => Set<VehicleMaintenanceWage>();
+    public DbSet<MaintenancePart> MaintenanceParts => Set<MaintenancePart>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -306,6 +310,42 @@ public class AppDbContext : DbContext
             entity.HasOne(o => o.CreatedBy).WithMany().HasForeignKey(o => o.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(o => o.UpdatedBy).WithMany().HasForeignKey(o => o.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(o => o.DeletedBy).WithMany().HasForeignKey(o => o.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VehicleMaintenanceLog>(entity =>
+        {
+            entity.HasQueryFilter(l => !l.IsDeleted);
+            entity.HasOne(l => l.Vehicle).WithMany().HasForeignKey(l => l.VehicleId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VehicleMaintenancePart>(entity =>
+        {
+            entity.HasQueryFilter(p => !p.IsDeleted);
+            entity.HasOne(p => p.MaintenanceLog).WithMany().HasForeignKey(p => p.MaintenanceLogId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(p => p.Part).WithMany().HasForeignKey(p => p.MaintenancePartId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(p => p.CreatedBy).WithMany().HasForeignKey(p => p.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.UpdatedBy).WithMany().HasForeignKey(p => p.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.DeletedBy).WithMany().HasForeignKey(p => p.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VehicleMaintenanceWage>(entity =>
+        {
+            entity.HasQueryFilter(w => !w.IsDeleted);
+            entity.HasOne(w => w.MaintenanceLog).WithMany().HasForeignKey(w => w.MaintenanceLogId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(w => w.CreatedBy).WithMany().HasForeignKey(w => w.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(w => w.UpdatedBy).WithMany().HasForeignKey(w => w.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(w => w.DeletedBy).WithMany().HasForeignKey(w => w.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<MaintenancePart>(entity =>
+        {
+            entity.HasQueryFilter(p => !p.IsDeleted);
+            entity.HasOne(p => p.CreatedBy).WithMany().HasForeignKey(p => p.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.UpdatedBy).WithMany().HasForeignKey(p => p.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(p => p.DeletedBy).WithMany().HasForeignKey(p => p.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<ProjectCommission>(entity =>

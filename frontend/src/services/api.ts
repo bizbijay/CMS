@@ -33,6 +33,12 @@ import type { ProjectExpenseListItem, CreateProjectExpenseRequest, UpdateProject
 import type { ProjectWageListItem, CreateProjectWageRequest, UpdateProjectWageRequest } from "../types/projectWages";
 import type { GovernmentOfficeListItem, CreateGovernmentOfficeRequest, UpdateGovernmentOfficeRequest } from "../types/governmentOffice";
 import type { ProjectCommissionListItem, CreateProjectCommissionRequest, UpdateProjectCommissionRequest } from "../types/projectCommissions";
+import type {
+  VehicleMaintenanceLogListItem, CreateVehicleMaintenanceLogRequest, UpdateVehicleMaintenanceLogRequest,
+  VehicleMaintenancePartListItem, CreateVehicleMaintenancePartRequest, UpdateVehicleMaintenancePartRequest,
+  VehicleMaintenanceWageListItem, CreateVehicleMaintenanceWageRequest, UpdateVehicleMaintenanceWageRequest,
+} from "../types/vehicleMaintenance";
+import type { MaintenancePartListItem, CreateMaintenancePartRequest, UpdateMaintenancePartRequest } from "../types/maintenancePart";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -335,6 +341,52 @@ export const governmentOfficesApi = {
     request<GovernmentOfficeListItem>(`/api/government-offices/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) =>
     request<void>(`/api/government-offices/${id}`, { method: "DELETE" }),
+};
+
+export const vehicleMaintenanceLogsApi = {
+  listByVehicle: (vehicleId: number) =>
+    request<VehicleMaintenanceLogListItem[]>(`/api/vehicle-maintenance-logs?vehicleId=${vehicleId}`, { method: "GET" }),
+  getById: (id: number) =>
+    request<VehicleMaintenanceLogListItem>(`/api/vehicle-maintenance-logs/${id}`, { method: "GET" }),
+  create: (body: CreateVehicleMaintenanceLogRequest) =>
+    request<VehicleMaintenanceLogListItem>("/api/vehicle-maintenance-logs", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateVehicleMaintenanceLogRequest) =>
+    request<VehicleMaintenanceLogListItem>(`/api/vehicle-maintenance-logs/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/vehicle-maintenance-logs/${id}`, { method: "DELETE" }),
+};
+
+export const vehicleMaintenancePartsApi = {
+  listByLog: (logId: number) =>
+    request<VehicleMaintenancePartListItem[]>(`/api/vehicle-maintenance-parts?logId=${logId}`, { method: "GET" }),
+  create: (body: CreateVehicleMaintenancePartRequest) =>
+    request<VehicleMaintenancePartListItem>("/api/vehicle-maintenance-parts", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateVehicleMaintenancePartRequest) =>
+    request<VehicleMaintenancePartListItem>(`/api/vehicle-maintenance-parts/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/vehicle-maintenance-parts/${id}`, { method: "DELETE" }),
+};
+
+export const vehicleMaintenanceWagesApi = {
+  listByLog: (logId: number) =>
+    request<VehicleMaintenanceWageListItem[]>(`/api/vehicle-maintenance-wages?logId=${logId}`, { method: "GET" }),
+  create: (body: CreateVehicleMaintenanceWageRequest) =>
+    request<VehicleMaintenanceWageListItem>("/api/vehicle-maintenance-wages", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateVehicleMaintenanceWageRequest) =>
+    request<VehicleMaintenanceWageListItem>(`/api/vehicle-maintenance-wages/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/vehicle-maintenance-wages/${id}`, { method: "DELETE" }),
+};
+
+export const maintenancePartsApi = {
+  list: () =>
+    request<MaintenancePartListItem[]>("/api/maintenance-parts", { method: "GET" }),
+  create: (body: CreateMaintenancePartRequest) =>
+    request<MaintenancePartListItem>("/api/maintenance-parts", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateMaintenancePartRequest) =>
+    request<MaintenancePartListItem>(`/api/maintenance-parts/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) =>
+    request<void>(`/api/maintenance-parts/${id}`, { method: "DELETE" }),
 };
 
 export const projectCommissionsApi = {

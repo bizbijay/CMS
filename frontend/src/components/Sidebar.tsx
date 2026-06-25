@@ -10,7 +10,7 @@ interface Props {
 
 const settingsPaths = [
   "/vehicles", "/materials", "/vendors", "/projects",
-  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office",
+  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office", "/maintenance-parts",
 ];
 
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
@@ -25,6 +25,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/transportation", label: t.nav.transportation, icon: TransportationIcon, policy: "transportation.view" },
     { to: "/fuel-log", label: t.nav.fuelLog, icon: FuelLogIcon, policy: "fuel_log.view" },
     { to: "/dozer-log", label: t.nav.dozerLog, icon: DozerLogIcon, policy: "dozer_log.view" },
+    { to: "/vehicle-maintenance", label: t.nav.vehicleMaintenance, icon: VehicleMaintenanceIcon, policy: "vehicle_maintenance.view" },
     { to: "/project-details", label: t.nav.projectDetails, icon: ProjectDetailsIcon, policy: "projects.view" },
     { to: "/monthly-salary", label: t.nav.monthlySalary, icon: MonthlySalaryIcon, policy: "monthly_salary.view" },
     { to: "/salary-details", label: t.nav.salaryDetails, icon: SalaryDetailIcon, policy: "salary_detail.view" },
@@ -37,6 +38,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/projects", label: t.nav.projects, icon: ProjectsIcon, policy: "projects.view" },
     { to: "/fuels", label: t.nav.fuelTypes, icon: FuelIcon, policy: "fuel_types.view" },
     { to: "/government-office", label: t.nav.governmentOffice, icon: GovernmentOfficeIcon, policy: "govt_offices.view" },
+    { to: "/maintenance-parts", label: t.nav.maintenanceParts, icon: MaintenancePartsIcon, policy: "maintenance_parts.view" },
     { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
     { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
     { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
@@ -449,6 +451,15 @@ function SalarySetupIcon({ className }: { className?: string }) {
 }
 
 
+function VehicleMaintenanceIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
 function ProjectDetailsIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -471,6 +482,15 @@ function SalaryDetailIcon({ className }: { className?: string }) {
       <line x1="16" y1="3" x2="16" y2="9" />
       <line x1="6" y1="14" x2="12" y2="14" />
       <line x1="6" y1="18" x2="10" y2="18" />
+    </svg>
+  );
+}
+
+function MaintenancePartsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
     </svg>
   );
 }
