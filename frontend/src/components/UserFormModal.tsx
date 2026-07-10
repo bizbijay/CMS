@@ -125,7 +125,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4"
+        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -161,7 +161,7 @@ export default function UserFormModal({ open, mode, onClose, onSaved }: Props) {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label={t.modal.users.firstName}>
             <input
               type="text"
