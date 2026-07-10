@@ -60,7 +60,7 @@ public class UserService : IUserService
         var email = request.Email.Trim().ToLowerInvariant();
 
         var exists = await _db.Users.IgnoreQueryFilters()
-            .AnyAsync(u => (u.Username == username || u.Email == email) && !u.IsDeleted);
+            .AnyAsync(u => u.Username == username || u.Email == email);
         if (exists)
             return (null, "A user with that username or email already exists.");
 
