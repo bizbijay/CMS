@@ -44,35 +44,49 @@ public class DozerLogService : IDozerLogService
 
     public async Task<(DozerLogListItemDto? Item, string? Error)> CreateAsync(CreateDozerLogRequest request, int createdById)
     {
-        var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther);
-        if (error is not null) return (null, error);
-
-        var item = new DozerLog
+        try
         {
-            DriverId = request.DriverId,
-            VehicleId = request.VehicleId,
-            OperationDate = request.OperationDate,
-            OperatedTimeMs = request.OperatedTimeMs,
-            ProjectId = request.ProjectId,
-            ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
-            Wages = request.Wages,
-            CreatedById = createdById,
-            CreatedAt = DateTime.UtcNow
-        };
+            var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther, request.StartMeter, request.EndMeter);
+            if (error is not null) return (null, error);
 
-        _db.DozerLogs.Add(item);
+            var totalMeterRun = request.EndMeter - request.StartMeter;
 
-        if (request.Wages > 0)
-            await _salaryDetailService.AdjustAsync(request.DriverId, totalSalaryDelta: request.Wages ?? 0m);
+            var item = new DozerLog
+            {
+                DriverId = request.DriverId,
+                VehicleId = request.VehicleId,
+                OperationDate = request.OperationDate,
+                StartMeter = request.StartMeter,
+                EndMeter = request.EndMeter,
+                TotalMeterRun = totalMeterRun,
+                ProjectId = request.ProjectId,
+                ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
+                Wages = request.Wages,
+                CreatedById = createdById,
+                CreatedAt = DateTime.UtcNow
+            };
 
-        await _db.SaveChangesAsync();
+            _db.DozerLogs.Add(item);
 
-        await _db.Entry(item).Reference(d => d.Driver).LoadAsync();
-        if (item.VehicleId.HasValue) await _db.Entry(item).Reference(d => d.Vehicle).LoadAsync();
-        if (item.ProjectId.HasValue) await _db.Entry(item).Reference(d => d.Project).LoadAsync();
-        await _db.Entry(item).Reference(d => d.CreatedBy).LoadAsync();
+            if (request.Wages > 0)
+                await _salaryDetailService.AdjustAsync(request.DriverId, totalSalaryDelta: request.Wages ?? 0m);
 
-        return (ToDto(item), null);
+            await _db.SaveChangesAsync();
+
+            await _db.Entry(item).Reference(d => d.Driver).LoadAsync();
+            if (item.VehicleId.HasValue) await _db.Entry(item).Reference(d => d.Vehicle).LoadAsync();
+            if (item.ProjectId.HasValue) await _db.Entry(item).Reference(d => d.Project).LoadAsync();
+            await _db.Entry(item).Reference(d => d.CreatedBy).LoadAsync();
+
+            return (ToDto(item), null);
+
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+        
     }
 
     public async Task<(DozerLogListItemDto? Item, string? Error)> UpdateAsync(int id, UpdateDozerLogRequest request, int updatedById)
@@ -87,16 +101,20 @@ public class DozerLogService : IDozerLogService
 
         if (item is null) return (null, null);
 
-        var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther, request.StartMeter, request.EndMeter);
         if (error is not null) return (null, error);
 
         var oldDriverId = item.DriverId;
         var oldWages = item.Wages;
 
+        var totalMeterRun = request.EndMeter - request.StartMeter;
+
         item.DriverId = request.DriverId;
         item.VehicleId = request.VehicleId;
         item.OperationDate = request.OperationDate;
-        item.OperatedTimeMs = request.OperatedTimeMs;
+        item.StartMeter = request.StartMeter;
+        item.EndMeter = request.EndMeter;
+        item.TotalMeterRun = totalMeterRun;
         item.ProjectId = request.ProjectId;
         item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
         item.Wages = request.Wages;
@@ -144,13 +162,16 @@ public class DozerLogService : IDozerLogService
         return true;
     }
 
-    private async Task<string?> ValidateRequest(int driverId, int? vehicleId, int? projectId, string? projectOther)
+    private async Task<string?> ValidateRequest(int driverId, int? vehicleId, int? projectId, string? projectOther, decimal startMeter, decimal endMeter)
     {
         if (!await _db.Users.AnyAsync(u => u.Id == driverId))
             return "Selected driver does not exist.";
 
         if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
             return "Selected vehicle does not exist.";
+
+        if (endMeter <= startMeter)
+            return "End meter must be greater than start meter.";
 
         if (projectId.HasValue)
         {
@@ -180,6 +201,9 @@ public class DozerLogService : IDozerLogService
         VehicleName = d.Vehicle is null ? null : $"{d.Vehicle.Name} ({d.Vehicle.NumberPlate})",
         OperationDate = d.OperationDate,
         OperatedTimeMs = d.OperatedTimeMs,
+        StartMeter = d.StartMeter,
+        EndMeter = d.EndMeter,
+        TotalMeterRun = d.TotalMeterRun,
         ProjectId = d.ProjectId,
         ProjectName = d.Project?.Name ?? d.ProjectOther ?? string.Empty,
         ProjectOther = d.ProjectOther,

@@ -17,7 +17,7 @@ export default function SalaryBreakdown() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isOperator = data?.wages.some((w) => w.operatedTimeMs != null) ?? false;
+  const isOperator = data?.wages.some((w) => w.operatedTimeMs != null || w.totalMeterRun != null) ?? false;
 
   useEffect(() => {
     const id = Number(userId);
@@ -136,7 +136,13 @@ export default function SalaryBreakdown() {
                       <td className="px-4 py-2.5 text-slate-600 whitespace-nowrap">{formatBSDate(w.date)}</td>
                       <td className="px-4 py-2.5 text-slate-600">{w.projectName ?? "—"}</td>
                       {isOperator
-                        ? <td className="px-4 py-2.5 text-slate-600">{w.operatedTimeMs != null ? formatMs(w.operatedTimeMs) : "—"}</td>
+                        ? <td className="px-4 py-2.5 text-slate-600">
+                            {w.operatedTimeMs != null 
+                              ? formatMs(w.operatedTimeMs) 
+                              : w.totalMeterRun != null 
+                              ? formatMeterTime(w.totalMeterRun)
+                              : "—"}
+                          </td>
                         : <td className="px-4 py-2.5 text-slate-600">{w.vendorName ?? "—"}</td>}
                       <td className="px-4 py-2.5 text-right font-medium text-slate-800">
                         {t.common.currencySymbol} {w.wages.toLocaleString()}
@@ -186,6 +192,12 @@ function formatMs(ms: number) {
   const hours = Math.floor(ms / 3_600_000);
   const minutes = Math.floor((ms % 3_600_000) / 60_000);
   return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+}
+
+function formatMeterTime(decimalHours: number) {
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
+  return `${decimalHours.toFixed(1)} hrs (${hours}h ${String(minutes).padStart(2, "0")}m)`;
 }
 
 function ChevronLeftIcon() {

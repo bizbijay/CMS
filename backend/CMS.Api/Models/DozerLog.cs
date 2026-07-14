@@ -19,10 +19,25 @@ public class DozerLog
     [Required]
     public DateOnly OperationDate { get; set; }
 
-    /// <summary>Total operated time stored in milliseconds.</summary>
-    [Required]
+    /// <summary>Total operated time stored in milliseconds (nullable - for legacy support).</summary>
     [Range(0, int.MaxValue)]
-    public int OperatedTimeMs { get; set; }
+    public int? OperatedTimeMs { get; set; }
+
+    /// <summary>Start meter reading (e.g., 1234.5)</summary>
+    [Required]
+    [Column(TypeName = "numeric(10,2)")]
+    [Range(0, double.MaxValue)]
+    public decimal StartMeter { get; set; }
+
+    /// <summary>End meter reading (e.g., 1263.8)</summary>
+    [Required]
+    [Column(TypeName = "numeric(10,2)")]
+    [Range(0, double.MaxValue)]
+    public decimal EndMeter { get; set; }
+
+    /// <summary>Total meter run calculated as EndMeter - StartMeter</summary>
+    [Column(TypeName = "numeric(10,2)")]
+    public decimal TotalMeterRun { get; set; }
 
     // Either ProjectId (FK) or ProjectOther (free text) must be set
     public int? ProjectId { get; set; }

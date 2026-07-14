@@ -5,7 +5,10 @@ export interface DozerLogListItem {
   vehicleId: number | null;
   vehicleName: string | null;
   operationDate: string;
-  operatedTimeMs: number;
+  operatedTimeMs: number | null;
+  startMeter: number;
+  endMeter: number;
+  totalMeterRun: number;
   projectId: number | null;
   projectName: string;
   projectOther: string | null;
@@ -16,7 +19,8 @@ export interface CreateDozerLogRequest {
   driverId: number;
   vehicleId: number | null;
   operationDate: string;
-  operatedTimeMs: number;
+  startMeter: number;
+  endMeter: number;
   projectId: number | null;
   projectOther: string | null;
   wages: number | null;
@@ -26,7 +30,8 @@ export interface UpdateDozerLogRequest {
   driverId: number;
   vehicleId: number | null;
   operationDate: string;
-  operatedTimeMs: number;
+  startMeter: number;
+  endMeter: number;
   projectId: number | null;
   projectOther: string | null;
   wages: number | null;

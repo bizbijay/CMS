@@ -85,7 +85,10 @@ public class SalaryDetailService : ISalaryDetailService
                 Wages = d.Wages!.Value,
                 ProjectName = d.Project != null ? d.Project.Name : d.ProjectOther,
                 VendorName = null,
-                OperatedTimeMs = d.OperatedTimeMs
+                OperatedTimeMs = null,
+                StartMeter = d.StartMeter,
+                EndMeter = d.EndMeter,
+                TotalMeterRun = d.TotalMeterRun
             })
             .ToListAsync();
 

@@ -17,18 +17,12 @@ interface Props {
   onSaved: (item: DozerLogListItem, mode: DozerLogFormMode["kind"]) => void;
 }
 
-const MS_PER_HOUR = 3_600_000;
-const MS_PER_MINUTE = 60_000;
 const OTHER = "other";
 
-function msToHoursMinutes(ms: number) {
-  const hours = Math.floor(ms / MS_PER_HOUR);
-  const minutes = Math.floor((ms % MS_PER_HOUR) / MS_PER_MINUTE);
+function decimalHoursToHoursMinutes(decimalHours: number) {
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
   return { hours, minutes };
-}
-
-function hoursMinutesToMs(hours: number, minutes: number) {
-  return hours * MS_PER_HOUR + minutes * MS_PER_MINUTE;
 }
 
 function todayIso() {
@@ -51,8 +45,8 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
 
   const [driverId, setDriverId] = useState<number>(0);
   const [operationDate, setOperationDate] = useState(todayIso());
-  const [operatedHours, setOperatedHours] = useState<string>("0");
-  const [operatedMinutes, setOperatedMinutes] = useState<string>("0");
+  const [startMeter, setStartMeter] = useState<string>("0");
+  const [endMeter, setEndMeter] = useState<string>("0");
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
   const [wages, setWages] = useState("");
@@ -63,11 +57,14 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   const assignedVehicleId = selectedDriver?.vehicleId ?? null;
   const assignedVehicleName = selectedDriver?.assignedVehicleName ?? null;
 
+  const totalMeterRun = Math.max(0, parseFloat(endMeter || "0") - parseFloat(startMeter || "0"));
+  const { hours: displayHours, minutes: displayMinutes } = decimalHoursToHoursMinutes(totalMeterRun);
+
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
     Promise.all([usersApi.dozerDrivers(), projectsApi.list()])
-      .then(([d, p]) => {
+      .then(async ([d, p]) => {
         setDrivers(d);
         setProjects(p);
 
@@ -79,9 +76,8 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
           const log = mode.log;
           setDriverId(log.driverId);
           setOperationDate(log.operationDate.slice(0, 10));
-          const { hours, minutes } = msToHoursMinutes(log.operatedTimeMs);
-          setOperatedHours(String(hours));
-          setOperatedMinutes(String(minutes));
+          setStartMeter(String(log.startMeter));
+          setEndMeter(String(log.endMeter));
 
           if (log.projectId) {
             setProjectSel(String(log.projectId));
@@ -92,10 +88,24 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
           }
           setWages(log.wages != null ? String(log.wages) : "");
         } else {
-          setDriverId(selfMatch?.id ?? d[0]?.id ?? 0);
+          const driverId = selfMatch?.id ?? d[0]?.id ?? 0;
+          setDriverId(driverId);
           setOperationDate(todayIso());
-          setOperatedHours("0");
-          setOperatedMinutes("0");
+          
+          // Fetch the last log for this driver to use its end meter as start meter
+          try {
+            const allLogs = await dozerLogsApi.list();
+            const lastLog = allLogs
+              .filter(log => log.driverId === driverId)
+              .sort((a, b) => new Date(b.operationDate).getTime() - new Date(a.operationDate).getTime())
+              .at(0);
+            
+            setStartMeter(lastLog ? String(lastLog.endMeter) : "0");
+          } catch {
+            setStartMeter("0");
+          }
+          
+          setEndMeter("0");
           setProjectSel(p[0] ? String(p[0].id) : OTHER);
           setProjectOther("");
           setWages("1500");
@@ -117,15 +127,19 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
     e.preventDefault();
     setError(null);
 
-    const hours = parseInt(operatedHours, 10);
-    const minutes = parseInt(operatedMinutes, 10);
+    const startMeterVal = parseFloat(startMeter);
+    const endMeterVal = parseFloat(endMeter);
 
-    if (isNaN(hours) || hours < 0 || hours > 23) {
-      setError(tr.modal.dozerLog.errorInvalidHours);
+    if (isNaN(startMeterVal) || startMeterVal < 0) {
+      setError(tr.modal.dozerLog.errorInvalidStartMeter);
       return;
     }
-    if (isNaN(minutes) || minutes < 0 || minutes > 59) {
-      setError(tr.modal.dozerLog.errorInvalidMinutes);
+    if (isNaN(endMeterVal) || endMeterVal < 0) {
+      setError(tr.modal.dozerLog.errorInvalidEndMeter);
+      return;
+    }
+    if (endMeterVal <= startMeterVal) {
+      setError(tr.modal.dozerLog.errorEndMeterLessThanStart);
       return;
     }
     if (projectSel === OTHER && !projectOther.trim()) {
@@ -139,7 +153,8 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
       driverId,
       vehicleId: assignedVehicleId,
       operationDate,
-      operatedTimeMs: hoursMinutesToMs(hours, minutes),
+      startMeter: startMeterVal,
+      endMeter: endMeterVal,
       projectId: projectSel !== OTHER ? Number(projectSel) : null,
       projectOther: projectSel === OTHER ? projectOther.trim() : null,
       wages: parsedWages !== null && !isNaN(parsedWages) ? parsedWages : null,
@@ -226,28 +241,35 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={tr.common.hours} required>
+              <Field label={tr.common.startMeter} required>
                 <input
                   type="number"
-                  min={0}
-                  max={23}
-                  value={operatedHours}
-                  onChange={(e) => setOperatedHours(e.target.value)}
+                  min="0"
+                  step="0.1"
+                  value={startMeter}
+                  onChange={(e) => setStartMeter(e.target.value)}
                   required
                   className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </Field>
-              <Field label={tr.common.minutes} required>
+              <Field label={tr.common.endMeter} required>
                 <input
                   type="number"
-                  min={0}
-                  max={59}
-                  value={operatedMinutes}
-                  onChange={(e) => setOperatedMinutes(e.target.value)}
+                  min="0"
+                  step="0.1"
+                  value={endMeter}
+                  onChange={(e) => setEndMeter(e.target.value)}
                   required
                   className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </Field>
+            </div>
+
+            <div className="rounded bg-blue-50 border border-blue-200 p-3">
+              <p className="text-sm font-medium text-slate-700 mb-2">{tr.common.totalMeterRun}</p>
+              <p className="text-lg font-semibold text-blue-700">
+                {totalMeterRun.toFixed(1)} hrs ({displayHours}h {displayMinutes}m)
+              </p>
             </div>
 
             <Field label={tr.common.project} required>

@@ -21,6 +21,9 @@ export interface WageBreakdownItem {
   projectName: string | null;
   vendorName: string | null;
   operatedTimeMs: number | null;
+  startMeter: number | null;
+  endMeter: number | null;
+  totalMeterRun: number | null;
 }
 
 export interface SalaryBreakdownDto {

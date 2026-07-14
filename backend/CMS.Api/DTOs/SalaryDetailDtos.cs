@@ -37,4 +37,7 @@ public class WageBreakdownItem
     public string? ProjectName { get; set; }
     public string? VendorName { get; set; }
     public int? OperatedTimeMs { get; set; }
+    public decimal? StartMeter { get; set; }
+    public decimal? EndMeter { get; set; }
+    public decimal? TotalMeterRun { get; set; }
 }

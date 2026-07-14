@@ -10,7 +10,10 @@ public class DozerLogListItemDto
     public int? VehicleId { get; set; }
     public string? VehicleName { get; set; }
     public DateOnly OperationDate { get; set; }
-    public int OperatedTimeMs { get; set; }
+    public int? OperatedTimeMs { get; set; }
+    public decimal StartMeter { get; set; }
+    public decimal EndMeter { get; set; }
+    public decimal TotalMeterRun { get; set; }
     public int? ProjectId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public string? ProjectOther { get; set; }
@@ -32,8 +35,12 @@ public class CreateDozerLogRequest
     public DateOnly OperationDate { get; set; }
 
     [Required]
-    [Range(0, int.MaxValue)]
-    public int OperatedTimeMs { get; set; }
+    [Range(0, double.MaxValue)]
+    public decimal StartMeter { get; set; }
+
+    [Required]
+    [Range(0, double.MaxValue)]
+    public decimal EndMeter { get; set; }
 
     public int? ProjectId { get; set; }
 
@@ -55,8 +62,12 @@ public class UpdateDozerLogRequest
     public DateOnly OperationDate { get; set; }
 
     [Required]
-    [Range(0, int.MaxValue)]
-    public int OperatedTimeMs { get; set; }
+    [Range(0, double.MaxValue)]
+    public decimal StartMeter { get; set; }
+
+    [Required]
+    [Range(0, double.MaxValue)]
+    public decimal EndMeter { get; set; }
 
     public int? ProjectId { get; set; }
 

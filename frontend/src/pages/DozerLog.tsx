@@ -100,9 +100,9 @@ export default function DozerLog() {
       cell: ({ row }) => formatDate(row.original.operationDate),
     },
     {
-      id: "operatedTime",
-      header: t.common.operatedTime,
-      cell: ({ row }) => formatTime(row.original.operatedTimeMs),
+      id: "totalMeterRun",
+      header: t.common.totalMeterRun,
+      cell: ({ row }) => formatMeterTime(row.original.totalMeterRun),
     },
     {
       accessorKey: "projectName",
@@ -200,10 +200,10 @@ function formatDate(iso: string) {
   return formatBSDate(iso);
 }
 
-function formatTime(ms: number) {
-  const hours = Math.floor(ms / 3_600_000);
-  const minutes = Math.floor((ms % 3_600_000) / 60_000);
-  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+function formatMeterTime(decimalHours: number) {
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
+  return `${decimalHours.toFixed(1)} hrs (${hours}h ${String(minutes).padStart(2, "0")}m)`;
 }
 
 function PencilIcon() {
