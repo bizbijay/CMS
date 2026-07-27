@@ -130,11 +130,11 @@ CREATE TABLE "Vendors" (
 );
 
 -- -------------------------------------------------------------
--- Projects
+-- Government Offices
 -- -------------------------------------------------------------
-CREATE TABLE "Projects" (
+CREATE TABLE "GovernmentOffices" (
     "Id"           SERIAL       PRIMARY KEY,
-    "Name"         VARCHAR(100) NOT NULL,
+    "Name"         VARCHAR(200) NOT NULL,
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
@@ -142,6 +142,159 @@ CREATE TABLE "Projects" (
     "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
     "DeletedOn"    TIMESTAMPTZ,
     "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Maintenance Parts
+-- -------------------------------------------------------------
+CREATE TABLE "MaintenanceParts" (
+    "Id"           SERIAL       PRIMARY KEY,
+    "Name"         VARCHAR(300) NOT NULL,
+    "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    "UpdatedAt"    TIMESTAMPTZ,
+    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Projects
+-- -------------------------------------------------------------
+CREATE TABLE "Projects" (
+    "Id"             SERIAL       PRIMARY KEY,
+    "Name"           VARCHAR(200) NOT NULL,
+    "Address"        VARCHAR(500),
+    "IssuedOfficeId" INT REFERENCES "GovernmentOffices"("Id") ON DELETE SET NULL,
+    "StartDate"      DATE,
+    "EndDate"        DATE,
+    "ProjectCost"    NUMERIC(18, 2),
+    "CreatedAt"      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    "UpdatedAt"      TIMESTAMPTZ,
+    "CreatedById"    INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"    INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"      BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"      TIMESTAMPTZ,
+    "DeletedById"    INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Project Commissions
+-- -------------------------------------------------------------
+CREATE TABLE "ProjectCommissions" (
+    "Id"           SERIAL          PRIMARY KEY,
+    "ProjectId"    INT             NOT NULL REFERENCES "Projects"("Id") ON DELETE CASCADE,
+    "OfficeId"     INT             REFERENCES "GovernmentOffices"("Id") ON DELETE SET NULL,
+    "OtherOption"  VARCHAR(200),
+    "Amount"       NUMERIC(18, 2)  NOT NULL,
+    "Remarks"      VARCHAR(500),
+    "CreatedAt"    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"    TIMESTAMPTZ,
+    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Project Expenses
+-- -------------------------------------------------------------
+CREATE TABLE "ProjectExpenses" (
+    "Id"           SERIAL          PRIMARY KEY,
+    "ProjectId"    INT             NOT NULL REFERENCES "Projects"("Id") ON DELETE CASCADE,
+    "MaterialId"   INT             REFERENCES "Materials"("Id") ON DELETE SET NULL,
+    "Quantity"     NUMERIC(18, 2),
+    "CostPerUnit"  NUMERIC(18, 2),
+    "TotalCost"    NUMERIC(18, 2),
+    "VendorId"     INT             REFERENCES "Vendors"("Id") ON DELETE SET NULL,
+    "VendorOther"  VARCHAR(200),
+    "Date"         DATE            NOT NULL,
+    "Remarks"      VARCHAR(500),
+    "CreatedAt"    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"    TIMESTAMPTZ,
+    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Project Wages
+-- -------------------------------------------------------------
+CREATE TABLE "ProjectWages" (
+    "Id"                SERIAL          PRIMARY KEY,
+    "ProjectId"         INT             NOT NULL REFERENCES "Projects"("Id") ON DELETE CASCADE,
+    "NumberOfWorkers"   INT             NOT NULL,
+    "Rate"              NUMERIC(18, 2)  NOT NULL,
+    "TotalAmount"       NUMERIC(18, 2)  NOT NULL,
+    "Date"              DATE            NOT NULL,
+    "Remarks"           VARCHAR(500),
+    "CreatedAt"         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"         TIMESTAMPTZ,
+    "CreatedById"       INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"       INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"         BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"         TIMESTAMPTZ,
+    "DeletedById"       INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Vehicle Maintenance Logs
+-- -------------------------------------------------------------
+CREATE TABLE "VehicleMaintenanceLogs" (
+    "Id"           SERIAL       PRIMARY KEY,
+    "VehicleId"    INT          NOT NULL REFERENCES "Vehicles"("Id") ON DELETE CASCADE,
+    "Date"         DATE         NOT NULL,
+    "Remarks"      VARCHAR(500),
+    "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    "UpdatedAt"    TIMESTAMPTZ,
+    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Vehicle Maintenance Parts
+-- -------------------------------------------------------------
+CREATE TABLE "VehicleMaintenanceParts" (
+    "Id"                 SERIAL          PRIMARY KEY,
+    "MaintenanceLogId"   INT             NOT NULL REFERENCES "VehicleMaintenanceLogs"("Id") ON DELETE CASCADE,
+    "MaintenancePartId"  INT             NOT NULL REFERENCES "MaintenanceParts"("Id") ON DELETE RESTRICT,
+    "Quantity"           NUMERIC(18, 2),
+    "UnitCost"           NUMERIC(18, 2),
+    "TotalCost"          NUMERIC(18, 2),
+    "Remarks"            VARCHAR(500),
+    "CreatedAt"          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"          TIMESTAMPTZ,
+    "CreatedById"        INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"        INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"          BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"          TIMESTAMPTZ,
+    "DeletedById"        INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
+-- Vehicle Maintenance Wages
+-- -------------------------------------------------------------
+CREATE TABLE "VehicleMaintenanceWages" (
+    "Id"                SERIAL          PRIMARY KEY,
+    "MaintenanceLogId"  INT             NOT NULL REFERENCES "VehicleMaintenanceLogs"("Id") ON DELETE CASCADE,
+    "NumberOfWorkers"   INT             NOT NULL,
+    "Rate"              NUMERIC(18, 2)  NOT NULL,
+    "TotalAmount"       NUMERIC(18, 2)  NOT NULL,
+    "Remarks"           VARCHAR(500),
+    "CreatedAt"         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"         TIMESTAMPTZ,
+    "CreatedById"       INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"       INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"         BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"         TIMESTAMPTZ,
+    "DeletedById"       INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
 -- -------------------------------------------------------------
