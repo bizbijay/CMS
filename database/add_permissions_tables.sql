@@ -75,6 +75,42 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.add',       
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.edit',            'Edit a project')                             ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.delete',          'Delete a project')                           ON CONFLICT ("Name") DO NOTHING;
 
+-- Project Expenses
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_expenses.view',    'View project expenses')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_expenses.add',     'Add project expenses')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_expenses.edit',    'Edit project expenses')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_expenses.delete',  'Delete project expenses')                    ON CONFLICT ("Name") DO NOTHING;
+
+-- Project Wages
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_wages.view',       'View project wages')                         ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_wages.add',        'Add project wages')                          ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_wages.edit',       'Edit project wages')                         ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_wages.delete',     'Delete project wages')                       ON CONFLICT ("Name") DO NOTHING;
+
+-- Government Offices
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('govt_offices.view',        'View government offices')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('govt_offices.add',         'Add government offices')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('govt_offices.edit',        'Edit government offices')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('govt_offices.delete',      'Delete government offices')                  ON CONFLICT ("Name") DO NOTHING;
+
+-- Project Commissions
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_commissions.view', 'View project commissions')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_commissions.add',  'Add project commissions')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_commissions.edit', 'Edit project commissions')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('project_commissions.delete','Delete project commissions')                 ON CONFLICT ("Name") DO NOTHING;
+
+-- Vehicle Maintenance
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicle_maintenance.view', 'View vehicle maintenance')                  ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicle_maintenance.add',  'Add vehicle maintenance')                   ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicle_maintenance.edit', 'Edit vehicle maintenance')                  ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vehicle_maintenance.delete','Delete vehicle maintenance')                ON CONFLICT ("Name") DO NOTHING;
+
+-- Maintenance Parts
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('maintenance_parts.view',  'View maintenance parts')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('maintenance_parts.add',   'Add maintenance parts')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('maintenance_parts.edit',  'Edit maintenance parts')                     ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('maintenance_parts.delete','Delete maintenance parts')                   ON CONFLICT ("Name") DO NOTHING;
+
 -- Fuel Types
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.view',          'View the fuel types list')                   ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_types.add',           'Add a fuel type')                            ON CONFLICT ("Name") DO NOTHING;
@@ -92,6 +128,12 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.view',   
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.add',          'Create a new permission')                    ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.edit',         'Edit an existing permission')                ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.delete',       'Delete a permission')                        ON CONFLICT ("Name") DO NOTHING;
+
+-- Party Names
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.view',         'View party names')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.add',          'Add party names')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.edit',         'Edit party names')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.delete',       'Delete party names')                         ON CONFLICT ("Name") DO NOTHING;
 
 -- Role Permissions
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.view',    'View permissions assigned to roles')         ON CONFLICT ("Name") DO NOTHING;
