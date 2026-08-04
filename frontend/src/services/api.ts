@@ -33,6 +33,7 @@ import type { ProjectExpenseListItem, CreateProjectExpenseRequest, UpdateProject
 import type { ProjectWageListItem, CreateProjectWageRequest, UpdateProjectWageRequest } from "../types/projectWages";
 import type { GovernmentOfficeListItem, CreateGovernmentOfficeRequest, UpdateGovernmentOfficeRequest } from "../types/governmentOffice";
 import type { ProjectCommissionListItem, CreateProjectCommissionRequest, UpdateProjectCommissionRequest } from "../types/projectCommissions";
+import type { CreateExtraExpenseRequest, UpdateExtraExpenseRequest, ExtraExpenseListItem } from "../types/extraExpense";
 import type {
   VehicleMaintenanceLogListItem, CreateVehicleMaintenanceLogRequest, UpdateVehicleMaintenanceLogRequest,
   VehicleMaintenancePartListItem, CreateVehicleMaintenancePartRequest, UpdateVehicleMaintenancePartRequest,
@@ -276,6 +277,17 @@ export const dozerLogsApi = {
   update: (id: number, body: UpdateDozerLogRequest) =>
     request<DozerLogListItem>(`/api/dozerlogs/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/dozerlogs/${id}`, { method: "DELETE" }),
+};
+
+export const extraExpensesApi = {
+  list: () => request<ExtraExpenseListItem[]>("/api/extra-expenses", { method: "GET" }),
+  create: (body: CreateExtraExpenseRequest) =>
+    request<ExtraExpenseListItem>("/api/extra-expenses", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateExtraExpenseRequest) =>
+    request<ExtraExpenseListItem>(`/api/extra-expenses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  verify: (id: number) =>
+    request<ExtraExpenseListItem>(`/api/extra-expenses/${id}/verify`, { method: "POST" }),
+  remove: (id: number) => request<void>(`/api/extra-expenses/${id}`, { method: "DELETE" }),
 };
 
 export const materialsApi = {

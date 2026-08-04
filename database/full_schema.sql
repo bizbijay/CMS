@@ -513,6 +513,31 @@ CREATE TABLE "SalaryDetails" (
     CONSTRAINT "UX_SalaryDetails_UserId" UNIQUE ("UserId")
 );
 
+-- -------------------------------------------------------------
+-- ExtraExpenses
+-- -------------------------------------------------------------
+CREATE TABLE "ExtraExpenses" (
+    "Id"              SERIAL          PRIMARY KEY,
+    "ExpensedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "ExpensedByOther" VARCHAR(200),
+    "Item"            VARCHAR(200)    NOT NULL,
+    "Quantity"        NUMERIC(18, 2),
+    "Cost"            NUMERIC(18, 2),
+    "TotalCost"       NUMERIC(18, 2)  NOT NULL,
+    "Remarks"         VARCHAR(500),
+    "IsVerified"      BOOLEAN         NOT NULL DEFAULT FALSE,
+    "VerifiedById"    INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "VerifiedAt"      TIMESTAMPTZ,
+    "Date"            DATE            NOT NULL,
+    "CreatedAt"       TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"       TIMESTAMPTZ,
+    "CreatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"       BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"       TIMESTAMPTZ,
+    "DeletedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
 -- =============================================================
 -- Seed: Admin role
 -- =============================================================

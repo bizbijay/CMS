@@ -29,6 +29,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/project-details", label: t.nav.projectDetails, icon: ProjectDetailsIcon, policy: "projects.view" },
     { to: "/monthly-salary", label: t.nav.monthlySalary, icon: MonthlySalaryIcon, policy: "monthly_salary.view" },
     { to: "/salary-details", label: t.nav.salaryDetails, icon: SalaryDetailIcon, policy: "salary_detail.view" },
+    { to: "/extra-expenses", label: t.nav.extraExpenses, icon: ExtraExpensesIcon, policy: "extra_expenses.view" },
   ];
 
   const settingsMenu = [
@@ -518,6 +519,17 @@ function GovernmentOfficeIcon({ className }: { className?: string }) {
       <rect x="9" y="13" width="6" height="8" />
       <line x1="9" y1="10" x2="9" y2="10.01" />
       <line x1="15" y1="10" x2="15" y2="10.01" />
+    </svg>
+  );
+}
+
+function ExtraExpensesIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
     </svg>
   );
 }

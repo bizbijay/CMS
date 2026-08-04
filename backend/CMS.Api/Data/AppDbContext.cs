@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<VehicleMaintenanceWage> VehicleMaintenanceWages => Set<VehicleMaintenanceWage>();
     public DbSet<MaintenancePart> MaintenanceParts => Set<MaintenancePart>();
     public DbSet<PartyName> PartyNames => Set<PartyName>();
+    public DbSet<ExtraExpense> ExtraExpenses => Set<ExtraExpense>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

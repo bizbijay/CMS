@@ -70,6 +70,12 @@ export const POLICY_MAP: Record<string, string> = {
   "salary_payment.delete":  "salary_payment.delete",
 
   "salary_detail.view":     "salary_detail.view",
+
+  "extra_expenses.view":   "extra_expenses.view",
+  "extra_expenses.add":    "extra_expenses.add",
+  "extra_expenses.edit":   "extra_expenses.edit",
+  "extra_expenses.delete": "extra_expenses.delete",
+  "extra_expenses.verify": "extra_expenses.verify",
 };
 
 export type PolicyName = keyof typeof POLICY_MAP;

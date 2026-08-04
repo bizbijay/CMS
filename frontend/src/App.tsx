@@ -15,6 +15,7 @@ import Permissions from "./pages/Permissions";
 import RolePermissions from "./pages/RolePermissions";
 import FuelLog from "./pages/FuelLog";
 import DozerLog from "./pages/DozerLog";
+import ExtraExpenses from "./pages/ExtraExpenses";
 import SalarySetup from "./pages/SalarySetup";
 import MonthlySalary from "./pages/MonthlySalary";
 import SalaryPayments from "./pages/SalaryPayments";
@@ -83,6 +84,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="dozer_log.view">
               <DozerLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/extra-expenses"
+          element={
+            <ProtectedRoute policy="extra_expenses.view">
+              <ExtraExpenses />
             </ProtectedRoute>
           }
         />

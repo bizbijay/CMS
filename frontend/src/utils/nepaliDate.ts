@@ -48,11 +48,12 @@ export function getDaysInBSMonth(year: number, month: number): number {
   return new NepaliDate(adDate).getDate();
 }
 
-/** Format an AD ISO date string as a human-readable BS date, e.g. "2082 Baishakh 15". */
-export function formatBSDate(isoAd: string): string {
+/** Format an AD ISO date string as a human-readable BS date, e.g. "2082 Baishakh 15" or "२०८२ बैशाख १५". */
+export function formatBSDate(isoAd: string, locale: "en" | "np" = "en"): string {
   try {
     const { year, month, day } = adToBS(isoAd);
-    return `${year} ${NEPALI_MONTHS_EN[month - 1]} ${day}`;
+    const monthName = locale === "np" ? NEPALI_MONTHS_NP[month - 1] : NEPALI_MONTHS_EN[month - 1];
+    return `${year} ${monthName} ${day}`;
   } catch {
     return isoAd;
   }
