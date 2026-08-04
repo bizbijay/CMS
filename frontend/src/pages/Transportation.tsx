@@ -175,6 +175,16 @@ export default function Transportation() {
         : <span className="text-slate-400">—</span>,
     },
     {
+      accessorKey: "totalWages",
+      header: t.common.totalWages,
+      cell: ({ row }) => {
+        const total = row.original.totalWages ?? (row.original.wages ? row.original.wages * Math.max(1, row.original.noOfTip ?? 1) : null);
+        return total != null
+          ? `${t.common.currencySymbol} ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+          : <span className="text-slate-400">—</span>;
+      },
+    },
+    {
       accessorKey: "date",
       header: t.common.date,
       cell: ({ row }) => formatDate(row.original.date),

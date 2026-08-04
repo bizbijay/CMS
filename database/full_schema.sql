@@ -351,6 +351,7 @@ CREATE TABLE "Transportations" (
     "MaterialCost"        NUMERIC(18, 2),
     "Tax"                 NUMERIC(18, 2),
     "Wages"               NUMERIC(18, 2),
+    "TotalWages"          NUMERIC(18, 2),
     "Date"                DATE            NOT NULL,
     "CreatedAt"           TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     "UpdatedAt"           TIMESTAMPTZ,
@@ -412,6 +413,7 @@ CREATE TABLE "DozerLogs" (
     "DeletedOn"       TIMESTAMPTZ,
     "DeletedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "chk_dozer_project" CHECK (
+        ("PartyNameId" IS NULL AND "ProjectId" IS NULL AND "ProjectOther" IS NULL) OR
         ("PartyNameId" IS NOT NULL AND "ProjectId" IS NULL AND "ProjectOther" IS NULL) OR
         ("PartyNameId" IS NULL AND (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL)))
     )

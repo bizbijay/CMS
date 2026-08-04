@@ -60,7 +60,7 @@ public class SalaryDetailService : ISalaryDetailService
             .ToListAsync();
 
         var transportationWages = await _db.Transportations
-            .Where(t => t.TransportedById == userId && t.Wages != null && t.Wages > 0)
+            .Where(t => t.TransportedById == userId && ((t.TotalWages != null && t.TotalWages > 0) || (t.Wages != null && t.Wages > 0)))
             .Include(t => t.Project)
             .Include(t => t.Vendor)
             .OrderByDescending(t => t.Date)
@@ -68,7 +68,7 @@ public class SalaryDetailService : ISalaryDetailService
             {
                 TransportationId = t.Id,
                 Date = t.Date,
-                Wages = t.Wages!.Value,
+                Wages = t.TotalWages ?? ((t.Wages ?? 0m) * (t.NoOfTip ?? 1)),
                 ProjectName = t.Project != null ? t.Project.Name : t.ProjectOther,
                 VendorName = t.Vendor != null ? t.Vendor.Name : t.VendorOther
             })

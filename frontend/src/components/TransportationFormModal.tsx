@@ -60,7 +60,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [materialId, setMaterialId] = useState<number | null>(null);
   const [location, setLocation] = useState("");
   const [partyNameId, setPartyNameId] = useState<number | null>(null);
-  const [noOfTip, setNoOfTip] = useState("");
+  const [noOfTip, setNoOfTip] = useState("1");
   const [quantity, setQuantity] = useState("1");
   const [perUnitCost, setPerUnitCost] = useState("");
   const [tax, setTax] = useState("");
@@ -74,6 +74,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     quantity !== "" && perUnitCost !== ""
       ? Number(quantity) * Number(perUnitCost)
       : null;
+
+  const parsedWagesRate = wages !== "" ? Number(wages) : null;
+  const parsedTips = noOfTip !== "" ? Math.max(1, Number(noOfTip)) : 1;
+  const computedTotalWages = parsedWagesRate !== null ? parsedWagesRate * parsedTips : null;
 
   // Derive vehicle from the selected driver when a registered driver is chosen.
   const isOtherTransporter = transportedBySel === OTHER;
@@ -118,7 +122,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           setLocation(t.location ?? "");
           setPartyNameId(t.partyNameId ?? null);
           setReferenceType(t.partyNameId ? "partyName" : "project");
-          setNoOfTip(t.noOfTip != null ? String(t.noOfTip) : "");
+          setNoOfTip(t.noOfTip != null && t.noOfTip >= 1 ? String(t.noOfTip) : "1");
           setQuantity(t.quantity != null ? String(t.quantity) : "");
           setPerUnitCost(t.perUnitCost != null ? String(t.perUnitCost) : "");
           setTax(t.tax != null ? String(t.tax) : "");
@@ -213,11 +217,12 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
       projectOther: selectedProjectOther,
       location: location.trim() || null,
       partyNameId: selectedPartyNameId,
-      noOfTip: noOfTip !== "" ? Number(noOfTip) : null,
+      noOfTip: parsedTips,
       quantity: quantity !== "" ? Number(quantity) : null,
       perUnitCost: perUnitCost !== "" ? Number(perUnitCost) : null,
       tax: tax !== "" ? Number(tax) : null,
-      wages: wages !== "" ? Number(wages) : null,
+      wages: parsedWagesRate,
+      totalWages: computedTotalWages,
       date,
     };
 
@@ -376,18 +381,46 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
               </>
             )}
 
-            <Field label={tr.common.wages}>
-              <select
-                value={wages}
-                onChange={(e) => setWages(e.target.value)}
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">—</option>
-                <option value="1000">1000</option>
-                <option value="1500">1500</option>
-                <option value="3000">3000</option>
-              </select>
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={tr.common.wages}>
+                <select
+                  value={wages}
+                  onChange={(e) => setWages(e.target.value)}
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">—</option>
+                  <option value="1000">1000</option>
+                  <option value="1500">1500</option>
+                  <option value="3000">3000</option>
+                </select>
+              </Field>
+
+              <Field label={tr.common.noOfTip}>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={noOfTip}
+                  onChange={(e) => setNoOfTip(e.target.value)}
+                  onBlur={() => {
+                    if (noOfTip === "" || Number(noOfTip) < 1) {
+                      setNoOfTip("1");
+                    }
+                  }}
+                  placeholder="1"
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </Field>
+            </div>
+
+            {computedTotalWages !== null && (
+              <div className="flex items-center justify-between rounded bg-blue-50 border border-blue-200 px-3 py-2 text-sm font-medium text-slate-700">
+                <span>{tr.common.totalWages}</span>
+                <span className="font-semibold text-blue-700">
+                  {tr.common.currencySymbol} {computedTotalWages.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
 
             <Field label={tr.common.vendor} required>
               <select
@@ -485,17 +518,6 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
               />
             </Field>
 
-            <Field label={tr.common.noOfTip}>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={noOfTip}
-                onChange={(e) => setNoOfTip(e.target.value)}
-                placeholder="0"
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </Field>
             <Field label={tr.common.date} required>
               <NepaliCalendarPicker
                 value={date}

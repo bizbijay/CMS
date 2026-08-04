@@ -28,6 +28,7 @@ public class TransportationListItemDto
     public decimal? MaterialCost { get; set; }
     public decimal? Tax { get; set; }
     public decimal? Wages { get; set; }
+    public decimal? TotalWages { get; set; }
     public DateOnly Date { get; set; }
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
@@ -74,6 +75,8 @@ public class CreateTransportationRequest
 
     public decimal? Wages { get; set; }
 
+    public decimal? TotalWages { get; set; }
+
     [Required]
     public DateOnly Date { get; set; }
 }
@@ -116,6 +119,8 @@ public class UpdateTransportationRequest
     public decimal? Tax { get; set; }
 
     public decimal? Wages { get; set; }
+
+    public decimal? TotalWages { get; set; }
 
     [Required]
     public DateOnly Date { get; set; }

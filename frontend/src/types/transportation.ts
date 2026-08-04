@@ -23,6 +23,7 @@ export interface TransportationListItem {
   materialCost?: number | null;
   tax?: number | null;
   wages?: number | null;
+  totalWages?: number | null;
   date: string;
   createdBy?: string | null;
   updatedBy?: string | null;
@@ -47,6 +48,7 @@ export interface CreateTransportationRequest {
   perUnitCost?: number | null;
   tax?: number | null;
   wages?: number | null;
+  totalWages?: number | null;
   date: string;
 }
 
@@ -67,5 +69,6 @@ export interface UpdateTransportationRequest {
   perUnitCost?: number | null;
   tax?: number | null;
   wages?: number | null;
+  totalWages?: number | null;
   date: string;
 }

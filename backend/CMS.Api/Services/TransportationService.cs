@@ -92,6 +92,7 @@ public class TransportationService : ITransportationService
                 : null,
             Tax = request.Tax,
             Wages = request.Wages,
+            TotalWages = request.TotalWages ?? ((request.Wages ?? 0m) * Math.Max(1, request.NoOfTip ?? 1)),
             Date = request.Date,
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
@@ -99,8 +100,9 @@ public class TransportationService : ITransportationService
 
         _db.Transportations.Add(item);
 
-        if (request.TransportedById.HasValue && request.Wages > 0)
-            await _salaryDetailService.AdjustAsync(request.TransportedById.Value, totalSalaryDelta: request.Wages ?? 0m);
+        var totalWagesAmount = item.TotalWages ?? 0m;
+        if (request.TransportedById.HasValue && totalWagesAmount > 0)
+            await _salaryDetailService.AdjustAsync(request.TransportedById.Value, totalSalaryDelta: totalWagesAmount);
 
         await _db.SaveChangesAsync();
 
@@ -154,12 +156,15 @@ public class TransportationService : ITransportationService
             : null;
         item.Tax = request.Tax;
         item.Wages = request.Wages;
+        var oldTotalWagesValue = item.TotalWages ?? ((oldWages ?? 0m) * Math.Max(1, item.NoOfTip ?? 1));
+        var newTotalWagesValue = request.TotalWages ?? ((request.Wages ?? 0m) * Math.Max(1, request.NoOfTip ?? 1));
+        item.TotalWages = newTotalWagesValue;
         item.Date = request.Date;
         item.UpdatedById = updatedById;
         item.UpdatedAt = DateTime.UtcNow;
 
-        var oldWagesValue = oldWages ?? 0m;
-        var newWagesValue = request.Wages ?? 0m;
+        var oldWagesValue = oldTotalWagesValue;
+        var newWagesValue = newTotalWagesValue;
 
         // Only adjust salary when both old and new entries reference actual users
         if (oldTransportedById.HasValue && request.TransportedById.HasValue && oldTransportedById == request.TransportedById)
@@ -193,8 +198,9 @@ public class TransportationService : ITransportationService
     {
         var item = await _db.Transportations.FindAsync(id);
         if (item is null) return false;
-        if (item.TransportedById.HasValue && item.Wages is { } wages && wages != 0)
-            await _salaryDetailService.AdjustAsync(item.TransportedById.Value, totalSalaryDelta: -wages);
+        var deletedTotalWages = item.TotalWages ?? ((item.Wages ?? 0m) * Math.Max(1, item.NoOfTip ?? 1));
+        if (item.TransportedById.HasValue && deletedTotalWages != 0)
+            await _salaryDetailService.AdjustAsync(item.TransportedById.Value, totalSalaryDelta: -deletedTotalWages);
 
         item.IsDeleted = true;
         item.DeletedById = deletedById;
@@ -279,6 +285,7 @@ public class TransportationService : ITransportationService
         MaterialCost = t.MaterialCost,
         Tax = t.Tax,
         Wages = t.Wages,
+        TotalWages = t.TotalWages ?? ((t.Wages ?? 0m) * Math.Max(1, t.NoOfTip ?? 1)),
         Date = t.Date,
         CreatedBy = t.CreatedBy?.Username,
         UpdatedBy = t.UpdatedBy?.Username,

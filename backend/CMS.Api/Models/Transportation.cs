@@ -63,6 +63,9 @@ public class Transportation
     [Column(TypeName = "numeric(18,2)")]
     public decimal? Wages { get; set; }
 
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal? TotalWages { get; set; }
+
     [Required]
     public DateOnly Date { get; set; }
 
