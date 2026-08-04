@@ -24,6 +24,7 @@ public class TransportationService : ITransportationService
             .Include(t => t.Material)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
+            .Include(t => t.PartyName)
             .Include(t => t.CreatedBy)
             .Include(t => t.UpdatedBy)
             .OrderByDescending(t => t.Date)
@@ -40,6 +41,7 @@ public class TransportationService : ITransportationService
             .Include(t => t.Material)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
+            .Include(t => t.PartyName)
             .Include(t => t.CreatedBy)
             .Include(t => t.UpdatedBy)
             .Where(t => t.ProjectId == projectId)
@@ -57,6 +59,7 @@ public class TransportationService : ITransportationService
             .Include(t => t.Material)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
+            .Include(t => t.PartyName)
             .Include(t => t.CreatedBy)
             .Include(t => t.UpdatedBy)
             .FirstOrDefaultAsync(t => t.Id == id);
@@ -65,7 +68,7 @@ public class TransportationService : ITransportationService
 
     public async Task<(TransportationListItemDto? Item, string? Error)> CreateAsync(CreateTransportationRequest request, int createdById)
     {
-        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther, request.PartyNameId);
         if (error is not null) return (null, error);
 
         var item = new Transportation
@@ -79,6 +82,9 @@ public class TransportationService : ITransportationService
             VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null,
             ProjectId = request.ProjectId,
             ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
+            Location = request.Location?.Trim(),
+            PartyNameId = request.PartyNameId,
+            NoOfTip = request.NoOfTip,
             Quantity = request.Quantity,
             PerUnitCost = request.PerUnitCost,
             MaterialCost = (request.Quantity.HasValue && request.PerUnitCost.HasValue)
@@ -103,6 +109,7 @@ public class TransportationService : ITransportationService
         if (item.MaterialId.HasValue) await _db.Entry(item).Reference(t => t.Material).LoadAsync();
         if (item.VendorId.HasValue) await _db.Entry(item).Reference(t => t.Vendor).LoadAsync();
         if (item.ProjectId.HasValue) await _db.Entry(item).Reference(t => t.Project).LoadAsync();
+        if (item.PartyNameId.HasValue) await _db.Entry(item).Reference(t => t.PartyName).LoadAsync();
         await _db.Entry(item).Reference(t => t.CreatedBy).LoadAsync();
 
         return (ToDto(item), null);
@@ -115,13 +122,14 @@ public class TransportationService : ITransportationService
             .Include(t => t.Vehicle)
             .Include(t => t.Vendor)
             .Include(t => t.Project)
+            .Include(t => t.PartyName)
             .Include(t => t.CreatedBy)
             .Include(t => t.UpdatedBy)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (item is null) return (null, null);
 
-        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther);
+        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther, request.PartyNameId);
         if (error is not null) return (null, error);
 
         var oldTransportedById = item.TransportedById;
@@ -136,6 +144,9 @@ public class TransportationService : ITransportationService
         item.VendorOther = request.VendorId is null ? request.VendorOther?.Trim() : null;
         item.ProjectId = request.ProjectId;
         item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
+        item.Location = request.Location?.Trim();
+        item.PartyNameId = request.PartyNameId;
+        item.NoOfTip = request.NoOfTip;
         item.Quantity = request.Quantity;
         item.PerUnitCost = request.PerUnitCost;
         item.MaterialCost = (request.Quantity.HasValue && request.PerUnitCost.HasValue)
@@ -172,6 +183,7 @@ public class TransportationService : ITransportationService
         if (item.MaterialId.HasValue) await _db.Entry(item).Reference(t => t.Material).LoadAsync();
         if (item.VendorId.HasValue) await _db.Entry(item).Reference(t => t.Vendor).LoadAsync();
         if (item.ProjectId.HasValue) await _db.Entry(item).Reference(t => t.Project).LoadAsync();
+        if (item.PartyNameId.HasValue) await _db.Entry(item).Reference(t => t.PartyName).LoadAsync();
         await _db.Entry(item).Reference(t => t.UpdatedBy).LoadAsync();
 
         return (ToDto(item), null);
@@ -191,7 +203,7 @@ public class TransportationService : ITransportationService
         return true;
     }
 
-    private async Task<string?> ValidateRequest(int? transportedById, string? transportedByOther, int? vehicleId, int? materialId, int? vendorId, string? vendorOther, int? projectId, string? projectOther)
+    private async Task<string?> ValidateRequest(int? transportedById, string? transportedByOther, int? vehicleId, int? materialId, int? vendorId, string? vendorOther, int? projectId, string? projectOther, int? partyNameId)
     {
         if (transportedById.HasValue)
         {
@@ -229,6 +241,9 @@ public class TransportationService : ITransportationService
             return "Project is required.";
         }
 
+        if (partyNameId.HasValue && !await _db.PartyNames.AnyAsync(p => p.Id == partyNameId.Value))
+            return "Selected party name does not exist.";
+
         return null;
     }
 
@@ -255,6 +270,10 @@ public class TransportationService : ITransportationService
         ProjectId = t.ProjectId,
         ProjectName = t.Project?.Name ?? t.ProjectOther ?? string.Empty,
         ProjectOther = t.ProjectOther,
+        Location = t.Location,
+        PartyNameId = t.PartyNameId,
+        PartyNameName = t.PartyName?.Name,
+        NoOfTip = t.NoOfTip,
         Quantity = t.Quantity,
         PerUnitCost = t.PerUnitCost,
         MaterialCost = t.MaterialCost,

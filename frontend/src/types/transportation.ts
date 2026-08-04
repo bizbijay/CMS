@@ -14,6 +14,10 @@ export interface TransportationListItem {
   projectId?: number | null;
   projectName: string;
   projectOther?: string | null;
+  location?: string | null;
+  partyNameId?: number | null;
+  partyNameName?: string | null;
+  noOfTip?: number | null;
   quantity?: number | null;
   perUnitCost?: number | null;
   materialCost?: number | null;
@@ -36,6 +40,9 @@ export interface CreateTransportationRequest {
   vendorOther?: string | null;
   projectId?: number | null;
   projectOther?: string | null;
+  location?: string | null;
+  partyNameId?: number | null;
+  noOfTip?: number | null;
   quantity?: number | null;
   perUnitCost?: number | null;
   tax?: number | null;
@@ -53,6 +60,9 @@ export interface UpdateTransportationRequest {
   vendorOther?: string | null;
   projectId?: number | null;
   projectOther?: string | null;
+  location?: string | null;
+  partyNameId?: number | null;
+  noOfTip?: number | null;
   quantity?: number | null;
   perUnitCost?: number | null;
   tax?: number | null;

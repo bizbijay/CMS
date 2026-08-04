@@ -84,6 +84,7 @@ builder.Services.AddScoped<IVehicleMaintenanceLogService, VehicleMaintenanceLogS
 builder.Services.AddScoped<IVehicleMaintenancePartService, VehicleMaintenancePartService>();
 builder.Services.AddScoped<IVehicleMaintenanceWageService, VehicleMaintenanceWageService>();
 builder.Services.AddScoped<IMaintenancePartService, MaintenancePartService>();
+builder.Services.AddScoped<IPartyNameService, PartyNameService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("noc", c =>
@@ -159,6 +160,8 @@ builder.Services.AddAuthorization(options =>
         "vehicle_maintenance.view", "vehicle_maintenance.add", "vehicle_maintenance.edit", "vehicle_maintenance.delete",
 
         "maintenance_parts.view", "maintenance_parts.add", "maintenance_parts.edit", "maintenance_parts.delete",
+
+        "party_names.view", "party_names.add", "party_names.edit", "party_names.delete",
     ];
 
     foreach (var perm in permissions)

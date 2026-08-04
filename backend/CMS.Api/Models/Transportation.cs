@@ -39,6 +39,14 @@ public class Transportation
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
+    [MaxLength(200)]
+    public string? Location { get; set; }
+
+    public int? PartyNameId { get; set; }
+    public PartyName? PartyName { get; set; }
+
+    public int? NoOfTip { get; set; }
+
     [Column(TypeName = "numeric(18,2)")]
     public decimal? Quantity { get; set; }
 

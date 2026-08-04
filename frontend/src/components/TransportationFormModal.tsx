@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { transportationsApi, usersApi, vendorsApi, projectsApi, materialsApi, getStoredUser } from "../services/api";
+import { transportationsApi, usersApi, vendorsApi, projectsApi, materialsApi, partyNamesApi, getStoredUser } from "../services/api";
 import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { TransportationListItem } from "../types/transportation";
@@ -39,6 +39,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
+  const [partyNames, setPartyNames] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
 
@@ -51,11 +52,15 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
 
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
+  const [referenceType, setReferenceType] = useState<"project" | "partyName">("project");
 
   // vehicleOther is only used when transportedBySel === OTHER
   const [vehicleOther, setVehicleOther] = useState("");
 
   const [materialId, setMaterialId] = useState<number | null>(null);
+  const [location, setLocation] = useState("");
+  const [partyNameId, setPartyNameId] = useState<number | null>(null);
+  const [noOfTip, setNoOfTip] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [perUnitCost, setPerUnitCost] = useState("");
   const [tax, setTax] = useState("");
@@ -79,16 +84,18 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.drivers(), vendorsApi.list(), projectsApi.list(), materialsApi.list()])
-      .then(([d, v, p, m]) => {
+    Promise.all([usersApi.drivers(), vendorsApi.list(), projectsApi.list(), materialsApi.list(), partyNamesApi.list()])
+      .then(([d, v, p, m, pn]) => {
         const safeD = d ?? [];
         const safeV = v ?? [];
         const safeP = p ?? [];
         const safeM = m ?? [];
+        const safePartyNames = pn ?? [];
         setDrivers(safeD);
         setVendors(safeV);
         setProjects(safeP);
         setMaterials(safeM);
+        setPartyNames(safePartyNames);
 
         const stored = getStoredUser();
         const selfMatch = safeD.find((x) => x.id === stored?.id);
@@ -108,6 +115,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           setVehicleOther(t.vehicleOther ?? "");
           setDate(t.date.slice(0, 10));
           setMaterialId(t.materialId ?? null);
+          setLocation(t.location ?? "");
+          setPartyNameId(t.partyNameId ?? null);
+          setReferenceType(t.partyNameId ? "partyName" : "project");
+          setNoOfTip(t.noOfTip != null ? String(t.noOfTip) : "");
           setQuantity(t.quantity != null ? String(t.quantity) : "");
           setPerUnitCost(t.perUnitCost != null ? String(t.perUnitCost) : "");
           setTax(t.tax != null ? String(t.tax) : "");
@@ -137,6 +148,10 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
           setTransportedByOther("");
           setVehicleOther("");
           setMaterialId(null);
+          setLocation("");
+          setPartyNameId(null);
+          setReferenceType("project");
+          setNoOfTip("1");
           setQuantity("1");
           setPerUnitCost("");
           setTax("");
@@ -172,8 +187,17 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
       setError(tr.modal.transportation.errorNoVendor);
       return;
     }
-    if (projectSel === OTHER && !projectOther.trim()) {
+
+    const selectedProjectId = referenceType === "project" && projectSel !== OTHER ? Number(projectSel) : null;
+    const selectedProjectOther = referenceType === "project" && projectSel === OTHER ? projectOther.trim() || null : null;
+    const selectedPartyNameId = referenceType === "partyName" ? partyNameId ?? null : null;
+
+    if (referenceType === "project" && !selectedProjectId && !selectedProjectOther) {
       setError(tr.modal.transportation.errorNoProject);
+      return;
+    }
+    if (referenceType === "partyName" && !selectedPartyNameId) {
+      setError("Please select a party name.");
       return;
     }
 
@@ -185,8 +209,11 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
       materialId,
       vendorId: vendorSel !== OTHER ? Number(vendorSel) : null,
       vendorOther: vendorSel === OTHER ? vendorOther.trim() : null,
-      projectId: projectSel !== OTHER ? Number(projectSel) : null,
-      projectOther: projectSel === OTHER ? projectOther.trim() : null,
+      projectId: selectedProjectId,
+      projectOther: selectedProjectOther,
+      location: location.trim() || null,
+      partyNameId: selectedPartyNameId,
+      noOfTip: noOfTip !== "" ? Number(noOfTip) : null,
       quantity: quantity !== "" ? Number(quantity) : null,
       perUnitCost: perUnitCost !== "" ? Number(perUnitCost) : null,
       tax: tax !== "" ? Number(tax) : null,
@@ -384,28 +411,91 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
               )}
             </Field>
 
-            <Field label={tr.common.project} required>
-              <select
-                value={projectSel}
-                onChange={(e) => { setProjectSel(e.target.value); setProjectOther(""); }}
+            <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <input
+                    type="radio"
+                    name="referenceType"
+                    value="project"
+                    checked={referenceType === "project"}
+                    onChange={() => setReferenceType("project")}
+                    className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {tr.common.project}
+                </label>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <input
+                    type="radio"
+                    name="referenceType"
+                    value="partyName"
+                    checked={referenceType === "partyName"}
+                    onChange={() => setReferenceType("partyName")}
+                    className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {tr.common.partyName}
+                </label>
+              </div>
+            </div>
+
+            {referenceType === "project" ? (
+              <Field label={tr.common.project} required>
+                <select
+                  value={projectSel}
+                  onChange={(e) => { setProjectSel(e.target.value); setProjectOther(""); }}
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {projects.map((p) => (
+                    <option key={p.id} value={String(p.id)}>{p.name}</option>
+                  ))}
+                  <option value={OTHER}>{tr.modal.transportation.otherOption}</option>
+                </select>
+                {projectSel === OTHER && (
+                  <input
+                    type="text"
+                    value={projectOther}
+                    onChange={(e) => setProjectOther(e.target.value)}
+                    placeholder={tr.modal.transportation.enterProjectName}
+                    className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
+              </Field>
+            ) : (
+              <Field label={tr.common.partyName} required>
+                <select
+                  value={partyNameId ?? ""}
+                  onChange={(e) => setPartyNameId(e.target.value ? Number(e.target.value) : null)}
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">{tr.modal.transportation.noneOption}</option>
+                  {partyNames.map((party) => (
+                    <option key={party.id} value={party.id}>{party.name}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
+            <Field label={tr.common.location}>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder={tr.modal.transportation.enterLocation}
                 className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={String(p.id)}>{p.name}</option>
-                ))}
-                <option value={OTHER}>{tr.modal.transportation.otherOption}</option>
-              </select>
-              {projectSel === OTHER && (
-                <input
-                  type="text"
-                  value={projectOther}
-                  onChange={(e) => setProjectOther(e.target.value)}
-                  placeholder={tr.modal.transportation.enterProjectName}
-                  className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
+              />
             </Field>
 
+            <Field label={tr.common.noOfTip}>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={noOfTip}
+                onChange={(e) => setNoOfTip(e.target.value)}
+                placeholder="0"
+                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Field>
             <Field label={tr.common.date} required>
               <NepaliCalendarPicker
                 value={date}

@@ -10,7 +10,7 @@ interface Props {
 
 const settingsPaths = [
   "/vehicles", "/materials", "/vendors", "/projects",
-  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office", "/maintenance-parts",
+  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office", "/maintenance-parts", "/party-names",
 ];
 
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
@@ -39,6 +39,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/fuels", label: t.nav.fuelTypes, icon: FuelIcon, policy: "fuel_types.view" },
     { to: "/government-office", label: t.nav.governmentOffice, icon: GovernmentOfficeIcon, policy: "govt_offices.view" },
     { to: "/maintenance-parts", label: t.nav.maintenanceParts, icon: MaintenancePartsIcon, policy: "maintenance_parts.view" },
+    { to: "/party-names", label: t.nav.partyNames, icon: PartyNameIcon, policy: "party_names.view" },
     { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
     { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
     { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
@@ -491,6 +492,19 @@ function MaintenancePartsIcon({ className }: { className?: string }) {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
+    </svg>
+  );
+}
+
+function PartyNameIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 7h16" />
+      <path d="M7 3h10" />
+      <path d="M7 21h10" />
+      <path d="M8 7v14" />
+      <path d="M16 7v14" />
     </svg>
   );
 }

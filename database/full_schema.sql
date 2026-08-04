@@ -160,6 +160,21 @@ CREATE TABLE "MaintenanceParts" (
 );
 
 -- -------------------------------------------------------------
+-- Party Names
+-- -------------------------------------------------------------
+CREATE TABLE "PartyNames" (
+    "Id"           SERIAL       PRIMARY KEY,
+    "Name"         VARCHAR(200) NOT NULL,
+    "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    "UpdatedAt"    TIMESTAMPTZ,
+    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"    BOOLEAN      NOT NULL DEFAULT FALSE,
+    "DeletedOn"    TIMESTAMPTZ,
+    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+-- -------------------------------------------------------------
 -- Projects
 -- -------------------------------------------------------------
 CREATE TABLE "Projects" (
@@ -327,6 +342,9 @@ CREATE TABLE "Transportations" (
     "VendorOther"         VARCHAR(200),
     "ProjectId"           INT             REFERENCES "Projects"("Id")        ON DELETE SET NULL,
     "ProjectOther"        VARCHAR(200),
+    "Location"            VARCHAR(200),
+    "PartyNameId"         INT REFERENCES "PartyNames"("Id") ON DELETE SET NULL,
+    "NoOfTip"             INT,
     "Quantity"            NUMERIC(18, 2),
     "PerUnitCost"         NUMERIC(18, 2),
     "MaterialCost"        NUMERIC(18, 2),
@@ -561,6 +579,12 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.view',   
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.add',         'Create a new permission')                   ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.edit',        'Edit an existing permission')               ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('permissions.delete',      'Delete a permission')                       ON CONFLICT ("Name") DO NOTHING;
+
+-- Party Names
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.view',        'View party names')                          ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.add',         'Add party names')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.edit',        'Edit party names')                          ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('party_names.delete',      'Delete party names')                        ON CONFLICT ("Name") DO NOTHING;
 
 -- Role Permissions
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('role_permissions.view',   'View permissions assigned to roles')        ON CONFLICT ("Name") DO NOTHING;

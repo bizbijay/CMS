@@ -139,6 +139,21 @@ export default function Transportation() {
       header: t.common.project,
     },
     {
+      accessorKey: "partyNameName",
+      header: t.common.partyName,
+      cell: ({ row }) => row.original.partyNameName ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "location",
+      header: t.common.location,
+      cell: ({ row }) => row.original.location ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "noOfTip",
+      header: t.common.noOfTip,
+      cell: ({ row }) => row.original.noOfTip != null ? String(row.original.noOfTip) : <span className="text-slate-400">—</span>,
+    },
+    {
       accessorKey: "materialCost",
       header: t.common.materialCost,
       cell: ({ row }) => row.original.materialCost != null

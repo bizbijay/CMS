@@ -19,6 +19,10 @@ public class TransportationListItemDto
     public int? ProjectId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public string? ProjectOther { get; set; }
+    public string? Location { get; set; }
+    public int? PartyNameId { get; set; }
+    public string? PartyNameName { get; set; }
+    public int? NoOfTip { get; set; }
     public decimal? Quantity { get; set; }
     public decimal? PerUnitCost { get; set; }
     public decimal? MaterialCost { get; set; }
@@ -55,6 +59,13 @@ public class CreateTransportationRequest
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
 
+    [MaxLength(200)]
+    public string? Location { get; set; }
+
+    public int? PartyNameId { get; set; }
+
+    public int? NoOfTip { get; set; }
+
     public decimal? Quantity { get; set; }
 
     public decimal? PerUnitCost { get; set; }
@@ -90,6 +101,13 @@ public class UpdateTransportationRequest
 
     [MaxLength(200)]
     public string? ProjectOther { get; set; }
+
+    [MaxLength(200)]
+    public string? Location { get; set; }
+
+    public int? PartyNameId { get; set; }
+
+    public int? NoOfTip { get; set; }
 
     public decimal? Quantity { get; set; }
 

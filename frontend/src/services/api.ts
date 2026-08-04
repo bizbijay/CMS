@@ -39,6 +39,7 @@ import type {
   VehicleMaintenanceWageListItem, CreateVehicleMaintenanceWageRequest, UpdateVehicleMaintenanceWageRequest,
 } from "../types/vehicleMaintenance";
 import type { MaintenancePartListItem, CreateMaintenancePartRequest, UpdateMaintenancePartRequest } from "../types/maintenancePart";
+import type { PartyNameListItem, CreatePartyNameRequest, UpdatePartyNameRequest } from "../types/partyName";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -193,6 +194,15 @@ export const fuelsApi = {
   update: (id: number, body: UpdateFuelRequest) =>
     request<FuelListItem>(`/api/fuels/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/fuels/${id}`, { method: "DELETE" }),
+};
+
+export const partyNamesApi = {
+  list: () => request<PartyNameListItem[]>("/api/party-names", { method: "GET" }),
+  create: (body: CreatePartyNameRequest) =>
+    request<PartyNameListItem>("/api/party-names", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdatePartyNameRequest) =>
+    request<PartyNameListItem>(`/api/party-names/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/party-names/${id}`, { method: "DELETE" }),
 };
 
 export const transportationsApi = {
