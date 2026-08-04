@@ -87,6 +87,22 @@ export default function Vehicles() {
       cell: ({ row }) => TYPE_LABELS[row.original.type] ?? row.original.type,
     },
     {
+      accessorKey: "ownership",
+      header: t.pages.vehicles.ownership,
+      cell: ({ row }) => {
+        const isPartnered = row.original.ownership === "partnered";
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
+            isPartnered
+              ? "bg-purple-50 text-purple-700 border border-purple-200"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+          }`}>
+            {isPartnered ? t.common.partnered : t.common.owned}
+          </span>
+        );
+      },
+    },
+    {
       id: "actions",
       header: t.common.actions,
       enableSorting: false,

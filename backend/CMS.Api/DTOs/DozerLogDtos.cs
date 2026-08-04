@@ -18,6 +18,12 @@ public class DozerLogListItemDto
     public string ProjectName { get; set; } = string.Empty;
     public string? ProjectOther { get; set; }
     public decimal? Wages { get; set; }
+    public int? PartyNameId { get; set; }
+    public string? PartyNameName { get; set; }
+    public string? Location { get; set; }
+    public string? PaymentType { get; set; }
+    public decimal? CashAmount { get; set; }
+    public string? WorkOrderBy { get; set; }
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -49,6 +55,20 @@ public class CreateDozerLogRequest
 
     [Range(0, double.MaxValue)]
     public decimal? Wages { get; set; }
+
+    public int? PartyNameId { get; set; }
+
+    [MaxLength(200)]
+    public string? Location { get; set; }
+
+    [MaxLength(20)]
+    public string? PaymentType { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal? CashAmount { get; set; }
+
+    [MaxLength(200)]
+    public string? WorkOrderBy { get; set; }
 }
 
 public class UpdateDozerLogRequest
@@ -76,4 +96,18 @@ public class UpdateDozerLogRequest
 
     [Range(0, double.MaxValue)]
     public decimal? Wages { get; set; }
+
+    public int? PartyNameId { get; set; }
+
+    [MaxLength(200)]
+    public string? Location { get; set; }
+
+    [MaxLength(20)]
+    public string? PaymentType { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal? CashAmount { get; set; }
+
+    [MaxLength(200)]
+    public string? WorkOrderBy { get; set; }
 }

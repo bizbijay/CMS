@@ -49,6 +49,22 @@ public class DozerLog
     [Column(TypeName = "numeric(12,2)")]
     public decimal? Wages { get; set; }
 
+    public int? PartyNameId { get; set; }
+    public PartyName? PartyName { get; set; }
+
+    [MaxLength(200)]
+    public string? Location { get; set; }
+
+    [MaxLength(20)]
+    public string? PaymentType { get; set; }
+
+    [Column(TypeName = "numeric(12,2)")]
+    [Range(0, double.MaxValue)]
+    public decimal? CashAmount { get; set; }
+
+    [MaxLength(200)]
+    public string? WorkOrderBy { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

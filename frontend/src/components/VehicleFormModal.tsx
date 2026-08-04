@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { vehiclesApi } from "../services/api";
 import { useT } from "../hooks/useT";
-import type { VehicleListItem, VehicleType } from "../types/vehicles";
+import type { VehicleListItem, VehicleType, VehicleOwnership } from "../types/vehicles";
 
 export type VehicleFormMode =
   | { kind: "add" }
@@ -23,6 +23,7 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
   const [name, setName] = useState("");
   const [numberPlate, setNumberPlate] = useState("");
   const [type, setType] = useState<VehicleType>("tipper");
+  const [ownership, setOwnership] = useState<VehicleOwnership>("owned");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -32,10 +33,12 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
       setName(mode.vehicle.name);
       setNumberPlate(mode.vehicle.numberPlate);
       setType(mode.vehicle.type);
+      setOwnership(mode.vehicle.ownership ?? "owned");
     } else {
       setName("");
       setNumberPlate("");
       setType("tipper");
+      setOwnership("owned");
     }
     setError(null);
   }, [open, mode]);
@@ -55,6 +58,7 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
       name: name.trim(),
       numberPlate: numberPlate.trim().toUpperCase(),
       type,
+      ownership,
     };
 
     setSaving(true);
@@ -149,6 +153,36 @@ export default function VehicleFormModal({ open, mode, onClose, onSaved }: Props
             ))}
           </select>
         </Field>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            {t.modal.vehicles.ownershipLabel} <span className="text-red-500 ml-0.5">*</span>
+          </label>
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+              <input
+                type="radio"
+                name="vehicleOwnership"
+                value="owned"
+                checked={ownership === "owned"}
+                onChange={() => setOwnership("owned")}
+                className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              {t.modal.vehicles.ownershipOwned}
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+              <input
+                type="radio"
+                name="vehicleOwnership"
+                value="partnered"
+                checked={ownership === "partnered"}
+                onChange={() => setOwnership("partnered")}
+                className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              {t.modal.vehicles.ownershipPartnered}
+            </label>
+          </div>
+        </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <button

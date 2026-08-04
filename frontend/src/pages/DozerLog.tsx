@@ -109,6 +109,36 @@ export default function DozerLog() {
       header: t.common.project,
     },
     {
+      accessorKey: "partyNameName",
+      header: t.common.partyName,
+      cell: ({ row }) => row.original.partyNameName ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      accessorKey: "location",
+      header: t.common.location,
+      cell: ({ row }) => row.original.location ?? <span className="text-slate-400">—</span>,
+    },
+    {
+      id: "paymentType",
+      header: t.common.paymentType,
+      cell: ({ row }) => {
+        const pt = row.original.paymentType;
+        if (!pt) return <span className="text-slate-400">—</span>;
+        if (pt === "Cash") {
+          const amt = row.original.cashAmount;
+          return amt != null
+            ? `${t.common.cash} (${t.common.currencySymbol} ${amt.toLocaleString()})`
+            : t.common.cash;
+        }
+        return pt === "Credit" ? t.common.credit : pt;
+      },
+    },
+    {
+      accessorKey: "workOrderBy",
+      header: t.common.workOrderBy,
+      cell: ({ row }) => row.original.workOrderBy ?? <span className="text-slate-400">—</span>,
+    },
+    {
       accessorKey: "wages",
       header: t.common.wagesNrs,
       cell: ({ row }) => row.original.wages != null

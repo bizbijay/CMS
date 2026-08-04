@@ -46,6 +46,7 @@ CREATE TABLE "Vehicles" (
     "Name"         VARCHAR(100) NOT NULL,
     "NumberPlate"  VARCHAR(20)  NOT NULL,
     "Type"         VARCHAR(20)  NOT NULL CHECK ("Type" IN ('Tipper', 'Jcb', 'Nissan')),
+    "Ownership"    VARCHAR(20)  NOT NULL DEFAULT 'Owned' CHECK ("Ownership" IN ('Owned', 'Partnered')),
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT,
@@ -398,6 +399,11 @@ CREATE TABLE "DozerLogs" (
     "ProjectId"       INT            REFERENCES "Projects"("Id")          ON DELETE SET NULL,
     "ProjectOther"    VARCHAR(200),
     "Wages"           NUMERIC(12, 2),
+    "PartyNameId"     INT            REFERENCES "PartyNames"("Id")        ON DELETE SET NULL,
+    "Location"        VARCHAR(200),
+    "PaymentType"     VARCHAR(20)    CHECK ("PaymentType" IN ('Cash', 'Credit')),
+    "CashAmount"      NUMERIC(12,2)  CHECK ("CashAmount" >= 0),
+    "WorkOrderBy"     VARCHAR(200),
     "CreatedAt"       TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     "UpdatedAt"       TIMESTAMPTZ,
     "CreatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
@@ -405,7 +411,10 @@ CREATE TABLE "DozerLogs" (
     "IsDeleted"       BOOLEAN        NOT NULL DEFAULT FALSE,
     "DeletedOn"       TIMESTAMPTZ,
     "DeletedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    CONSTRAINT "chk_dozer_project" CHECK (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL))
+    CONSTRAINT "chk_dozer_project" CHECK (
+        ("PartyNameId" IS NOT NULL AND "ProjectId" IS NULL AND "ProjectOther" IS NULL) OR
+        ("PartyNameId" IS NULL AND (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL)))
+    )
 );
 
 -- -------------------------------------------------------------

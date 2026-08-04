@@ -9,6 +9,7 @@ public class VehicleListItemDto
     public string Name { get; set; } = string.Empty;
     public string NumberPlate { get; set; } = string.Empty;
     public VehicleType Type { get; set; }
+    public VehicleOwnership Ownership { get; set; }
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -24,6 +25,9 @@ public class CreateVehicleRequest
 
     [Required]
     public VehicleType Type { get; set; }
+
+    [Required]
+    public VehicleOwnership Ownership { get; set; } = VehicleOwnership.Owned;
 }
 
 public class UpdateVehicleRequest
@@ -36,4 +40,7 @@ public class UpdateVehicleRequest
 
     [Required]
     public VehicleType Type { get; set; }
+
+    [Required]
+    public VehicleOwnership Ownership { get; set; } = VehicleOwnership.Owned;
 }

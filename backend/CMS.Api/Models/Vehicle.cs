@@ -10,6 +10,12 @@ public enum VehicleType
     Nissan
 }
 
+public enum VehicleOwnership
+{
+    Owned,
+    Partnered
+}
+
 [Table("Vehicles")]
 public class Vehicle
 {
@@ -24,6 +30,9 @@ public class Vehicle
 
     [Required]
     public VehicleType Type { get; set; }
+
+    [Required]
+    public VehicleOwnership Ownership { get; set; } = VehicleOwnership.Owned;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

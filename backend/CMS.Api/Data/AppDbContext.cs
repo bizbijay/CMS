@@ -91,12 +91,23 @@ public class AppDbContext : DbContext
             entity.HasOne(f => f.DeletedBy).WithMany().HasForeignKey(f => f.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
+        modelBuilder.Entity<Vehicle>(entity =>
+        {
+            entity.HasQueryFilter(v => !v.IsDeleted);
+            entity.Property(v => v.Type).HasConversion<string>();
+            entity.Property(v => v.Ownership).HasConversion<string>();
+            entity.HasOne(v => v.CreatedBy).WithMany().HasForeignKey(v => v.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(v => v.UpdatedBy).WithMany().HasForeignKey(v => v.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(v => v.DeletedBy).WithMany().HasForeignKey(v => v.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<DozerLog>(entity =>
         {
             entity.HasQueryFilter(d => !d.IsDeleted);
             entity.HasOne(d => d.Driver).WithMany().HasForeignKey(d => d.DriverId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(d => d.Vehicle).WithMany().HasForeignKey(d => d.VehicleId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.Project).WithMany().HasForeignKey(d => d.ProjectId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(d => d.PartyName).WithMany().HasForeignKey(d => d.PartyNameId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.CreatedBy).WithMany().HasForeignKey(d => d.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.UpdatedBy).WithMany().HasForeignKey(d => d.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(d => d.DeletedBy).WithMany().HasForeignKey(d => d.DeletedById).OnDelete(DeleteBehavior.SetNull);

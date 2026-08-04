@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
-import { dozerLogsApi, usersApi, projectsApi, getStoredUser } from "../services/api";
+import { dozerLogsApi, usersApi, projectsApi, partyNamesApi, vehiclesApi, getStoredUser } from "../services/api";
 import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { DozerLogListItem } from "../types/dozerLog";
 import type { UserListItem } from "../types/users";
 import type { ProjectListItem } from "../types/projects";
+import type { PartyNameListItem } from "../types/partyName";
+import type { VehicleListItem } from "../types/vehicles";
 
 export type DozerLogFormMode =
   | { kind: "add" }
@@ -40,6 +42,8 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
 
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const [partyNames, setPartyNames] = useState<PartyNameListItem[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
 
@@ -47,15 +51,27 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   const [operationDate, setOperationDate] = useState(todayIso());
   const [startMeter, setStartMeter] = useState<string>("0");
   const [endMeter, setEndMeter] = useState<string>("0");
+
+  const [referenceType, setReferenceType] = useState<"project" | "partyName">("project");
   const [projectSel, setProjectSel] = useState<string>("");
   const [projectOther, setProjectOther] = useState("");
+  const [partyNameId, setPartyNameId] = useState<number | null>(null);
+
+  const [location, setLocation] = useState("");
+  const [paymentType, setPaymentType] = useState<string>("Credit");
+  const [cashAmount, setCashAmount] = useState("");
+  const [workOrderBy, setWorkOrderBy] = useState("");
   const [wages, setWages] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const selectedDriver = drivers.find((u) => u.id === driverId);
-  const assignedVehicleId = selectedDriver?.vehicleId ?? null;
-  const assignedVehicleName = selectedDriver?.assignedVehicleName ?? null;
+  const assignedVehicleId = selectedDriver?.vehicleId ?? (mode.kind === "edit" ? mode.log.vehicleId : null);
+  const assignedVehicle = vehicles.find((v) => v.id === assignedVehicleId);
+  const assignedVehicleName = selectedDriver?.assignedVehicleName ?? (assignedVehicle ? `${assignedVehicle.name} (${assignedVehicle.numberPlate})` : null);
+  const vehicleOwnership = assignedVehicle ? String(assignedVehicle.ownership).toLowerCase() : "owned";
+  const isPartnered = vehicleOwnership === "partnered";
 
   const totalMeterRun = Math.max(0, parseFloat(endMeter || "0") - parseFloat(startMeter || "0"));
   const { hours: displayHours, minutes: displayMinutes } = decimalHoursToHoursMinutes(totalMeterRun);
@@ -63,10 +79,12 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.dozerDrivers(), projectsApi.list()])
-      .then(async ([d, p]) => {
+    Promise.all([usersApi.dozerDrivers(), projectsApi.list(), partyNamesApi.list(), vehiclesApi.list()])
+      .then(async ([d, p, pn, v]) => {
         setDrivers(d);
         setProjects(p);
+        setPartyNames(pn ?? []);
+        setVehicles(v ?? []);
 
         const stored = getStoredUser();
         const selfMatch = d.find((x) => x.id === stored?.id);
@@ -79,36 +97,56 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
           setStartMeter(String(log.startMeter));
           setEndMeter(String(log.endMeter));
 
-          if (log.projectId) {
-            setProjectSel(String(log.projectId));
+          if (log.partyNameId) {
+            setReferenceType("partyName");
+            setPartyNameId(log.partyNameId);
+            setProjectSel(p[0] ? String(p[0].id) : OTHER);
             setProjectOther("");
           } else {
-            setProjectSel(OTHER);
-            setProjectOther(log.projectOther ?? "");
+            setReferenceType("project");
+            setPartyNameId(null);
+            if (log.projectId) {
+              setProjectSel(String(log.projectId));
+              setProjectOther("");
+            } else {
+              setProjectSel(OTHER);
+              setProjectOther(log.projectOther ?? "");
+            }
           }
+
           setWages(log.wages != null ? String(log.wages) : "");
+          setLocation(log.location ?? "");
+          setPaymentType(log.paymentType ?? "Credit");
+          setCashAmount(log.cashAmount != null ? String(log.cashAmount) : "");
+          setWorkOrderBy(log.workOrderBy ?? "");
         } else {
-          const driverId = selfMatch?.id ?? d[0]?.id ?? 0;
-          setDriverId(driverId);
+          const targetDriverId = selfMatch?.id ?? d[0]?.id ?? 0;
+          setDriverId(targetDriverId);
           setOperationDate(todayIso());
-          
+
           // Fetch the last log for this driver to use its end meter as start meter
           try {
             const allLogs = await dozerLogsApi.list();
             const lastLog = allLogs
-              .filter(log => log.driverId === driverId)
+              .filter(log => log.driverId === targetDriverId)
               .sort((a, b) => new Date(b.operationDate).getTime() - new Date(a.operationDate).getTime())
               .at(0);
-            
+
             setStartMeter(lastLog ? String(lastLog.endMeter) : "0");
           } catch {
             setStartMeter("0");
           }
-          
+
           setEndMeter("0");
+          setReferenceType("project");
           setProjectSel(p[0] ? String(p[0].id) : OTHER);
           setProjectOther("");
+          setPartyNameId(null);
           setWages("1500");
+          setLocation("");
+          setPaymentType("Credit");
+          setCashAmount("");
+          setWorkOrderBy("");
         }
       })
       .catch(() => setError(tr.modal.loadError))
@@ -142,12 +180,30 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
       setError(tr.modal.dozerLog.errorEndMeterLessThanStart);
       return;
     }
-    if (projectSel === OTHER && !projectOther.trim()) {
-      setError(tr.modal.dozerLog.errorNoProject);
-      return;
+
+    const selectedProjectId = referenceType === "project" ? (projectSel && projectSel !== OTHER ? Number(projectSel) : null) : null;
+    const selectedProjectOther = referenceType === "project" ? (projectSel === OTHER ? projectOther.trim() : null) : null;
+    const selectedPartyNameId = referenceType === "partyName" ? partyNameId ?? null : null;
+
+    if (referenceType === "project") {
+      if (projectSel === OTHER) {
+        if (!projectOther.trim()) {
+          setError(tr.modal.dozerLog.errorNoProject);
+          return;
+        }
+      } else if (!selectedProjectId) {
+        setError(tr.modal.dozerLog.errorNoProject);
+        return;
+      }
+    } else {
+      if (!selectedPartyNameId) {
+        setError(tr.modal.dozerLog.errorNoPartyName);
+        return;
+      }
     }
 
     const parsedWages = wages.trim() !== "" ? parseFloat(wages) : null;
+    const parsedCashAmount = paymentType === "Cash" && cashAmount.trim() !== "" ? parseFloat(cashAmount) : null;
 
     const body = {
       driverId,
@@ -155,9 +211,14 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
       operationDate,
       startMeter: startMeterVal,
       endMeter: endMeterVal,
-      projectId: projectSel !== OTHER ? Number(projectSel) : null,
-      projectOther: projectSel === OTHER ? projectOther.trim() : null,
+      projectId: selectedProjectId,
+      projectOther: selectedProjectOther,
       wages: parsedWages !== null && !isNaN(parsedWages) ? parsedWages : null,
+      partyNameId: selectedPartyNameId,
+      location: location.trim() || null,
+      paymentType: isPartnered ? (paymentType || null) : null,
+      cashAmount: isPartnered && paymentType === "Cash" && parsedCashAmount !== null && !isNaN(parsedCashAmount) ? parsedCashAmount : null,
+      workOrderBy: isPartnered ? (workOrderBy.trim() || null) : null,
     };
 
     setSaving(true);
@@ -181,7 +242,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4"
+        className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -233,6 +294,9 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
               </Field>
             )}
 
+            {/* Hidden field storing vehicle ownership info */}
+            <input type="hidden" name="vehicleOwnership" value={vehicleOwnership} />
+
             <Field label={tr.common.date} required>
               <NepaliCalendarPicker
                 value={operationDate}
@@ -272,27 +336,147 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
               </p>
             </div>
 
-            <Field label={tr.common.project} required>
-              <select
-                value={projectSel}
-                onChange={(e) => { setProjectSel(e.target.value); setProjectOther(""); }}
+            <div>
+              <div className="flex items-center gap-6 mb-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="referenceType"
+                    value="project"
+                    checked={referenceType === "project"}
+                    onChange={() => {
+                      setReferenceType("project");
+                      setPartyNameId(null);
+                    }}
+                    className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {tr.common.project}
+                </label>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="referenceType"
+                    value="partyName"
+                    checked={referenceType === "partyName"}
+                    onChange={() => {
+                      setReferenceType("partyName");
+                      setProjectSel("");
+                      setProjectOther("");
+                    }}
+                    className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {tr.common.partyName}
+                </label>
+              </div>
+            </div>
+
+            {referenceType === "project" ? (
+              <Field label={tr.common.project} required>
+                <select
+                  value={projectSel}
+                  onChange={(e) => { setProjectSel(e.target.value); setProjectOther(""); }}
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {projects.map((p) => (
+                    <option key={p.id} value={String(p.id)}>{p.name}</option>
+                  ))}
+                  <option value={OTHER}>{tr.modal.dozerLog.otherOption}</option>
+                </select>
+                {projectSel === OTHER && (
+                  <input
+                    type="text"
+                    value={projectOther}
+                    onChange={(e) => setProjectOther(e.target.value)}
+                    placeholder={tr.modal.dozerLog.enterProjectName}
+                    className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
+              </Field>
+            ) : (
+              <Field label={tr.common.partyName} required>
+                <select
+                  value={partyNameId ?? ""}
+                  onChange={(e) => setPartyNameId(e.target.value ? Number(e.target.value) : null)}
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">{tr.common.selectPartyName}</option>
+                  {partyNames.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
+            <Field label={tr.common.location}>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder={tr.modal.dozerLog.enterLocation}
                 className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={String(p.id)}>{p.name}</option>
-                ))}
-                <option value={OTHER}>{tr.modal.dozerLog.otherOption}</option>
-              </select>
-              {projectSel === OTHER && (
-                <input
-                  type="text"
-                  value={projectOther}
-                  onChange={(e) => setProjectOther(e.target.value)}
-                  placeholder={tr.modal.dozerLog.enterProjectName}
-                  className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
+              />
             </Field>
+
+            {isPartnered && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    {tr.common.paymentType}
+                  </label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="dozerPaymentType"
+                        value="Credit"
+                        checked={paymentType === "Credit"}
+                        onChange={() => {
+                          setPaymentType("Credit");
+                          setCashAmount("");
+                        }}
+                        className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      {tr.common.credit}
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="dozerPaymentType"
+                        value="Cash"
+                        checked={paymentType === "Cash"}
+                        onChange={() => setPaymentType("Cash")}
+                        className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      {tr.common.cash}
+                    </label>
+                  </div>
+                </div>
+
+                {paymentType === "Cash" && (
+                  <Field label={tr.common.cashAmount}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={cashAmount}
+                      onChange={(e) => setCashAmount(e.target.value)}
+                      placeholder={tr.modal.dozerLog.enterCashAmount}
+                      className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </Field>
+                )}
+
+                <Field label={tr.common.workOrderBy}>
+                  <input
+                    type="text"
+                    value={workOrderBy}
+                    onChange={(e) => setWorkOrderBy(e.target.value)}
+                    placeholder={tr.modal.dozerLog.enterWorkOrderBy}
+                    className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </Field>
+              </>
+            )}
 
             <Field label={tr.common.wages}>
               <input

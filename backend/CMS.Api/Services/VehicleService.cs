@@ -16,12 +16,21 @@ public class VehicleService : IVehicleService
 
     public async Task<IEnumerable<VehicleListItemDto>> GetAllAsync()
     {
-        var vehicles = await _db.Vehicles
+        try
+        {
+var vehicles = await _db.Vehicles
             .Include(v => v.CreatedBy)
             .Include(v => v.UpdatedBy)
             .OrderByDescending(v => v.CreatedAt)
             .ToListAsync();
         return vehicles.Select(ToDto);
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+        
     }
 
     public async Task<VehicleListItemDto?> GetByIdAsync(int id)
@@ -46,6 +55,7 @@ public class VehicleService : IVehicleService
             Name = request.Name.Trim(),
             NumberPlate = plate,
             Type = request.Type,
+            Ownership = request.Ownership,
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
         };
@@ -76,6 +86,7 @@ public class VehicleService : IVehicleService
         vehicle.Name = request.Name.Trim();
         vehicle.NumberPlate = plate;
         vehicle.Type = request.Type;
+        vehicle.Ownership = request.Ownership;
         vehicle.UpdatedById = updatedById;
         vehicle.UpdatedAt = DateTime.UtcNow;
 
@@ -104,6 +115,7 @@ public class VehicleService : IVehicleService
         Name = v.Name,
         NumberPlate = v.NumberPlate,
         Type = v.Type,
+        Ownership = v.Ownership,
         CreatedBy = v.CreatedBy?.Username,
         UpdatedBy = v.UpdatedBy?.Username,
         CreatedAt = v.CreatedAt

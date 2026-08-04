@@ -22,6 +22,7 @@ public class DozerLogService : IDozerLogService
             .Include(d => d.Driver)
             .Include(d => d.Vehicle)
             .Include(d => d.Project)
+            .Include(d => d.PartyName)
             .Include(d => d.CreatedBy)
             .Include(d => d.UpdatedBy)
             .OrderByDescending(d => d.OperationDate)
@@ -36,6 +37,7 @@ public class DozerLogService : IDozerLogService
             .Include(d => d.Driver)
             .Include(d => d.Vehicle)
             .Include(d => d.Project)
+            .Include(d => d.PartyName)
             .Include(d => d.CreatedBy)
             .Include(d => d.UpdatedBy)
             .FirstOrDefaultAsync(d => d.Id == id);
@@ -46,10 +48,11 @@ public class DozerLogService : IDozerLogService
     {
         try
         {
-            var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther, request.StartMeter, request.EndMeter);
+            var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther, request.StartMeter, request.EndMeter, request.PartyNameId);
             if (error is not null) return (null, error);
 
             var totalMeterRun = request.EndMeter - request.StartMeter;
+            var isCash = string.Equals(request.PaymentType?.Trim(), "Cash", StringComparison.OrdinalIgnoreCase);
 
             var item = new DozerLog
             {
@@ -62,6 +65,11 @@ public class DozerLogService : IDozerLogService
                 ProjectId = request.ProjectId,
                 ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null,
                 Wages = request.Wages,
+                PartyNameId = request.PartyNameId,
+                Location = request.Location?.Trim(),
+                PaymentType = request.PaymentType?.Trim(),
+                CashAmount = isCash ? request.CashAmount : null,
+                WorkOrderBy = request.WorkOrderBy?.Trim(),
                 CreatedById = createdById,
                 CreatedAt = DateTime.UtcNow
             };
@@ -76,17 +84,16 @@ public class DozerLogService : IDozerLogService
             await _db.Entry(item).Reference(d => d.Driver).LoadAsync();
             if (item.VehicleId.HasValue) await _db.Entry(item).Reference(d => d.Vehicle).LoadAsync();
             if (item.ProjectId.HasValue) await _db.Entry(item).Reference(d => d.Project).LoadAsync();
+            if (item.PartyNameId.HasValue) await _db.Entry(item).Reference(d => d.PartyName).LoadAsync();
             await _db.Entry(item).Reference(d => d.CreatedBy).LoadAsync();
 
             return (ToDto(item), null);
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-
             throw;
         }
-        
     }
 
     public async Task<(DozerLogListItemDto? Item, string? Error)> UpdateAsync(int id, UpdateDozerLogRequest request, int updatedById)
@@ -95,19 +102,21 @@ public class DozerLogService : IDozerLogService
             .Include(d => d.Driver)
             .Include(d => d.Vehicle)
             .Include(d => d.Project)
+            .Include(d => d.PartyName)
             .Include(d => d.CreatedBy)
             .Include(d => d.UpdatedBy)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (item is null) return (null, null);
 
-        var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther, request.StartMeter, request.EndMeter);
+        var error = await ValidateRequest(request.DriverId, request.VehicleId, request.ProjectId, request.ProjectOther, request.StartMeter, request.EndMeter, request.PartyNameId);
         if (error is not null) return (null, error);
 
         var oldDriverId = item.DriverId;
         var oldWages = item.Wages;
 
         var totalMeterRun = request.EndMeter - request.StartMeter;
+        var isCash = string.Equals(request.PaymentType?.Trim(), "Cash", StringComparison.OrdinalIgnoreCase);
 
         item.DriverId = request.DriverId;
         item.VehicleId = request.VehicleId;
@@ -118,6 +127,11 @@ public class DozerLogService : IDozerLogService
         item.ProjectId = request.ProjectId;
         item.ProjectOther = request.ProjectId is null ? request.ProjectOther?.Trim() : null;
         item.Wages = request.Wages;
+        item.PartyNameId = request.PartyNameId;
+        item.Location = request.Location?.Trim();
+        item.PaymentType = request.PaymentType?.Trim();
+        item.CashAmount = isCash ? request.CashAmount : null;
+        item.WorkOrderBy = request.WorkOrderBy?.Trim();
         item.UpdatedById = updatedById;
         item.UpdatedAt = DateTime.UtcNow;
 
@@ -143,6 +157,7 @@ public class DozerLogService : IDozerLogService
         await _db.Entry(item).Reference(d => d.Driver).LoadAsync();
         if (item.VehicleId.HasValue) await _db.Entry(item).Reference(d => d.Vehicle).LoadAsync();
         if (item.ProjectId.HasValue) await _db.Entry(item).Reference(d => d.Project).LoadAsync();
+        if (item.PartyNameId.HasValue) await _db.Entry(item).Reference(d => d.PartyName).LoadAsync();
         await _db.Entry(item).Reference(d => d.UpdatedBy).LoadAsync();
 
         return (ToDto(item), null);
@@ -162,7 +177,7 @@ public class DozerLogService : IDozerLogService
         return true;
     }
 
-    private async Task<string?> ValidateRequest(int driverId, int? vehicleId, int? projectId, string? projectOther, decimal startMeter, decimal endMeter)
+    private async Task<string?> ValidateRequest(int driverId, int? vehicleId, int? projectId, string? projectOther, decimal startMeter, decimal endMeter, int? partyNameId)
     {
         if (!await _db.Users.AnyAsync(u => u.Id == driverId))
             return "Selected driver does not exist.";
@@ -173,14 +188,19 @@ public class DozerLogService : IDozerLogService
         if (endMeter <= startMeter)
             return "End meter must be greater than start meter.";
 
-        if (projectId.HasValue)
+        if (partyNameId.HasValue)
+        {
+            if (!await _db.PartyNames.AnyAsync(p => p.Id == partyNameId.Value))
+                return "Selected party name does not exist.";
+        }
+        else if (projectId.HasValue)
         {
             if (!await _db.Projects.AnyAsync(p => p.Id == projectId.Value))
                 return "Selected project does not exist.";
         }
         else if (string.IsNullOrWhiteSpace(projectOther))
         {
-            return "Project is required.";
+            return "Project or Party Name is required.";
         }
 
         return null;
@@ -208,6 +228,12 @@ public class DozerLogService : IDozerLogService
         ProjectName = d.Project?.Name ?? d.ProjectOther ?? string.Empty,
         ProjectOther = d.ProjectOther,
         Wages = d.Wages,
+        PartyNameId = d.PartyNameId,
+        PartyNameName = d.PartyName?.Name,
+        Location = d.Location,
+        PaymentType = d.PaymentType,
+        CashAmount = d.CashAmount,
+        WorkOrderBy = d.WorkOrderBy,
         CreatedBy = d.CreatedBy?.Username,
         UpdatedBy = d.UpdatedBy?.Username,
         CreatedAt = d.CreatedAt,

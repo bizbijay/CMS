@@ -13,6 +13,12 @@ export interface DozerLogListItem {
   projectName: string;
   projectOther: string | null;
   wages: number | null;
+  partyNameId?: number | null;
+  partyNameName?: string | null;
+  location?: string | null;
+  paymentType?: string | null;
+  cashAmount?: number | null;
+  workOrderBy?: string | null;
 }
 
 export interface CreateDozerLogRequest {
@@ -24,6 +30,11 @@ export interface CreateDozerLogRequest {
   projectId: number | null;
   projectOther: string | null;
   wages: number | null;
+  partyNameId?: number | null;
+  location?: string | null;
+  paymentType?: string | null;
+  cashAmount?: number | null;
+  workOrderBy?: string | null;
 }
 
 export interface UpdateDozerLogRequest {
@@ -35,4 +46,9 @@ export interface UpdateDozerLogRequest {
   projectId: number | null;
   projectOther: string | null;
   wages: number | null;
+  partyNameId?: number | null;
+  location?: string | null;
+  paymentType?: string | null;
+  cashAmount?: number | null;
+  workOrderBy?: string | null;
 }
