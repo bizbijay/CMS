@@ -5,6 +5,7 @@ export interface BankAccountListItem {
   accountNumber: string;
   branch?: string | null;
   isPrimary: boolean;
+  totalBalance?: number;
   createdAt: string;
   updatedAt?: string | null;
   createdBy?: string | null;
@@ -25,4 +26,25 @@ export interface UpdateBankAccountRequest {
   accountNumber: string;
   branch?: string | null;
   isPrimary: boolean;
+}
+
+export interface BankAccountBalanceSummary {
+  bankAccountId: number;
+  totalBalance: number;
+}
+
+export interface BankAccountCreditLogListItem {
+  id: number;
+  bankAccountId: number;
+  amount: number;
+  loggedOn: string;
+  remarks?: string | null;
+  createdAt: string;
+  createdBy?: string | null;
+}
+
+export interface AddBankAccountBalanceRequest {
+  amount: number;
+  loggedOn?: string | null;
+  remarks?: string | null;
 }

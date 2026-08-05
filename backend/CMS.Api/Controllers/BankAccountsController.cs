@@ -25,6 +25,16 @@ public class BankAccountsController : ControllerBase
     public async Task<ActionResult<IEnumerable<BankAccountListItemDto>>> GetAll() =>
         Ok(await _service.ListAsync());
 
+    [HttpGet("balances")]
+    [Authorize(Policy = "account_management.view")]
+    public async Task<ActionResult<IEnumerable<BankAccountBalanceSummaryDto>>> GetBalances() =>
+        Ok(await _service.ListBalancesAsync());
+
+    [HttpGet("credit-logs")]
+    [Authorize(Policy = "account_management.view")]
+    public async Task<ActionResult<IEnumerable<BankAccountCreditLogListItemDto>>> GetCreditLogs() =>
+        Ok(await _service.ListCreditLogsAsync());
+
     [HttpGet("{id:int}")]
     [Authorize]
     public async Task<ActionResult<BankAccountListItemDto>> GetById(int id)
@@ -40,6 +50,30 @@ public class BankAccountsController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var item = await _service.CreateAsync(request, CurrentUserId);
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
+    }
+
+    [HttpGet("{id:int}/credit-logs")]
+    [Authorize(Policy = "account_management.view")]
+    public async Task<ActionResult<IEnumerable<BankAccountCreditLogListItemDto>>> GetCreditLogsByAccount(int id)
+    {
+        var account = await _service.GetByIdAsync(id);
+        if (account is null) return NotFound();
+
+        var logs = await _service.ListCreditLogsByAccountAsync(id);
+        return Ok(logs);
+    }
+
+    [HttpPost("{id:int}/balances")]
+    [Authorize(Policy = "account_management.view")]
+    public async Task<ActionResult<BankAccountCreditLogListItemDto>> AddBalance(int id, [FromBody] AddBankAccountBalanceRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var (item, error) = await _service.AddBalanceAsync(id, request, CurrentUserId);
+        if (item is null && error is null) return NotFound();
+        if (error is not null) return BadRequest(new { message = error });
+
+        return Ok(item);
     }
 
     [HttpPut("{id:int}")]

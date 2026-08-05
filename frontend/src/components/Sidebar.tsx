@@ -30,6 +30,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/monthly-salary", label: t.nav.monthlySalary, icon: MonthlySalaryIcon, policy: "monthly_salary.view" },
     { to: "/salary-details", label: t.nav.salaryDetails, icon: SalaryDetailIcon, policy: "salary_detail.view" },
     { to: "/extra-expenses", label: t.nav.extraExpenses, icon: ExtraExpensesIcon, policy: "extra_expenses.view" },
+    { to: "/account-management", label: t.nav.accountManagement, icon: BankIcon, policy: "account_management.view" },
   ];
 
   const settingsMenu = [
@@ -87,7 +88,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
         )}
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="sidebar-scroll flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {visibleTopMenu.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -172,7 +173,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     <>
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex md:flex-col ${width} bg-slate-900 text-slate-100 min-h-screen transition-all duration-200 shrink-0`}
+        className={`hidden md:flex md:flex-col ${width} bg-slate-900 text-slate-100 md:sticky md:top-0 md:h-screen overflow-hidden transition-all duration-200 shrink-0`}
       >
         {navContent(false)}
       </aside>
@@ -188,7 +189,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
 
       {/* Mobile drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-slate-900 text-slate-100 transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-slate-900 text-slate-100 overflow-hidden transition-transform duration-200 md:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

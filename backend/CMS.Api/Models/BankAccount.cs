@@ -29,6 +29,9 @@ public class BankAccount : IPrimaryAccountState
 
     public bool IsPrimary { get; set; }
 
+    [Column(TypeName = "numeric(18,2)")]
+    public decimal TotalBalance { get; set; } = 0m;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
@@ -42,4 +45,6 @@ public class BankAccount : IPrimaryAccountState
     public DateTime? DeletedOn { get; set; }
     public int? DeletedById { get; set; }
     public User? DeletedBy { get; set; }
+
+    public List<BankAccountCreditLog> CreditLogs { get; set; } = [];
 }

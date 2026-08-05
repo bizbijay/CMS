@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS "DozerLogs"       CASCADE;
 DROP TABLE IF EXISTS "FuelLogs"        CASCADE;
 DROP TABLE IF EXISTS "Transportations" CASCADE;
 DROP TABLE IF EXISTS "ExtraExpenses"   CASCADE;
+DROP TABLE IF EXISTS "BankAccountCreditLogs" CASCADE;
 DROP TABLE IF EXISTS "BankAccounts"    CASCADE;
 DROP TABLE IF EXISTS "RolePermissions" CASCADE;
 DROP TABLE IF EXISTS "Permissions"     CASCADE;
@@ -550,6 +551,7 @@ CREATE TABLE "BankAccounts" (
     "AccountNumber" VARCHAR(100)    NOT NULL,
     "Branch"        VARCHAR(200),
     "IsPrimary"     BOOLEAN         NOT NULL DEFAULT FALSE,
+    "TotalBalance"  NUMERIC(18, 2)  NOT NULL DEFAULT 0,
     "CreatedAt"     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     "UpdatedAt"     TIMESTAMPTZ,
     "CreatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
@@ -558,6 +560,27 @@ CREATE TABLE "BankAccounts" (
     "DeletedOn"     TIMESTAMPTZ,
     "DeletedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
+
+-- -------------------------------------------------------------
+-- BankAccountCreditLogs
+-- -------------------------------------------------------------
+CREATE TABLE "BankAccountCreditLogs" (
+    "Id"            SERIAL          PRIMARY KEY,
+    "BankAccountId" INT             NOT NULL REFERENCES "BankAccounts"("Id") ON DELETE RESTRICT,
+    "Amount"        NUMERIC(18, 2)  NOT NULL CHECK ("Amount" > 0),
+    "LoggedOn"      DATE            NOT NULL,
+    "Remarks"       VARCHAR(500),
+    "CreatedAt"     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"     TIMESTAMPTZ,
+    "CreatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"     BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"     TIMESTAMPTZ,
+    "DeletedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+CREATE INDEX "IX_BankAccountCreditLogs_BankAccountId_LoggedOn"
+ON "BankAccountCreditLogs" ("BankAccountId", "LoggedOn" DESC);
 
 -- =============================================================
 -- Seed: Admin role
@@ -579,6 +602,7 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.delete
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.verify',   'Verify extra expenses')                    ON CONFLICT ("Name") DO NOTHING;
 
 -- Bank accounts
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('account_management.view', 'Access account management page')             ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.view',       'View bank accounts')                       ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.add',        'Add bank accounts')                        ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.edit',       'Edit bank accounts')                       ON CONFLICT ("Name") DO NOTHING;

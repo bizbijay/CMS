@@ -167,6 +167,8 @@ builder.Services.AddAuthorization(options =>
 
         "extra_expenses.view", "extra_expenses.add", "extra_expenses.edit", "extra_expenses.delete", "extra_expenses.verify",
 
+        "account_management.view",
+
         "bank_accounts.view", "bank_accounts.add", "bank_accounts.edit", "bank_accounts.delete",
     ];
 
@@ -248,6 +250,7 @@ using (var scope = app.Services.CreateScope())
                 ""AccountNumber""  VARCHAR(100)    NOT NULL,
                 ""Branch""         VARCHAR(200),
                 ""IsPrimary""      BOOLEAN         NOT NULL DEFAULT FALSE,
+                ""TotalBalance""   NUMERIC(18, 2)  NOT NULL DEFAULT 0,
                 ""CreatedAt""      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 ""UpdatedAt""      TIMESTAMPTZ,
                 ""CreatedById""    INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
@@ -257,6 +260,34 @@ using (var scope = app.Services.CreateScope())
                 ""DeletedById""    INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL
             );
 
+            ALTER TABLE ""BankAccounts""
+            ADD COLUMN IF NOT EXISTS ""TotalBalance"" NUMERIC(18, 2) NOT NULL DEFAULT 0;
+
+            CREATE TABLE IF NOT EXISTS ""BankAccountCreditLogs"" (
+                ""Id""            SERIAL          PRIMARY KEY,
+                ""BankAccountId"" INT             NOT NULL REFERENCES ""BankAccounts""(""Id"") ON DELETE RESTRICT,
+                ""Amount""        NUMERIC(18, 2)  NOT NULL CHECK (""Amount"" > 0),
+                ""LoggedOn""      DATE            NOT NULL,
+                ""Remarks""       VARCHAR(500),
+                ""CreatedAt""     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                ""UpdatedAt""     TIMESTAMPTZ,
+                ""CreatedById""   INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                ""UpdatedById""   INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                ""IsDeleted""     BOOLEAN         NOT NULL DEFAULT FALSE,
+                ""DeletedOn""     TIMESTAMPTZ,
+                ""DeletedById""   INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL
+            );
+
+            UPDATE ""BankAccounts"" a
+            SET ""TotalBalance"" = COALESCE(s.""TotalBalance"", 0)
+            FROM (
+                SELECT ""BankAccountId"", SUM(""Amount"") AS ""TotalBalance""
+                FROM ""BankAccountCreditLogs""
+                WHERE NOT ""IsDeleted""
+                GROUP BY ""BankAccountId""
+            ) s
+            WHERE s.""BankAccountId"" = a.""Id"";
+
             INSERT INTO ""Permissions"" (""Name"", ""Description"", ""CreatedAt"")
             VALUES 
                 ('extra_expenses.view', 'View extra expenses', NOW()),
@@ -264,6 +295,7 @@ using (var scope = app.Services.CreateScope())
                 ('extra_expenses.edit', 'Edit extra expenses', NOW()),
                 ('extra_expenses.delete', 'Delete extra expenses', NOW()),
                 ('extra_expenses.verify', 'Verify extra expenses', NOW()),
+                ('account_management.view', 'Access account management page', NOW()),
                 ('bank_accounts.view', 'View bank accounts', NOW()),
                 ('bank_accounts.add', 'Add bank accounts', NOW()),
                 ('bank_accounts.edit', 'Edit bank accounts', NOW()),
@@ -279,6 +311,13 @@ using (var scope = app.Services.CreateScope())
 
             INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
             SELECT 1, ""Id"" FROM ""Permissions"" WHERE ""Name"" LIKE 'extra_expenses.%' OR ""Name"" LIKE 'bank_accounts.%'
+            ON CONFLICT DO NOTHING;
+
+            INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
+            SELECT r.""Id"", p.""Id""
+            FROM ""Roles"" r
+            JOIN ""Permissions"" p ON p.""Name"" = 'account_management.view'
+            WHERE r.""Name"" = 'Admin'
             ON CONFLICT DO NOTHING;
         ");
     }

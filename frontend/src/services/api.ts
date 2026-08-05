@@ -41,7 +41,14 @@ import type {
 } from "../types/vehicleMaintenance";
 import type { MaintenancePartListItem, CreateMaintenancePartRequest, UpdateMaintenancePartRequest } from "../types/maintenancePart";
 import type { PartyNameListItem, CreatePartyNameRequest, UpdatePartyNameRequest } from "../types/partyName";
-import type { BankAccountListItem, CreateBankAccountRequest, UpdateBankAccountRequest } from "../types/bankAccount";
+import type {
+  AddBankAccountBalanceRequest,
+  BankAccountBalanceSummary,
+  BankAccountCreditLogListItem,
+  BankAccountListItem,
+  CreateBankAccountRequest,
+  UpdateBankAccountRequest,
+} from "../types/bankAccount";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -220,6 +227,43 @@ export const transportationsApi = {
 
 export const bankAccountsApi = {
   list: () => request<BankAccountListItem[]>("/api/bank-accounts", { method: "GET" }),
+  getById: (id: number) => request<BankAccountListItem>(`/api/bank-accounts/${id}`, { method: "GET" }),
+  listBalances: async () => {
+    try {
+      return await requestFromCandidatePaths<BankAccountBalanceSummary[]>([
+        "/api/bank-accounts/balances",
+        "/api/bank-accounts/balance-summary",
+      ], { method: "GET" });
+    } catch {
+      return [];
+    }
+  },
+  listCreditLogs: async () => {
+    try {
+      return await requestFromCandidatePaths<BankAccountCreditLogListItem[]>([
+        "/api/bank-accounts/credit-logs",
+        "/api/bank-account-credit-logs",
+      ], { method: "GET" });
+    } catch {
+      return [];
+    }
+  },
+  listCreditLogsByAccount: async (id: number) => {
+    try {
+      return await requestFromCandidatePaths<BankAccountCreditLogListItem[]>([
+        `/api/bank-accounts/${id}/credit-logs`,
+        `/api/bank-accounts/credit-logs?bankAccountId=${id}`,
+      ], { method: "GET" });
+    } catch {
+      const allLogs = await bankAccountsApi.listCreditLogs();
+      return allLogs.filter((log) => log.bankAccountId === id);
+    }
+  },
+  addBalance: (id: number, body: AddBankAccountBalanceRequest) =>
+    requestFromCandidatePaths<BankAccountCreditLogListItem>([
+      `/api/bank-accounts/${id}/balances`,
+      `/api/bank-accounts/${id}/credit-logs`,
+    ], { method: "POST", body: JSON.stringify(body) }),
   create: (body: CreateBankAccountRequest) =>
     request<BankAccountListItem>("/api/bank-accounts", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdateBankAccountRequest) =>
@@ -228,6 +272,23 @@ export const bankAccountsApi = {
   setPrimary: (id: number) =>
     request<BankAccountListItem>(`/api/bank-accounts/${id}/set-primary`, { method: "POST" }),
 };
+
+async function requestFromCandidatePaths<T>(paths: string[], init: RequestInit): Promise<T> {
+  let lastError: unknown;
+
+  for (const path of paths) {
+    try {
+      return await request<T>(path, init);
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof Error) || !error.message.includes("404")) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("No matching API endpoint found.");
+}
 
 export const vendorsApi = {
   list: () => request<VendorListItem[]>("/api/vendors", { method: "GET" }),

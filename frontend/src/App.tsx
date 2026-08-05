@@ -33,6 +33,8 @@ import GovernmentOffice from "./pages/GovernmentOffice";
 import MaintenanceParts from "./pages/MaintenanceParts";
 import PartyNames from "./pages/PartyNames";
 import BankAccounts from "./pages/BankAccounts";
+import AccountManagement from "./pages/AccountManagement";
+import BankAccountDetails from "./pages/BankAccountDetails";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -293,6 +295,22 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="bank_accounts.view">
               <BankAccounts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account-management"
+          element={
+            <ProtectedRoute policy="account_management.view">
+              <AccountManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account-management/:accountId"
+          element={
+            <ProtectedRoute policy="account_management.view">
+              <BankAccountDetails />
             </ProtectedRoute>
           }
         />

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "BankAccounts" (
     "AccountNumber"   VARCHAR(100)    NOT NULL,
     "Branch"          VARCHAR(200),
     "IsPrimary"       BOOLEAN         NOT NULL DEFAULT FALSE,
+    "TotalBalance"    NUMERIC(18, 2)  NOT NULL DEFAULT 0,
     "CreatedAt"       TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     "UpdatedAt"       TIMESTAMPTZ,
     "CreatedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL,
@@ -28,6 +29,6 @@ ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
 SELECT r."Id", p."Id"
 FROM "Roles" r
-JOIN "Permissions" p ON p."Name" LIKE 'extra_expenses.%' OR p."Name" LIKE 'bank_accounts.%'
+JOIN "Permissions" p ON p."Name" LIKE 'bank_accounts.%'
 WHERE r."Name" = 'Admin'
 ON CONFLICT DO NOTHING;

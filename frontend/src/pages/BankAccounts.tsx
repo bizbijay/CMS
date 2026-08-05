@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useCulture } from "../context/CultureContext";
 import { useT } from "../hooks/useT";
 import { bankAccountsApi } from "../services/api";
 import BankAccountFormModal, { type BankAccountFormMode } from "../components/BankAccountFormModal";
@@ -7,10 +8,18 @@ import DataTable from "../components/DataTable";
 import IconButton from "../components/IconButton";
 import { useToast } from "../components/Toaster";
 import type { BankAccountListItem } from "../types/bankAccount";
-import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type SortingState } from "@tanstack/react-table";
+import {
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type SortingState,
+} from "@tanstack/react-table";
 
 export default function BankAccounts() {
   const t = useT();
+  const { locale } = useCulture();
   const { addToast } = useToast();
   const [accounts, setAccounts] = useState<BankAccountListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +29,17 @@ export default function BankAccounts() {
   const [deleting, setDeleting] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([{ id: "bankName", desc: false }]);
 
+  const formatMoney = useMemo(
+    () =>
+      new Intl.NumberFormat(locale === "np" ? "ne-NP" : "en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [locale],
+  );
+
   useEffect(() => {
-    loadAccounts();
+    void loadAccounts();
   }, []);
 
   async function loadAccounts() {
@@ -91,6 +109,15 @@ export default function BankAccounts() {
       cell: ({ row }) => <span className="text-slate-600">{row.original.branch || "—"}</span>,
     },
     {
+      accessorKey: "totalBalance",
+      header: t.pages.bankAccounts.totalBalanceLabel,
+      cell: ({ row }) => (
+        <span className="font-semibold text-emerald-700">
+          {t.common.currencySymbol} {formatMoney.format(Number(row.original.totalBalance || 0))}
+        </span>
+      ),
+    },
+    {
       accessorKey: "isPrimary",
       header: t.pages.bankAccounts.primaryLabel,
       cell: ({ row }) => (
@@ -111,7 +138,7 @@ export default function BankAccounts() {
         </div>
       ),
     },
-  ], [t]);
+  ], [t, formatMoney]);
 
   const table = useReactTable({
     data: accounts,
