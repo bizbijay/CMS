@@ -80,6 +80,7 @@ builder.Services.AddScoped<IProjectExpenseService, ProjectExpenseService>();
 builder.Services.AddScoped<IProjectWageService, ProjectWageService>();
 builder.Services.AddScoped<IExtraExpenseService, ExtraExpenseService>();
 builder.Services.AddScoped<IGovernmentOfficeService, GovernmentOfficeService>();
+builder.Services.AddScoped<IBankAccountService, BankAccountService>();
 builder.Services.AddScoped<IProjectCommissionService, ProjectCommissionService>();
 builder.Services.AddScoped<IVehicleMaintenanceLogService, VehicleMaintenanceLogService>();
 builder.Services.AddScoped<IVehicleMaintenancePartService, VehicleMaintenancePartService>();
@@ -165,6 +166,8 @@ builder.Services.AddAuthorization(options =>
         "party_names.view", "party_names.add", "party_names.edit", "party_names.delete",
 
         "extra_expenses.view", "extra_expenses.add", "extra_expenses.edit", "extra_expenses.delete", "extra_expenses.verify",
+
+        "bank_accounts.view", "bank_accounts.add", "bank_accounts.edit", "bank_accounts.delete",
     ];
 
     foreach (var perm in permissions)
@@ -238,26 +241,44 @@ using (var scope = app.Services.CreateScope())
 
             ALTER TABLE ""Transportations"" ADD COLUMN IF NOT EXISTS ""TotalWages"" NUMERIC(18, 2);
 
+            CREATE TABLE IF NOT EXISTS ""BankAccounts"" (
+                ""Id""              SERIAL          PRIMARY KEY,
+                ""BankName""        VARCHAR(200)    NOT NULL,
+                ""AccountHolder""  VARCHAR(200)    NOT NULL,
+                ""AccountNumber""  VARCHAR(100)    NOT NULL,
+                ""Branch""         VARCHAR(200),
+                ""IsPrimary""      BOOLEAN         NOT NULL DEFAULT FALSE,
+                ""CreatedAt""      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                ""UpdatedAt""      TIMESTAMPTZ,
+                ""CreatedById""    INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                ""UpdatedById""    INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                ""IsDeleted""      BOOLEAN         NOT NULL DEFAULT FALSE,
+                ""DeletedOn""      TIMESTAMPTZ,
+                ""DeletedById""    INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL
+            );
+
             INSERT INTO ""Permissions"" (""Name"", ""Description"", ""CreatedAt"")
             VALUES 
                 ('extra_expenses.view', 'View extra expenses', NOW()),
                 ('extra_expenses.add', 'Add extra expenses', NOW()),
                 ('extra_expenses.edit', 'Edit extra expenses', NOW()),
                 ('extra_expenses.delete', 'Delete extra expenses', NOW()),
-                ('extra_expenses.verify', 'Verify extra expenses', NOW())
+                ('extra_expenses.verify', 'Verify extra expenses', NOW()),
+                ('bank_accounts.view', 'View bank accounts', NOW()),
+                ('bank_accounts.add', 'Add bank accounts', NOW()),
+                ('bank_accounts.edit', 'Edit bank accounts', NOW()),
+                ('bank_accounts.delete', 'Delete bank accounts', NOW())
             ON CONFLICT (""Name"") DO NOTHING;
 
-            -- Grant extra_expenses.view and extra_expenses.add to ALL roles
             INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
             SELECT r.""Id"", p.""Id""
             FROM ""Roles"" r
             CROSS JOIN ""Permissions"" p
-            WHERE p.""Name"" IN ('extra_expenses.view', 'extra_expenses.add')
+            WHERE p.""Name"" IN ('extra_expenses.view', 'extra_expenses.add', 'bank_accounts.view', 'bank_accounts.add')
             ON CONFLICT DO NOTHING;
 
-            -- Grant all extra expense permissions to Admin role (RoleId = 1)
             INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
-            SELECT 1, ""Id"" FROM ""Permissions"" WHERE ""Name"" LIKE 'extra_expenses.%'
+            SELECT 1, ""Id"" FROM ""Permissions"" WHERE ""Name"" LIKE 'extra_expenses.%' OR ""Name"" LIKE 'bank_accounts.%'
             ON CONFLICT DO NOTHING;
         ");
     }

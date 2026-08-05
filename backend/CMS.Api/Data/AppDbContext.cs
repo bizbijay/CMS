@@ -33,6 +33,7 @@ public class AppDbContext : DbContext
     public DbSet<MaintenancePart> MaintenanceParts => Set<MaintenancePart>();
     public DbSet<PartyName> PartyNames => Set<PartyName>();
     public DbSet<ExtraExpense> ExtraExpenses => Set<ExtraExpense>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -378,6 +379,14 @@ public class AppDbContext : DbContext
             entity.HasOne(c => c.CreatedBy).WithMany().HasForeignKey(c => c.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(c => c.UpdatedBy).WithMany().HasForeignKey(c => c.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(c => c.DeletedBy).WithMany().HasForeignKey(c => c.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<BankAccount>(entity =>
+        {
+            entity.HasQueryFilter(a => !a.IsDeleted);
+            entity.HasOne(a => a.CreatedBy).WithMany().HasForeignKey(a => a.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(a => a.UpdatedBy).WithMany().HasForeignKey(a => a.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(a => a.DeletedBy).WithMany().HasForeignKey(a => a.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

@@ -10,7 +10,7 @@ interface Props {
 
 const settingsPaths = [
   "/vehicles", "/materials", "/vendors", "/projects",
-  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office", "/maintenance-parts", "/party-names",
+  "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office", "/maintenance-parts", "/party-names", "/bank-accounts",
 ];
 
 export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
@@ -41,6 +41,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/government-office", label: t.nav.governmentOffice, icon: GovernmentOfficeIcon, policy: "govt_offices.view" },
     { to: "/maintenance-parts", label: t.nav.maintenanceParts, icon: MaintenancePartsIcon, policy: "maintenance_parts.view" },
     { to: "/party-names", label: t.nav.partyNames, icon: PartyNameIcon, policy: "party_names.view" },
+    { to: "/bank-accounts", label: t.nav.bankAccounts, icon: BankIcon, policy: "bank_accounts.view" },
     { to: "/salary-setup", label: t.nav.salarySetup, icon: SalarySetupIcon, policy: "salary_setup.view" },
     { to: "/roles", label: t.nav.roles, icon: RolesIcon, policy: "roles.view" },
     { to: "/permissions", label: t.nav.permissions, icon: PermissionsIcon, policy: "permissions.view" },
@@ -210,6 +211,25 @@ function XIcon() {
       className="w-4 h-4"
     >
       <path d="M6 6l12 12M6 18L18 6" />
+    </svg>
+  );
+}
+
+function BankIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M7 15h.5" />
     </svg>
   );
 }

@@ -13,6 +13,8 @@ DROP TABLE IF EXISTS "SalarySetups"    CASCADE;
 DROP TABLE IF EXISTS "DozerLogs"       CASCADE;
 DROP TABLE IF EXISTS "FuelLogs"        CASCADE;
 DROP TABLE IF EXISTS "Transportations" CASCADE;
+DROP TABLE IF EXISTS "ExtraExpenses"   CASCADE;
+DROP TABLE IF EXISTS "BankAccounts"    CASCADE;
 DROP TABLE IF EXISTS "RolePermissions" CASCADE;
 DROP TABLE IF EXISTS "Permissions"     CASCADE;
 DROP TABLE IF EXISTS "Materials"       CASCADE;
@@ -538,6 +540,25 @@ CREATE TABLE "ExtraExpenses" (
     "DeletedById"     INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
 
+-- -------------------------------------------------------------
+-- BankAccounts
+-- -------------------------------------------------------------
+CREATE TABLE "BankAccounts" (
+    "Id"            SERIAL          PRIMARY KEY,
+    "BankName"      VARCHAR(200)    NOT NULL,
+    "AccountHolder" VARCHAR(200)    NOT NULL,
+    "AccountNumber" VARCHAR(100)    NOT NULL,
+    "Branch"        VARCHAR(200),
+    "IsPrimary"     BOOLEAN         NOT NULL DEFAULT FALSE,
+    "CreatedAt"     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"     TIMESTAMPTZ,
+    "CreatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"     BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"     TIMESTAMPTZ,
+    "DeletedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
 -- =============================================================
 -- Seed: Admin role
 -- =============================================================
@@ -549,6 +570,19 @@ INSERT INTO "Roles" ("Name") VALUES ('Admin') ON CONFLICT DO NOTHING;
 
 -- Dashboard
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('dashboard.view',          'View the dashboard')                        ON CONFLICT ("Name") DO NOTHING;
+
+-- Extra expenses
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.view',     'View extra expenses')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.add',      'Add extra expenses')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.edit',     'Edit extra expenses')                      ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.delete',   'Delete extra expenses')                    ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('extra_expenses.verify',   'Verify extra expenses')                    ON CONFLICT ("Name") DO NOTHING;
+
+-- Bank accounts
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.view',       'View bank accounts')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.add',        'Add bank accounts')                        ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.edit',       'Edit bank accounts')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('bank_accounts.delete',     'Delete bank accounts')                     ON CONFLICT ("Name") DO NOTHING;
 
 -- Users
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('users.view',              'View the users list')                       ON CONFLICT ("Name") DO NOTHING;

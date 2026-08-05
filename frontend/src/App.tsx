@@ -32,6 +32,7 @@ import VehicleMaintenanceDetail from "./pages/VehicleMaintenanceDetail";
 import GovernmentOffice from "./pages/GovernmentOffice";
 import MaintenanceParts from "./pages/MaintenanceParts";
 import PartyNames from "./pages/PartyNames";
+import BankAccounts from "./pages/BankAccounts";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toaster";
@@ -284,6 +285,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="party_names.view">
               <PartyNames />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bank-accounts"
+          element={
+            <ProtectedRoute policy="bank_accounts.view">
+              <BankAccounts />
             </ProtectedRoute>
           }
         />

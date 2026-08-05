@@ -41,6 +41,7 @@ import type {
 } from "../types/vehicleMaintenance";
 import type { MaintenancePartListItem, CreateMaintenancePartRequest, UpdateMaintenancePartRequest } from "../types/maintenancePart";
 import type { PartyNameListItem, CreatePartyNameRequest, UpdatePartyNameRequest } from "../types/partyName";
+import type { BankAccountListItem, CreateBankAccountRequest, UpdateBankAccountRequest } from "../types/bankAccount";
 
 // Vite dev server proxies /api to the backend (see vite.config.ts).
 // For production builds, set VITE_API_BASE_URL to your API origin.
@@ -215,6 +216,17 @@ export const transportationsApi = {
   update: (id: number, body: UpdateTransportationRequest) =>
     request<TransportationListItem>(`/api/transportations/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/transportations/${id}`, { method: "DELETE" }),
+};
+
+export const bankAccountsApi = {
+  list: () => request<BankAccountListItem[]>("/api/bank-accounts", { method: "GET" }),
+  create: (body: CreateBankAccountRequest) =>
+    request<BankAccountListItem>("/api/bank-accounts", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: number, body: UpdateBankAccountRequest) =>
+    request<BankAccountListItem>(`/api/bank-accounts/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  remove: (id: number) => request<void>(`/api/bank-accounts/${id}`, { method: "DELETE" }),
+  setPrimary: (id: number) =>
+    request<BankAccountListItem>(`/api/bank-accounts/${id}/set-primary`, { method: "POST" }),
 };
 
 export const vendorsApi = {
