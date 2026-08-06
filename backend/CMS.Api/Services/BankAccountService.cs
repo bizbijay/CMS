@@ -12,6 +12,8 @@ public interface IBankAccountService
     Task<List<BankAccountBalanceSummaryDto>> ListBalancesAsync();
     Task<List<BankAccountCreditLogListItemDto>> ListCreditLogsAsync();
     Task<List<BankAccountCreditLogListItemDto>> ListCreditLogsByAccountAsync(int bankAccountId);
+    Task<List<BankAccountDebitLogListItemDto>> ListDebitLogsAsync();
+    Task<List<BankAccountDebitLogListItemDto>> ListDebitLogsByAccountAsync(int bankAccountId);
     Task<(BankAccountCreditLogListItemDto? Item, string? Error)> AddBalanceAsync(int bankAccountId, AddBankAccountBalanceRequest request, int createdById);
     Task<BankAccountListItemDto> CreateAsync(CreateBankAccountRequest request, int createdById);
     Task<(BankAccountListItemDto? Item, string? Error)> UpdateAsync(int id, UpdateBankAccountRequest request, int updatedById);
@@ -84,6 +86,33 @@ public class BankAccountService : IBankAccountService
             .ToListAsync();
 
         return items.Select(ToCreditLogDto).ToList();
+    }
+
+    public async Task<List<BankAccountDebitLogListItemDto>> ListDebitLogsAsync()
+    {
+        var items = await _db.BankAccountDebitLogs
+            .Include(l => l.CreatedBy)
+            .Include(l => l.BankAccount)
+            .Include(l => l.Vendor)
+            .Where(l => !l.IsDeleted && l.BankAccount != null && !l.BankAccount.IsDeleted)
+            .OrderByDescending(l => l.DebitedOn)
+            .ThenByDescending(l => l.Id)
+            .ToListAsync();
+
+        return items.Select(ToDebitLogDto).ToList();
+    }
+
+    public async Task<List<BankAccountDebitLogListItemDto>> ListDebitLogsByAccountAsync(int bankAccountId)
+    {
+        var items = await _db.BankAccountDebitLogs
+            .Include(l => l.CreatedBy)
+            .Include(l => l.Vendor)
+            .Where(l => l.BankAccountId == bankAccountId && !l.IsDeleted)
+            .OrderByDescending(l => l.DebitedOn)
+            .ThenByDescending(l => l.Id)
+            .ToListAsync();
+
+        return items.Select(ToDebitLogDto).ToList();
     }
 
     public async Task<(BankAccountCreditLogListItemDto? Item, string? Error)> AddBalanceAsync(int bankAccountId, AddBankAccountBalanceRequest request, int createdById)
@@ -248,6 +277,19 @@ public class BankAccountService : IBankAccountService
         BankAccountId = item.BankAccountId,
         Amount = item.Amount,
         LoggedOn = item.LoggedOn,
+        Remarks = item.Remarks,
+        CreatedAt = item.CreatedAt,
+        CreatedBy = item.CreatedBy?.Username,
+    };
+
+    private static BankAccountDebitLogListItemDto ToDebitLogDto(BankAccountDebitLog item) => new()
+    {
+        Id = item.Id,
+        BankAccountId = item.BankAccountId,
+        VendorId = item.VendorId,
+        VendorName = item.Vendor?.Name,
+        Amount = item.Amount,
+        DebitedOn = item.DebitedOn,
         Remarks = item.Remarks,
         CreatedAt = item.CreatedAt,
         CreatedBy = item.CreatedBy?.Username,

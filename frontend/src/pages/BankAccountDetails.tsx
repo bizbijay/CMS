@@ -16,10 +16,23 @@ import BankBalanceFormModal from "../components/BankBalanceFormModal";
 import type {
   BankAccountBalanceSummary,
   BankAccountCreditLogListItem,
+  BankAccountDebitLogListItem,
   BankAccountListItem,
 } from "../types/bankAccount";
+import { formatBSDate } from "../utils/nepaliDate";
 
 type CreditLogRow = BankAccountCreditLogListItem;
+type DebitLogRow = BankAccountDebitLogListItem;
+type AccountTransactionRow = {
+  id: string;
+  type: "credit" | "debit";
+  amount: number;
+  eventDate: string;
+  createdAt: string;
+  vendorName?: string | null;
+  remarks?: string | null;
+  createdBy?: string | null;
+};
 
 export default function BankAccountDetails() {
   const t = useT();
@@ -28,11 +41,12 @@ export default function BankAccountDetails() {
   const parsedId = Number(accountId);
   const [account, setAccount] = useState<BankAccountListItem | null>(null);
   const [totalBalance, setTotalBalance] = useState(0);
-  const [logs, setLogs] = useState<CreditLogRow[]>([]);
+  const [creditLogs, setCreditLogs] = useState<CreditLogRow[]>([]);
+  const [debitLogs, setDebitLogs] = useState<DebitLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openBalanceModal, setOpenBalanceModal] = useState(false);
-  const [sorting, setSorting] = useState<SortingState>([{ id: "loggedOn", desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "eventDate", desc: true }]);
 
   const formatMoney = useMemo(
     () =>
@@ -57,21 +71,19 @@ export default function BankAccountDetails() {
       setLoading(true);
       setError(null);
 
-      const [accountData, balances, logsData] = await Promise.all([
+      const [accountData, balances, creditLogsData, debitLogsData] = await Promise.all([
         bankAccountsApi.getById(id),
         bankAccountsApi.listBalances(),
         bankAccountsApi.listCreditLogsByAccount(id),
+        bankAccountsApi.listDebitLogsByAccount(id),
       ]);
 
       setAccount(accountData);
-      setLogs(logsData ?? []);
+      setCreditLogs(creditLogsData ?? []);
+      setDebitLogs(debitLogsData ?? []);
 
       const matchingBalance = (balances ?? []).find((item: BankAccountBalanceSummary) => item.bankAccountId === id);
-      const computedLogTotal = (logsData ?? []).reduce(
-        (sum: number, item: BankAccountCreditLogListItem) => sum + Number(item.amount || 0),
-        0,
-      );
-      setTotalBalance(Number(matchingBalance?.totalBalance ?? computedLogTotal));
+      setTotalBalance(Number(matchingBalance?.totalBalance ?? accountData.totalBalance ?? 0));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load account details.");
     } finally {
@@ -79,24 +91,72 @@ export default function BankAccountDetails() {
     }
   }
 
-  const columns = useMemo<ColumnDef<CreditLogRow>[]>(() => [
+  const transactionRows = useMemo<AccountTransactionRow[]>(() => {
+    const rows: AccountTransactionRow[] = [
+      ...creditLogs.map((item) => ({
+        id: `credit-${item.id}`,
+        type: "credit" as const,
+        amount: Number(item.amount || 0),
+        eventDate: item.loggedOn,
+        createdAt: item.createdAt,
+        remarks: item.remarks,
+        createdBy: item.createdBy,
+      })),
+      ...debitLogs.map((item) => ({
+        id: `debit-${item.id}`,
+        type: "debit" as const,
+        amount: Number(item.amount || 0),
+        eventDate: item.debitedOn,
+        createdAt: item.createdAt,
+        vendorName: item.vendorName,
+        remarks: item.remarks,
+        createdBy: item.createdBy,
+      })),
+    ];
+
+    return rows.sort((left, right) => {
+      const leftDate = new Date(`${left.eventDate}T00:00:00`).getTime();
+      const rightDate = new Date(`${right.eventDate}T00:00:00`).getTime();
+      if (leftDate !== rightDate) {
+        return rightDate - leftDate;
+      }
+
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    });
+  }, [creditLogs, debitLogs]);
+
+  const transactionColumns = useMemo<ColumnDef<AccountTransactionRow>[]>(() => [
     {
-      accessorKey: "loggedOn",
+      accessorKey: "eventDate",
       header: t.pages.bankAccounts.creditDateLabel,
-      cell: ({ row }) => <span>{new Date(row.original.loggedOn).toLocaleDateString()}</span>,
+      cell: ({ row }) => <span>{formatBSDate(row.original.eventDate, locale)}</span>,
+    },
+    {
+      accessorKey: "type",
+      header: t.pages.bankAccounts.transactionTypeLabel,
+      cell: ({ row }) => (
+        <span className={row.original.type === "credit" ? "font-medium text-emerald-700" : "font-medium text-rose-700"}>
+          {row.original.type === "credit" ? t.pages.bankAccounts.creditTypeLabel : t.pages.bankAccounts.debitTypeLabel}
+        </span>
+      ),
     },
     {
       accessorKey: "amount",
-      header: t.pages.bankAccounts.creditAmountLabel,
+      header: t.pages.bankAccounts.amountLabel,
       cell: ({ row }) => (
-        <span className="font-medium text-emerald-700">
+        <span className={row.original.type === "credit" ? "font-medium text-emerald-700" : "font-medium text-rose-700"}>
           {t.common.currencySymbol} {formatMoney.format(Number(row.original.amount || 0))}
         </span>
       ),
     },
     {
+      accessorKey: "vendorName",
+      header: t.common.vendor,
+      cell: ({ row }) => <span className="text-slate-600">{row.original.vendorName || "—"}</span>,
+    },
+    {
       accessorKey: "remarks",
-      header: t.pages.bankAccounts.creditRemarksLabel,
+      header: t.common.remarks,
       cell: ({ row }) => <span className="text-slate-600">{row.original.remarks || "—"}</span>,
     },
     {
@@ -104,11 +164,11 @@ export default function BankAccountDetails() {
       header: t.pages.bankAccounts.loggedByLabel,
       cell: ({ row }) => <span className="text-slate-600">{row.original.createdBy || "—"}</span>,
     },
-  ], [t, formatMoney]);
+  ], [t, formatMoney, locale]);
 
-  const table = useReactTable({
-    data: logs,
-    columns,
+  const transactionsTable = useReactTable({
+    data: transactionRows,
+    columns: transactionColumns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -162,8 +222,8 @@ export default function BankAccountDetails() {
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-slate-800">{t.pages.bankAccounts.creditLogsTitle}</h3>
-        <DataTable table={table} loading={loading} emptyMessage={t.pages.bankAccounts.noCreditLogs} />
+        <h3 className="text-lg font-semibold text-slate-800">{t.pages.bankAccounts.transactionLogsTitle}</h3>
+        <DataTable table={transactionsTable} loading={loading} emptyMessage={t.pages.bankAccounts.noTransactionLogs} />
       </div>
 
       <BankBalanceFormModal

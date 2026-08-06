@@ -35,6 +35,8 @@ public class AppDbContext : DbContext
     public DbSet<ExtraExpense> ExtraExpenses => Set<ExtraExpense>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<BankAccountCreditLog> BankAccountCreditLogs => Set<BankAccountCreditLog>();
+    public DbSet<BankAccountDebitLog> BankAccountDebitLogs => Set<BankAccountDebitLog>();
+    public DbSet<VendorBalanceLog> VendorBalanceLogs => Set<VendorBalanceLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -136,6 +138,16 @@ public class AppDbContext : DbContext
             entity.HasOne(v => v.CreatedBy).WithMany().HasForeignKey(v => v.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(v => v.UpdatedBy).WithMany().HasForeignKey(v => v.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(v => v.DeletedBy).WithMany().HasForeignKey(v => v.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VendorBalanceLog>(entity =>
+        {
+            entity.HasQueryFilter(l => !l.IsDeleted);
+            entity.HasOne(l => l.Vendor).WithMany(v => v.BalanceLogs).HasForeignKey(l => l.VendorId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(l => l.BankAccount).WithMany().HasForeignKey(l => l.BankAccountId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Project>(entity =>
@@ -394,6 +406,16 @@ public class AppDbContext : DbContext
         {
             entity.HasQueryFilter(l => !l.IsDeleted);
             entity.HasOne(l => l.BankAccount).WithMany(a => a.CreditLogs).HasForeignKey(l => l.BankAccountId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<BankAccountDebitLog>(entity =>
+        {
+            entity.HasQueryFilter(l => !l.IsDeleted);
+            entity.HasOne(l => l.BankAccount).WithMany(a => a.DebitLogs).HasForeignKey(l => l.BankAccountId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(l => l.Vendor).WithMany().HasForeignKey(l => l.VendorId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);

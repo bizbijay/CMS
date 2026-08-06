@@ -23,7 +23,14 @@ import type { RolePermissions, SetRolePermissionsRequest } from "../types/rolePe
 import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from "../types/fuelLog";
 import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
 import type { CreateDozerLogRequest, UpdateDozerLogRequest, DozerLogListItem } from "../types/dozerLog";
-import type { CreateVendorRequest, UpdateVendorRequest, VendorListItem } from "../types/vendors";
+import type {
+  AddVendorBalanceRequest,
+  CreateVendorRequest,
+  PayVendorAmountRequest,
+  UpdateVendorRequest,
+  VendorBalanceLogListItem,
+  VendorListItem,
+} from "../types/vendors";
 import type { CreateProjectRequest, UpdateProjectRequest, ProjectListItem, ProjectExpenseSummary } from "../types/projects";
 import type { CreateSalarySetupRequest, UpdateSalarySetupRequest, SalarySetupListItem } from "../types/salarySetup";
 import type { MonthlySalaryRow, SaveMonthlySalaryRequest } from "../types/monthlySalary";
@@ -45,6 +52,7 @@ import type {
   AddBankAccountBalanceRequest,
   BankAccountBalanceSummary,
   BankAccountCreditLogListItem,
+  BankAccountDebitLogListItem,
   BankAccountListItem,
   CreateBankAccountRequest,
   UpdateBankAccountRequest,
@@ -259,6 +267,27 @@ export const bankAccountsApi = {
       return allLogs.filter((log) => log.bankAccountId === id);
     }
   },
+  listDebitLogs: async () => {
+    try {
+      return await requestFromCandidatePaths<BankAccountDebitLogListItem[]>([
+        "/api/bank-accounts/debit-logs",
+        "/api/bank-account-debit-logs",
+      ], { method: "GET" });
+    } catch {
+      return [];
+    }
+  },
+  listDebitLogsByAccount: async (id: number) => {
+    try {
+      return await requestFromCandidatePaths<BankAccountDebitLogListItem[]>([
+        `/api/bank-accounts/${id}/debit-logs`,
+        `/api/bank-accounts/debit-logs?bankAccountId=${id}`,
+      ], { method: "GET" });
+    } catch {
+      const allLogs = await bankAccountsApi.listDebitLogs();
+      return allLogs.filter((log) => log.bankAccountId === id);
+    }
+  },
   addBalance: (id: number, body: AddBankAccountBalanceRequest) =>
     requestFromCandidatePaths<BankAccountCreditLogListItem>([
       `/api/bank-accounts/${id}/balances`,
@@ -292,6 +321,13 @@ async function requestFromCandidatePaths<T>(paths: string[], init: RequestInit):
 
 export const vendorsApi = {
   list: () => request<VendorListItem[]>("/api/vendors", { method: "GET" }),
+  getById: (id: number) => request<VendorListItem>(`/api/vendors/${id}`, { method: "GET" }),
+  listBalanceLogsByVendor: (id: number) =>
+    request<VendorBalanceLogListItem[]>(`/api/vendors/${id}/balance-logs`, { method: "GET" }),
+  addBalance: (id: number, body: AddVendorBalanceRequest) =>
+    request<VendorBalanceLogListItem>(`/api/vendors/${id}/credit`, { method: "POST", body: JSON.stringify(body) }),
+  payAmount: (id: number, body: PayVendorAmountRequest) =>
+    request<VendorBalanceLogListItem>(`/api/vendors/${id}/pay`, { method: "POST", body: JSON.stringify(body) }),
   create: (body: CreateVendorRequest) =>
     request<VendorListItem>("/api/vendors", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdateVendorRequest) =>

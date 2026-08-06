@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS "DozerLogs"       CASCADE;
 DROP TABLE IF EXISTS "FuelLogs"        CASCADE;
 DROP TABLE IF EXISTS "Transportations" CASCADE;
 DROP TABLE IF EXISTS "ExtraExpenses"   CASCADE;
+DROP TABLE IF EXISTS "BankAccountDebitLogs" CASCADE;
+DROP TABLE IF EXISTS "VendorBalanceLogs" CASCADE;
 DROP TABLE IF EXISTS "BankAccountCreditLogs" CASCADE;
 DROP TABLE IF EXISTS "BankAccounts"    CASCADE;
 DROP TABLE IF EXISTS "RolePermissions" CASCADE;
@@ -124,6 +126,7 @@ CREATE TABLE "Vendors" (
     "Id"           SERIAL       PRIMARY KEY,
     "Name"         VARCHAR(100) NOT NULL,
     "PanNumber"    VARCHAR(20),
+    "TotalBalance" NUMERIC(18, 2) NOT NULL DEFAULT 0,
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
     "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
@@ -582,6 +585,51 @@ CREATE TABLE "BankAccountCreditLogs" (
 CREATE INDEX "IX_BankAccountCreditLogs_BankAccountId_LoggedOn"
 ON "BankAccountCreditLogs" ("BankAccountId", "LoggedOn" DESC);
 
+-- -------------------------------------------------------------
+-- VendorBalanceLogs
+-- -------------------------------------------------------------
+CREATE TABLE "VendorBalanceLogs" (
+    "Id"            SERIAL          PRIMARY KEY,
+    "VendorId"      INT             NOT NULL REFERENCES "Vendors"("Id") ON DELETE RESTRICT,
+    "BankAccountId" INT             REFERENCES "BankAccounts"("Id") ON DELETE SET NULL,
+    "EntryType"     VARCHAR(10)     NOT NULL CHECK ("EntryType" IN ('credit', 'debit')),
+    "Amount"        NUMERIC(18, 2)  NOT NULL CHECK ("Amount" > 0),
+    "LoggedOn"      DATE            NOT NULL,
+    "Remarks"       VARCHAR(500),
+    "CreatedAt"     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"     TIMESTAMPTZ,
+    "CreatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"     BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"     TIMESTAMPTZ,
+    "DeletedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+CREATE INDEX "IX_VendorBalanceLogs_VendorId_LoggedOn"
+ON "VendorBalanceLogs" ("VendorId", "LoggedOn" DESC);
+
+-- -------------------------------------------------------------
+-- BankAccountDebitLogs
+-- -------------------------------------------------------------
+CREATE TABLE "BankAccountDebitLogs" (
+    "Id"            SERIAL          PRIMARY KEY,
+    "BankAccountId" INT             NOT NULL REFERENCES "BankAccounts"("Id") ON DELETE RESTRICT,
+    "VendorId"      INT             REFERENCES "Vendors"("Id") ON DELETE SET NULL,
+    "Amount"        NUMERIC(18, 2)  NOT NULL CHECK ("Amount" > 0),
+    "DebitedOn"     DATE            NOT NULL,
+    "Remarks"       VARCHAR(500),
+    "CreatedAt"     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"     TIMESTAMPTZ,
+    "CreatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"     BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"     TIMESTAMPTZ,
+    "DeletedById"   INT REFERENCES "Users"("Id") ON DELETE SET NULL
+);
+
+CREATE INDEX "IX_BankAccountDebitLogs_BankAccountId_DebitedOn"
+ON "BankAccountDebitLogs" ("BankAccountId", "DebitedOn" DESC);
+
 -- =============================================================
 -- Seed: Admin role
 -- =============================================================
@@ -649,6 +697,7 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.view',       
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.add',             'Add a vendor')                              ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.edit',            'Edit a vendor')                             ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.delete',          'Delete a vendor')                           ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendor_management.view',  'Access vendor management page')             ON CONFLICT ("Name") DO NOTHING;
 
 -- Projects
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.view',           'View the projects list')                    ON CONFLICT ("Name") DO NOTHING;

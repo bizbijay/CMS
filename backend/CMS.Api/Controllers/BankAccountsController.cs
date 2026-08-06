@@ -35,6 +35,11 @@ public class BankAccountsController : ControllerBase
     public async Task<ActionResult<IEnumerable<BankAccountCreditLogListItemDto>>> GetCreditLogs() =>
         Ok(await _service.ListCreditLogsAsync());
 
+    [HttpGet("debit-logs")]
+    [Authorize(Policy = "account_management.view")]
+    public async Task<ActionResult<IEnumerable<BankAccountDebitLogListItemDto>>> GetDebitLogs() =>
+        Ok(await _service.ListDebitLogsAsync());
+
     [HttpGet("{id:int}")]
     [Authorize]
     public async Task<ActionResult<BankAccountListItemDto>> GetById(int id)
@@ -60,6 +65,17 @@ public class BankAccountsController : ControllerBase
         if (account is null) return NotFound();
 
         var logs = await _service.ListCreditLogsByAccountAsync(id);
+        return Ok(logs);
+    }
+
+    [HttpGet("{id:int}/debit-logs")]
+    [Authorize(Policy = "account_management.view")]
+    public async Task<ActionResult<IEnumerable<BankAccountDebitLogListItemDto>>> GetDebitLogsByAccount(int id)
+    {
+        var account = await _service.GetByIdAsync(id);
+        if (account is null) return NotFound();
+
+        var logs = await _service.ListDebitLogsByAccountAsync(id);
         return Ok(logs);
     }
 

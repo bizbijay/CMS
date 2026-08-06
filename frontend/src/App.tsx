@@ -7,6 +7,8 @@ import Users from "./pages/Users";
 import Vehicles from "./pages/Vehicles";
 import Materials from "./pages/Materials";
 import Vendors from "./pages/Vendors";
+import VendorManagement from "./pages/VendorManagement";
+import VendorManagementLogs from "./pages/VendorManagementLogs";
 import Projects from "./pages/Projects";
 import Transportation from "./pages/Transportation";
 import Fuels from "./pages/Fuels";
@@ -119,6 +121,22 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="vendors.view">
               <Vendors />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor-management"
+          element={
+            <ProtectedRoute policy="vendor_management.view">
+              <VendorManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor-management/:vendorId/logs"
+          element={
+            <ProtectedRoute policy="vendor_management.view">
+              <VendorManagementLogs />
             </ProtectedRoute>
           }
         />

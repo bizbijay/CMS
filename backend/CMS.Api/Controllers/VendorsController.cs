@@ -29,6 +29,16 @@ public class VendorsController : ControllerBase
         return vendor is null ? NotFound() : Ok(vendor);
     }
 
+    [HttpGet("{id:int}/balance-logs")]
+    [Authorize(Policy = "vendors.view")]
+    public async Task<ActionResult<IEnumerable<VendorBalanceLogListItemDto>>> GetBalanceLogs(int id)
+    {
+        var vendor = await _vendors.GetByIdAsync(id);
+        if (vendor is null) return NotFound();
+
+        return Ok(await _vendors.GetBalanceLogsAsync(id));
+    }
+
     [HttpPost]
     [Authorize(Policy = "vendors.add")]
     public async Task<ActionResult<VendorListItemDto>> Create([FromBody] CreateVendorRequest request)
@@ -47,6 +57,32 @@ public class VendorsController : ControllerBase
         if (vendor is null && error is null) return NotFound();
         if (error is not null) return Conflict(new { message = error });
         return Ok(vendor);
+    }
+
+    [HttpPost("{id:int}/credit")]
+    [Authorize(Policy = "vendors.edit")]
+    public async Task<ActionResult<VendorBalanceLogListItemDto>> AddBalance(int id, [FromBody] AddVendorBalanceRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var (log, error) = await _vendors.AddBalanceAsync(id, request, CurrentUserId);
+        if (log is null && error is null) return NotFound();
+        if (error is not null) return BadRequest(new { message = error });
+
+        return Ok(log);
+    }
+
+    [HttpPost("{id:int}/pay")]
+    [Authorize(Policy = "vendors.edit")]
+    public async Task<ActionResult<VendorBalanceLogListItemDto>> PayAmount(int id, [FromBody] PayVendorAmountRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var (log, error) = await _vendors.PayAmountAsync(id, request, CurrentUserId);
+        if (log is null && error is null) return NotFound();
+        if (error is not null) return BadRequest(new { message = error });
+
+        return Ok(log);
     }
 
     [HttpDelete("{id:int}")]

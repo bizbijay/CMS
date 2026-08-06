@@ -68,6 +68,7 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.view',       
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.add',              'Add a vendor')                               ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.edit',             'Edit a vendor')                              ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendors.delete',           'Delete a vendor')                            ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('vendor_management.view',   'Access vendor management page')              ON CONFLICT ("Name") DO NOTHING;
 
 -- Projects
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('projects.view',            'View the projects list')                     ON CONFLICT ("Name") DO NOTHING;

@@ -43,6 +43,18 @@ export interface BankAccountCreditLogListItem {
   createdBy?: string | null;
 }
 
+export interface BankAccountDebitLogListItem {
+  id: number;
+  bankAccountId: number;
+  vendorId?: number | null;
+  vendorName?: string | null;
+  amount: number;
+  debitedOn: string;
+  remarks?: string | null;
+  createdAt: string;
+  createdBy?: string | null;
+}
+
 export interface AddBankAccountBalanceRequest {
   amount: number;
   loggedOn?: string | null;

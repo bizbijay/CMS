@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { bankAccountsApi } from "../services/api";
 import { useT } from "../hooks/useT";
 import type { BankAccountListItem } from "../types/bankAccount";
+import NepaliCalendarPicker from "./NepaliCalendarPicker";
 
 interface Props {
   open: boolean;
@@ -99,11 +100,9 @@ export default function BankBalanceFormModal({ open, account, onClose, onSaved }
 
           <label className="space-y-1 text-sm text-slate-700">
             <span>{t.pages.bankAccounts.creditDateLabel}</span>
-            <input
-              type="date"
+            <NepaliCalendarPicker
               value={loggedOn}
-              onChange={(e) => setLoggedOn(e.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={setLoggedOn}
             />
           </label>
 

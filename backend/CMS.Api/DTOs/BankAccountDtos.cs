@@ -68,6 +68,19 @@ public class BankAccountCreditLogListItemDto
     public string? CreatedBy { get; set; }
 }
 
+public class BankAccountDebitLogListItemDto
+{
+    public int Id { get; set; }
+    public int BankAccountId { get; set; }
+    public int? VendorId { get; set; }
+    public string? VendorName { get; set; }
+    public decimal Amount { get; set; }
+    public DateOnly DebitedOn { get; set; }
+    public string? Remarks { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+}
+
 public class AddBankAccountBalanceRequest
 {
     [Range(0.01, double.MaxValue)]

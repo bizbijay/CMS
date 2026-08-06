@@ -47,4 +47,5 @@ public class BankAccount : IPrimaryAccountState
     public User? DeletedBy { get; set; }
 
     public List<BankAccountCreditLog> CreditLogs { get; set; } = [];
+    public List<BankAccountDebitLog> DebitLogs { get; set; } = [];
 }
