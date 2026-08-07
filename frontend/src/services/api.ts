@@ -47,7 +47,14 @@ import type {
   VehicleMaintenanceWageListItem, CreateVehicleMaintenanceWageRequest, UpdateVehicleMaintenanceWageRequest,
 } from "../types/vehicleMaintenance";
 import type { MaintenancePartListItem, CreateMaintenancePartRequest, UpdateMaintenancePartRequest } from "../types/maintenancePart";
-import type { PartyNameListItem, CreatePartyNameRequest, UpdatePartyNameRequest } from "../types/partyName";
+import type {
+  AddPartyBalanceRequest,
+  CreatePartyNameRequest,
+  PartyBalanceLogListItem,
+  PartyNameListItem,
+  ReceivePartyAmountRequest,
+  UpdatePartyNameRequest,
+} from "../types/partyName";
 import type {
   AddBankAccountBalanceRequest,
   BankAccountBalanceSummary,
@@ -215,6 +222,13 @@ export const fuelsApi = {
 
 export const partyNamesApi = {
   list: () => request<PartyNameListItem[]>("/api/party-names", { method: "GET" }),
+  getById: (id: number) => request<PartyNameListItem>(`/api/party-names/${id}`, { method: "GET" }),
+  listBalanceLogsByParty: (id: number) =>
+    request<PartyBalanceLogListItem[]>(`/api/party-names/${id}/balance-logs`, { method: "GET" }),
+  addBalance: (id: number, body: AddPartyBalanceRequest) =>
+    request<PartyBalanceLogListItem>(`/api/party-names/${id}/credit`, { method: "POST", body: JSON.stringify(body) }),
+  receiveAmount: (id: number, body: ReceivePartyAmountRequest) =>
+    request<PartyBalanceLogListItem>(`/api/party-names/${id}/receive`, { method: "POST", body: JSON.stringify(body) }),
   create: (body: CreatePartyNameRequest) =>
     request<PartyNameListItem>("/api/party-names", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdatePartyNameRequest) =>

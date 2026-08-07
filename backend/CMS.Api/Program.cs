@@ -135,6 +135,8 @@ builder.Services.AddAuthorization(options =>
 
         "vendor_management.view",
 
+        "party_management.view",
+
         "projects.view", "projects.add", "projects.edit", "projects.delete",
 
         "fuel_types.view", "fuel_types.add", "fuel_types.edit", "fuel_types.delete",
@@ -316,6 +318,28 @@ using (var scope = app.Services.CreateScope())
                 ""DeletedById""   INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL
             );
 
+            ALTER TABLE ""PartyNames""
+            ADD COLUMN IF NOT EXISTS ""TotalBalance"" NUMERIC(18, 2) NOT NULL DEFAULT 0;
+
+            CREATE TABLE IF NOT EXISTS ""PartyBalanceLogs"" (
+                ""Id""          SERIAL          PRIMARY KEY,
+                ""PartyNameId"" INT             NOT NULL REFERENCES ""PartyNames""(""Id"") ON DELETE RESTRICT,
+                ""EntryType""   VARCHAR(10)     NOT NULL CHECK (""EntryType"" IN ('credit', 'debit')),
+                ""Amount""      NUMERIC(18, 2)  NOT NULL CHECK (""Amount"" > 0),
+                ""LoggedOn""    DATE            NOT NULL,
+                ""Remarks""     VARCHAR(500),
+                ""CreatedAt""   TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                ""UpdatedAt""   TIMESTAMPTZ,
+                ""CreatedById"" INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                ""UpdatedById"" INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL,
+                ""IsDeleted""   BOOLEAN         NOT NULL DEFAULT FALSE,
+                ""DeletedOn""   TIMESTAMPTZ,
+                ""DeletedById"" INT REFERENCES ""Users""(""Id"") ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_PartyBalanceLogs_PartyNameId_LoggedOn""
+            ON ""PartyBalanceLogs"" (""PartyNameId"", ""LoggedOn"" DESC);
+
             CREATE INDEX IF NOT EXISTS ""IX_VendorBalanceLogs_VendorId_LoggedOn""
             ON ""VendorBalanceLogs"" (""VendorId"", ""LoggedOn"" DESC);
 
@@ -353,6 +377,17 @@ using (var scope = app.Services.CreateScope())
             ) s
             WHERE s.""VendorId"" = v.""Id"";
 
+            UPDATE ""PartyNames"" p
+            SET ""TotalBalance"" = COALESCE(s.""TotalBalance"", 0)
+            FROM (
+                SELECT ""PartyNameId"",
+                       SUM(CASE WHEN ""EntryType"" = 'credit' THEN ""Amount"" ELSE -""Amount"" END) AS ""TotalBalance""
+                FROM ""PartyBalanceLogs""
+                WHERE NOT ""IsDeleted""
+                GROUP BY ""PartyNameId""
+            ) s
+            WHERE s.""PartyNameId"" = p.""Id"";
+
             INSERT INTO ""Permissions"" (""Name"", ""Description"", ""CreatedAt"")
             VALUES 
                 ('extra_expenses.view', 'View extra expenses', NOW()),
@@ -361,6 +396,7 @@ using (var scope = app.Services.CreateScope())
                 ('extra_expenses.delete', 'Delete extra expenses', NOW()),
                 ('extra_expenses.verify', 'Verify extra expenses', NOW()),
                 ('vendor_management.view', 'Access vendor management page', NOW()),
+                ('party_management.view', 'Access party management page', NOW()),
                 ('account_management.view', 'Access account management page', NOW()),
                 ('bank_accounts.view', 'View bank accounts', NOW()),
                 ('bank_accounts.add', 'Add bank accounts', NOW()),
@@ -382,7 +418,7 @@ using (var scope = app.Services.CreateScope())
             INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
             SELECT r.""Id"", p.""Id""
             FROM ""Roles"" r
-            JOIN ""Permissions"" p ON p.""Name"" IN ('account_management.view', 'vendor_management.view')
+            JOIN ""Permissions"" p ON p.""Name"" IN ('account_management.view', 'vendor_management.view', 'party_management.view')
             WHERE r.""Name"" = 'Admin'
             ON CONFLICT DO NOTHING;
         ");

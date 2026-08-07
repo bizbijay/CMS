@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<VehicleMaintenanceWage> VehicleMaintenanceWages => Set<VehicleMaintenanceWage>();
     public DbSet<MaintenancePart> MaintenanceParts => Set<MaintenancePart>();
     public DbSet<PartyName> PartyNames => Set<PartyName>();
+    public DbSet<PartyBalanceLog> PartyBalanceLogs => Set<PartyBalanceLog>();
     public DbSet<ExtraExpense> ExtraExpenses => Set<ExtraExpense>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<BankAccountCreditLog> BankAccountCreditLogs => Set<BankAccountCreditLog>();
@@ -382,6 +383,15 @@ public class AppDbContext : DbContext
             entity.HasOne(p => p.CreatedBy).WithMany().HasForeignKey(p => p.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(p => p.UpdatedBy).WithMany().HasForeignKey(p => p.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(p => p.DeletedBy).WithMany().HasForeignKey(p => p.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PartyBalanceLog>(entity =>
+        {
+            entity.HasQueryFilter(l => !l.IsDeleted);
+            entity.HasOne(l => l.PartyName).WithMany(p => p.BalanceLogs).HasForeignKey(l => l.PartyNameId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<ProjectCommission>(entity =>

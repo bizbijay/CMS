@@ -33,6 +33,7 @@ export const POLICY_MAP: Record<string, string> = {
   "vendors.edit":          "vendors.edit",
   "vendors.delete":        "vendors.delete",
   "vendor_management.view": "vendor_management.view",
+  "party_management.view": "party_management.view",
 
   "projects.view":         "projects.view",
   "projects.add":          "projects.add",

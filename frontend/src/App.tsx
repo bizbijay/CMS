@@ -34,6 +34,8 @@ import VehicleMaintenanceDetail from "./pages/VehicleMaintenanceDetail";
 import GovernmentOffice from "./pages/GovernmentOffice";
 import MaintenanceParts from "./pages/MaintenanceParts";
 import PartyNames from "./pages/PartyNames";
+import PartyManagement from "./pages/PartyManagement";
+import PartyManagementLogs from "./pages/PartyManagementLogs";
 import BankAccounts from "./pages/BankAccounts";
 import AccountManagement from "./pages/AccountManagement";
 import BankAccountDetails from "./pages/BankAccountDetails";
@@ -137,6 +139,22 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="vendor_management.view">
               <VendorManagementLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/party-management"
+          element={
+            <ProtectedRoute policy="party_management.view">
+              <PartyManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/party-management/:partyId/logs"
+          element={
+            <ProtectedRoute policy="party_management.view">
+              <PartyManagementLogs />
             </ProtectedRoute>
           }
         />

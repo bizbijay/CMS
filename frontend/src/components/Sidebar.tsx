@@ -28,6 +28,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/vehicle-maintenance", label: t.nav.vehicleMaintenance, icon: VehicleMaintenanceIcon, policy: "vehicle_maintenance.view" },
     { to: "/project-details", label: t.nav.projectDetails, icon: ProjectDetailsIcon, policy: "projects.view" },
     { to: "/vendor-management", label: t.nav.vendorManagement, icon: VendorsIcon, policy: "vendor_management.view" },
+    { to: "/party-management", label: t.nav.partyManagement, icon: PartyNameIcon, policy: "party_management.view" },
     { to: "/monthly-salary", label: t.nav.monthlySalary, icon: MonthlySalaryIcon, policy: "monthly_salary.view" },
     { to: "/salary-details", label: t.nav.salaryDetails, icon: SalaryDetailIcon, policy: "salary_detail.view" },
     { to: "/extra-expenses", label: t.nav.extraExpenses, icon: ExtraExpensesIcon, policy: "extra_expenses.view" },

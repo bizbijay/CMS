@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS "PartyNames" (
     "Id"          SERIAL PRIMARY KEY,
     "Name"        VARCHAR(200) NOT NULL,
+    "TotalBalance" NUMERIC(18, 2) NOT NULL DEFAULT 0,
     "CreatedAt"   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "UpdatedAt"   TIMESTAMPTZ,
     "CreatedById" INTEGER REFERENCES "Users"("Id") ON DELETE SET NULL,

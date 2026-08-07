@@ -3,18 +3,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CMS.Api.Models;
 
-[Table("PartyNames")]
-public class PartyName
+[Table("PartyBalanceLogs")]
+public class PartyBalanceLog
 {
     [Key]
     public int Id { get; set; }
 
-    [Required]
-    [MaxLength(200)]
-    public string Name { get; set; } = string.Empty;
+    public int PartyNameId { get; set; }
+    public PartyName? PartyName { get; set; }
+
+    [Required, MaxLength(10)]
+    public string EntryType { get; set; } = "credit";
 
     [Column(TypeName = "numeric(18,2)")]
-    public decimal TotalBalance { get; set; } = 0m;
+    public decimal Amount { get; set; }
+
+    public DateOnly LoggedOn { get; set; }
+
+    [MaxLength(500)]
+    public string? Remarks { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
@@ -27,8 +34,7 @@ public class PartyName
 
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedOn { get; set; }
+
     public int? DeletedById { get; set; }
     public User? DeletedBy { get; set; }
-
-    public List<PartyBalanceLog> BalanceLogs { get; set; } = [];
 }
