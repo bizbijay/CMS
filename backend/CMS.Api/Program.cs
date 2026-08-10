@@ -247,6 +247,17 @@ using (var scope = app.Services.CreateScope())
 
             ALTER TABLE ""Transportations"" ADD COLUMN IF NOT EXISTS ""TotalWages"" NUMERIC(18, 2);
 
+            ALTER TABLE ""Transportations"" DROP CONSTRAINT IF EXISTS chk_project;
+            ALTER TABLE ""Transportations"" DROP CONSTRAINT IF EXISTS ""chk_project"";
+            ALTER TABLE ""Transportations"" DROP CONSTRAINT IF EXISTS chk_project_reference;
+            ALTER TABLE ""Transportations"" DROP CONSTRAINT IF EXISTS ""chk_project_reference"";
+            ALTER TABLE ""Transportations""
+            ADD CONSTRAINT chk_project_reference CHECK (
+                ""PartyNameId"" IS NOT NULL
+                OR
+                ((""ProjectId"" IS NOT NULL) <> (""ProjectOther"" IS NOT NULL))
+            );
+
             CREATE TABLE IF NOT EXISTS ""BankAccounts"" (
                 ""Id""              SERIAL          PRIMARY KEY,
                 ""BankName""        VARCHAR(200)    NOT NULL,

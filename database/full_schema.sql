@@ -370,7 +370,11 @@ CREATE TABLE "Transportations" (
     "DeletedById"         INT REFERENCES "Users"("Id") ON DELETE SET NULL,
     CONSTRAINT "chk_transporter" CHECK (("TransportedById" IS NOT NULL) <> ("TransportedByOther" IS NOT NULL)),
     CONSTRAINT "chk_vendor"      CHECK (("VendorId"        IS NOT NULL) <> ("VendorOther"        IS NOT NULL)),
-    CONSTRAINT "chk_project"     CHECK (("ProjectId"       IS NOT NULL) <> ("ProjectOther"       IS NOT NULL))
+    CONSTRAINT "chk_project_reference" CHECK (
+        "PartyNameId" IS NOT NULL
+        OR
+        (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL))
+    )
 );
 
 -- -------------------------------------------------------------

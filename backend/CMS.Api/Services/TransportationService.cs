@@ -68,9 +68,11 @@ public class TransportationService : ITransportationService
 
     public async Task<(TransportationListItemDto? Item, string? Error)> CreateAsync(CreateTransportationRequest request, int createdById)
     {
-        var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther, request.PartyNameId);
+        try
+        {
+var error = await ValidateRequest(request.TransportedById, request.TransportedByOther, request.VehicleId, request.MaterialId, request.VendorId, request.VendorOther, request.ProjectId, request.ProjectOther, request.PartyNameId);
         if (error is not null) return (null, error);
-
+        
         var item = new Transportation
         {
             TransportedById = request.TransportedById,
@@ -115,6 +117,13 @@ public class TransportationService : ITransportationService
         await _db.Entry(item).Reference(t => t.CreatedBy).LoadAsync();
 
         return (ToDto(item), null);
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+        
     }
 
     public async Task<(TransportationListItemDto? Item, string? Error)> UpdateAsync(int id, UpdateTransportationRequest request, int updatedById)
@@ -211,46 +220,59 @@ public class TransportationService : ITransportationService
 
     private async Task<string?> ValidateRequest(int? transportedById, string? transportedByOther, int? vehicleId, int? materialId, int? vendorId, string? vendorOther, int? projectId, string? projectOther, int? partyNameId)
     {
-        if (transportedById.HasValue)
+        try
         {
-            if (!await _db.Users.AnyAsync(u => u.Id == transportedById.Value))
-                return "Selected user does not exist.";
+            if (transportedById.HasValue)
+            {
+                if (!await _db.Users.AnyAsync(u => u.Id == transportedById.Value))
+                    return "Selected user does not exist.";
+            }
+            else if (string.IsNullOrWhiteSpace(transportedByOther))
+            {
+                return "Transported by is required.";
+            }
+
+            if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
+                return "Selected vehicle does not exist.";
+
+            if (materialId.HasValue && !await _db.Materials.AnyAsync(m => m.Id == materialId.Value))
+                return "Selected material does not exist.";
+
+            if (vendorId.HasValue)
+            {
+                if (!await _db.Vendors.AnyAsync(v => v.Id == vendorId.Value))
+                    return "Selected vendor does not exist.";
+            }
+            else if (string.IsNullOrWhiteSpace(vendorOther))
+            {
+                return "Vendor is required.";
+            }
+
+            if (projectId.HasValue)
+            {
+                if (!await _db.Projects.AnyAsync(p => p.Id == projectId.Value))
+                    return "Selected project does not exist.";
+            }
+
+            if (partyNameId.HasValue)
+            {
+                if (!await _db.PartyNames.AnyAsync(p => p.Id == partyNameId.Value))
+                    return "Selected party name does not exist.";
+            }
+
+            var hasProjectReference = projectId.HasValue || !string.IsNullOrWhiteSpace(projectOther);
+            var hasPartyReference = partyNameId.HasValue;
+            if (!hasProjectReference && !hasPartyReference)
+                return "Project or party name is required.";
+
+            return null;
         }
-        else if (string.IsNullOrWhiteSpace(transportedByOther))
+        catch (Exception ex)
         {
-            return "Transported by is required.";
+
+            throw;
         }
-
-        if (vehicleId.HasValue && !await _db.Vehicles.AnyAsync(v => v.Id == vehicleId.Value))
-            return "Selected vehicle does not exist.";
-
-        if (materialId.HasValue && !await _db.Materials.AnyAsync(m => m.Id == materialId.Value))
-            return "Selected material does not exist.";
-
-        if (vendorId.HasValue)
-        {
-            if (!await _db.Vendors.AnyAsync(v => v.Id == vendorId.Value))
-                return "Selected vendor does not exist.";
-        }
-        else if (string.IsNullOrWhiteSpace(vendorOther))
-        {
-            return "Vendor is required.";
-        }
-
-        if (projectId.HasValue)
-        {
-            if (!await _db.Projects.AnyAsync(p => p.Id == projectId.Value))
-                return "Selected project does not exist.";
-        }
-        else if (string.IsNullOrWhiteSpace(projectOther))
-        {
-            return "Project is required.";
-        }
-
-        if (partyNameId.HasValue && !await _db.PartyNames.AnyAsync(p => p.Id == partyNameId.Value))
-            return "Selected party name does not exist.";
-
-        return null;
+        
     }
 
     private static string UserDisplayName(User? u) =>
