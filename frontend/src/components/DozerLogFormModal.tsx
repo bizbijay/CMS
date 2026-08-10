@@ -79,7 +79,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.dozerDrivers(), projectsApi.list(), partyNamesApi.list(), vehiclesApi.list()])
+    Promise.all([usersApi.dozerDrivers(), projectsApi.list(), partyNamesApi.listForDropdown(), vehiclesApi.list()])
       .then(async ([d, p, pn, v]) => {
         setDrivers(d);
         setProjects(p);

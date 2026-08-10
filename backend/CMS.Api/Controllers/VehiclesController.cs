@@ -22,7 +22,6 @@ public class VehiclesController : ControllerBase
 
     // GET: api/vehicles
     [HttpGet]
-    [Authorize(Policy = "vehicles.view")]
     public async Task<ActionResult<IEnumerable<VehicleListItemDto>>> GetAll()
     {
         return Ok(await _vehicles.GetAllAsync());

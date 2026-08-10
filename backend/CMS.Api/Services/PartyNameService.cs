@@ -25,6 +25,15 @@ public class PartyNameService : IPartyNameService
         return items.Select(ToDto);
     }
 
+    public async Task<IEnumerable<PartyNameListItemDto>> GetDropdownAsync()
+    {
+        var items = await _db.PartyNames
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+
+        return items.Select(ToDto);
+    }
+
     public async Task<PartyNameListItemDto?> GetByIdAsync(int id)
     {
         var item = await _db.PartyNames.FirstOrDefaultAsync(p => p.Id == id);

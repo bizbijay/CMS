@@ -5,6 +5,7 @@ namespace CMS.Api.Services;
 public interface IPartyNameService
 {
     Task<IEnumerable<PartyNameListItemDto>> GetAllAsync();
+    Task<IEnumerable<PartyNameListItemDto>> GetDropdownAsync();
     Task<PartyNameListItemDto?> GetByIdAsync(int id);
     Task<IEnumerable<PartyBalanceLogListItemDto>> GetBalanceLogsAsync(int partyNameId);
     Task<PartyNameListItemDto> CreateAsync(CreatePartyNameRequest request, int createdById);

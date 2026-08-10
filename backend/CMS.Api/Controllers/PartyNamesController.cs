@@ -25,6 +25,11 @@ public class PartyNamesController : ControllerBase
     public async Task<ActionResult<IEnumerable<PartyNameListItemDto>>> GetAll() =>
         Ok(await _service.GetAllAsync());
 
+    [HttpGet("dropdown")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<PartyNameListItemDto>>> GetDropdown() =>
+        Ok(await _service.GetDropdownAsync());
+
     [HttpGet("{id:int}")]
     [Authorize(Policy = "party_names.view")]
     public async Task<ActionResult<PartyNameListItemDto>> GetById(int id)

@@ -88,7 +88,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.drivers(), vendorsApi.list(), projectsApi.list(), materialsApi.list(), partyNamesApi.list()])
+    Promise.all([usersApi.drivers(), vendorsApi.list(), projectsApi.list(), materialsApi.list(), partyNamesApi.listForDropdown()])
       .then(([d, v, p, m, pn]) => {
         const safeD = d ?? [];
         const safeV = v ?? [];

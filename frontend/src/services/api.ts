@@ -222,6 +222,7 @@ export const fuelsApi = {
 
 export const partyNamesApi = {
   list: () => request<PartyNameListItem[]>("/api/party-names", { method: "GET" }),
+  listForDropdown: () => request<PartyNameListItem[]>("/api/party-names/dropdown", { method: "GET" }),
   getById: (id: number) => request<PartyNameListItem>(`/api/party-names/${id}`, { method: "GET" }),
   listBalanceLogsByParty: (id: number) =>
     request<PartyBalanceLogListItem[]>(`/api/party-names/${id}/balance-logs`, { method: "GET" }),
