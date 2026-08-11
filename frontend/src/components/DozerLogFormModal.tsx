@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { dozerLogsApi, usersApi, projectsApi, partyNamesApi, vehiclesApi, getStoredUser } from "../services/api";
 import NepaliCalendarPicker from "./NepaliCalendarPicker";
+import SearchableCombobox from "./SearchableCombobox";
 import { useT } from "../hooks/useT";
 import type { DozerLogListItem } from "../types/dozerLog";
 import type { UserListItem } from "../types/users";
@@ -19,7 +20,19 @@ interface Props {
   onSaved: (item: DozerLogListItem, mode: DozerLogFormMode["kind"]) => void;
 }
 
-const OTHER = "other";
+function filterNamedItems<T extends { name: string }>(items: T[], query: string) {
+  const q = query.trim().toLowerCase();
+  return q ? items.filter((item) => item.name.toLowerCase().includes(q)) : items;
+}
+
+function hasExactNameMatch<T extends { name: string }>(items: T[], query: string) {
+  const q = query.trim().toLowerCase();
+  return q.length > 0 && items.some((item) => item.name.toLowerCase() === q);
+}
+
+function toComboboxOptions(items: Array<{ id: number; name: string }>) {
+  return items.map((item) => ({ key: String(item.id), label: item.name }));
+}
 
 function decimalHoursToHoursMinutes(decimalHours: number) {
   const hours = Math.floor(decimalHours);
@@ -53,9 +66,12 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   const [endMeter, setEndMeter] = useState<string>("0");
 
   const [referenceType, setReferenceType] = useState<"project" | "partyName">("project");
-  const [projectSel, setProjectSel] = useState<string>("");
-  const [projectOther, setProjectOther] = useState("");
+  const [projectId, setProjectId] = useState<number | null>(null);
+  const [projectInput, setProjectInput] = useState("");
+  const [addingProject, setAddingProject] = useState(false);
   const [partyNameId, setPartyNameId] = useState<number | null>(null);
+  const [partyNameInput, setPartyNameInput] = useState("");
+  const [addingPartyName, setAddingPartyName] = useState(false);
 
   const [location, setLocation] = useState("");
   const [paymentType, setPaymentType] = useState<string>("Credit");
@@ -76,14 +92,22 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   const totalMeterRun = Math.max(0, parseFloat(endMeter || "0") - parseFloat(startMeter || "0"));
   const { hours: displayHours, minutes: displayMinutes } = decimalHoursToHoursMinutes(totalMeterRun);
 
+  const filteredProjects = filterNamedItems(projects, projectInput);
+  const showAddProjectOption = projectInput.trim().length > 0 && !hasExactNameMatch(projects, projectInput);
+
+  const filteredPartyNames = filterNamedItems(partyNames, partyNameInput);
+  const showAddPartyOption = partyNameInput.trim().length > 0 && !hasExactNameMatch(partyNames, partyNameInput);
+
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
     Promise.all([usersApi.dozerDrivers(), projectsApi.list(), partyNamesApi.listForDropdown(), vehiclesApi.list()])
       .then(async ([d, p, pn, v]) => {
+        const safeP = p ?? [];
+        const safePartyNames = pn ?? [];
         setDrivers(d);
-        setProjects(p);
-        setPartyNames(pn ?? []);
+        setProjects(safeP);
+        setPartyNames(safePartyNames);
         setVehicles(v ?? []);
 
         const stored = getStoredUser();
@@ -100,17 +124,21 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
           if (log.partyNameId) {
             setReferenceType("partyName");
             setPartyNameId(log.partyNameId);
-            setProjectSel(p[0] ? String(p[0].id) : OTHER);
-            setProjectOther("");
+            const party = safePartyNames.find((item) => item.id === log.partyNameId);
+            setPartyNameInput(party?.name ?? log.partyNameName ?? "");
+            setProjectId(null);
+            setProjectInput("");
           } else {
             setReferenceType("project");
             setPartyNameId(null);
+            setPartyNameInput("");
             if (log.projectId) {
-              setProjectSel(String(log.projectId));
-              setProjectOther("");
+              const project = safeP.find((item) => item.id === log.projectId);
+              setProjectId(log.projectId);
+              setProjectInput(project?.name ?? log.projectName ?? "");
             } else {
-              setProjectSel(OTHER);
-              setProjectOther(log.projectOther ?? "");
+              setProjectId(null);
+              setProjectInput(log.projectOther ?? "");
             }
           }
 
@@ -139,9 +167,10 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
 
           setEndMeter("0");
           setReferenceType("project");
-          setProjectSel(p[0] ? String(p[0].id) : OTHER);
-          setProjectOther("");
+          setProjectId(null);
+          setProjectInput("");
           setPartyNameId(null);
+          setPartyNameInput("");
           setWages("1500");
           setLocation("");
           setPaymentType("Credit");
@@ -159,6 +188,40 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
   function handleClose() {
     if (saving) return;
     onClose();
+  }
+
+  async function handleAddPartyName() {
+    const name = partyNameInput.trim();
+    if (!name) return;
+    setAddingPartyName(true);
+    setError(null);
+    try {
+      const created = await partyNamesApi.create({ name });
+      setPartyNames((prev) => [...prev, created]);
+      setPartyNameId(created.id);
+      setPartyNameInput(created.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add party name.");
+    } finally {
+      setAddingPartyName(false);
+    }
+  }
+
+  async function handleAddProject() {
+    const name = projectInput.trim();
+    if (!name) return;
+    setAddingProject(true);
+    setError(null);
+    try {
+      const created = await projectsApi.create({ name });
+      setProjects((prev) => [...prev, created]);
+      setProjectId(created.id);
+      setProjectInput(created.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add project.");
+    } finally {
+      setAddingProject(false);
+    }
   }
 
   async function onSubmit(e: FormEvent) {
@@ -181,17 +244,12 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
       return;
     }
 
-    const selectedProjectId = referenceType === "project" ? (projectSel && projectSel !== OTHER ? Number(projectSel) : null) : null;
-    const selectedProjectOther = referenceType === "project" ? (projectSel === OTHER ? projectOther.trim() : null) : null;
+    const selectedProjectId = referenceType === "project" ? projectId : null;
+    const selectedProjectOther = referenceType === "project" && !projectId ? projectInput.trim() || null : null;
     const selectedPartyNameId = referenceType === "partyName" ? partyNameId ?? null : null;
 
     if (referenceType === "project") {
-      if (projectSel === OTHER) {
-        if (!projectOther.trim()) {
-          setError(tr.modal.dozerLog.errorNoProject);
-          return;
-        }
-      } else if (!selectedProjectId) {
+      if (!selectedProjectId && !selectedProjectOther) {
         setError(tr.modal.dozerLog.errorNoProject);
         return;
       }
@@ -360,8 +418,8 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
                     checked={referenceType === "partyName"}
                     onChange={() => {
                       setReferenceType("partyName");
-                      setProjectSel("");
-                      setProjectOther("");
+                      setProjectId(null);
+                      setProjectInput("");
                     }}
                     className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
                   />
@@ -372,38 +430,50 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
 
             {referenceType === "project" ? (
               <Field label={tr.common.project} required>
-                <select
-                  value={projectSel}
-                  onChange={(e) => { setProjectSel(e.target.value); setProjectOther(""); }}
-                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {projects.map((p) => (
-                    <option key={p.id} value={String(p.id)}>{p.name}</option>
-                  ))}
-                  <option value={OTHER}>{tr.modal.dozerLog.otherOption}</option>
-                </select>
-                {projectSel === OTHER && (
-                  <input
-                    type="text"
-                    value={projectOther}
-                    onChange={(e) => setProjectOther(e.target.value)}
-                    placeholder={tr.modal.dozerLog.enterProjectName}
-                    className="mt-2 w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
+                <SearchableCombobox
+                  value={projectInput}
+                  selectedKey={projectId !== null ? String(projectId) : null}
+                  options={toComboboxOptions(filteredProjects)}
+                  onChange={setProjectInput}
+                  onClearSelection={() => setProjectId(null)}
+                  onSelect={(option) => {
+                    setProjectId(Number(option.key));
+                    setProjectInput(option.label);
+                  }}
+                  placeholder={tr.modal.dozerLog.searchProjectName}
+                  required
+                  emptyMessage={tr.modal.dozerLog.noProjectsFound}
+                  showAddOption={showAddProjectOption}
+                  addLabel={tr.modal.dozerLog.addProjectName.replace("{{name}}", projectInput.trim())}
+                  onAdd={handleAddProject}
+                  adding={addingProject}
+                  addingLabel={tr.common.saving}
+                  toggleAriaLabel={tr.modal.dozerLog.toggleProjectDropdown}
+                  clearOnBlur={false}
+                />
               </Field>
             ) : (
               <Field label={tr.common.partyName} required>
-                <select
-                  value={partyNameId ?? ""}
-                  onChange={(e) => setPartyNameId(e.target.value ? Number(e.target.value) : null)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">{tr.common.selectPartyName}</option>
-                  {partyNames.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <SearchableCombobox
+                  value={partyNameInput}
+                  selectedKey={partyNameId !== null ? String(partyNameId) : null}
+                  options={toComboboxOptions(filteredPartyNames)}
+                  onChange={setPartyNameInput}
+                  onClearSelection={() => setPartyNameId(null)}
+                  onSelect={(option) => {
+                    setPartyNameId(Number(option.key));
+                    setPartyNameInput(option.label);
+                  }}
+                  placeholder={tr.modal.dozerLog.searchPartyName}
+                  required
+                  emptyMessage={tr.modal.dozerLog.noPartyNamesFound}
+                  showAddOption={showAddPartyOption}
+                  addLabel={tr.modal.dozerLog.addPartyName.replace("{{name}}", partyNameInput.trim())}
+                  onAdd={handleAddPartyName}
+                  adding={addingPartyName}
+                  addingLabel={tr.common.saving}
+                  toggleAriaLabel={tr.modal.dozerLog.togglePartyDropdown}
+                />
               </Field>
             )}
 
