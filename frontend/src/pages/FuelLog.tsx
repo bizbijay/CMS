@@ -117,6 +117,12 @@ export default function FuelLog() {
       header: t.common.vehicle,
     },
     {
+      id: "partyName",
+      header: t.common.partyName,
+      enableSorting: false,
+      cell: ({ row }) => row.original.partyNameName || row.original.partyNameOther || "-",
+    },
+    {
       accessorKey: "fuelTypeName",
       header: t.common.fuelType,
     },

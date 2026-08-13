@@ -84,6 +84,7 @@ public class AppDbContext : DbContext
             entity.HasOne(l => l.Driver).WithMany().HasForeignKey(l => l.DriverId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(l => l.Vehicle).WithMany().HasForeignKey(l => l.VehicleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(l => l.FuelType).WithMany().HasForeignKey(l => l.FuelTypeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(l => l.PartyName).WithMany().HasForeignKey(l => l.PartyNameId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);

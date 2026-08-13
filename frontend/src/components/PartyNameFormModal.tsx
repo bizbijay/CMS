@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { partyNamesApi } from "../services/api";
 import { useT } from "../hooks/useT";
-import type { PartyNameListItem } from "../types/partyName";
+import type { PartyNameListItem, PartyNameType } from "../types/partyName";
 
 export type PartyNameFormMode =
   | { kind: "add" }
@@ -18,12 +18,16 @@ export default function PartyNameFormModal({ open, mode, onClose, onSaved }: Pro
   const t = useT();
   const isEdit = mode.kind === "edit";
   const [name, setName] = useState("");
+  const [partyType, setPartyType] = useState<PartyNameType>("other");
+  const [address, setAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setName(mode.kind === "edit" ? mode.partyName.name : "");
+    setPartyType(mode.kind === "edit" ? normalizePartyType(mode.partyName.type) : "other");
+    setAddress(mode.kind === "edit" ? mode.partyName.address ?? "" : "");
     setError(null);
   }, [open, mode]);
 
@@ -37,7 +41,11 @@ export default function PartyNameFormModal({ open, mode, onClose, onSaved }: Pro
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const body = { name: name.trim() };
+    const body = {
+      name: name.trim(),
+      type: partyType,
+      address: address.trim() || null,
+    };
     setSaving(true);
     try {
       if (mode.kind === "add") {
@@ -90,6 +98,34 @@ export default function PartyNameFormModal({ open, mode, onClose, onSaved }: Pro
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            {t.modal.partyNames.typeLabel}<span className="text-red-500 ml-0.5">*</span>
+          </label>
+          <select
+            value={partyType}
+            onChange={(e) => setPartyType(e.target.value as PartyNameType)}
+            required
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="petrol_pump">{t.modal.partyNames.typePetrolPump}</option>
+            <option value="other">{t.modal.partyNames.typeOther}</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            {t.modal.partyNames.addressLabel}
+          </label>
+          <textarea
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            rows={2}
+            placeholder="e.g. Biratnagar"
+            className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={handleClose} disabled={saving} className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50">
             {t.common.cancel}
@@ -101,4 +137,12 @@ export default function PartyNameFormModal({ open, mode, onClose, onSaved }: Pro
       </form>
     </div>
   );
+}
+
+function normalizePartyType(value: PartyNameListItem["type"]): PartyNameType {
+  const normalized = String(value ?? "").toLowerCase().replace(/\s+/g, "_");
+  if (normalized === "petrol_pump" || normalized === "petrolpump") {
+    return "petrol_pump";
+  }
+  return "other";
 }

@@ -21,6 +21,12 @@ public class FuelLog
     public int FuelTypeId { get; set; }
     public Fuel? FuelType { get; set; }
 
+    public int? PartyNameId { get; set; }
+    public PartyName? PartyName { get; set; }
+
+    [MaxLength(200)]
+    public string? PartyNameOther { get; set; }
+
     [Required]
     public decimal Quantity { get; set; }
 

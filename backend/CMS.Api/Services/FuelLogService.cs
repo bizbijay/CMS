@@ -16,6 +16,7 @@ public class FuelLogService : IFuelLogService
             .Include(l => l.Driver)
             .Include(l => l.Vehicle)
             .Include(l => l.FuelType)
+            .Include(l => l.PartyName)
             .Include(l => l.CreatedBy)
             .Include(l => l.UpdatedBy)
             .OrderByDescending(l => l.Date)
@@ -30,6 +31,7 @@ public class FuelLogService : IFuelLogService
             .Include(l => l.Driver)
             .Include(l => l.Vehicle)
             .Include(l => l.FuelType)
+            .Include(l => l.PartyName)
             .Include(l => l.CreatedBy)
             .Include(l => l.UpdatedBy)
             .FirstOrDefaultAsync(l => l.Id == id);
@@ -38,7 +40,7 @@ public class FuelLogService : IFuelLogService
 
     public async Task<(FuelLogListItemDto? Item, string? Error)> CreateAsync(CreateFuelLogRequest request, int createdById)
     {
-        var error = await Validate(request.DriverId, request.VehicleId, request.FuelTypeId);
+        var error = await Validate(request.DriverId, request.VehicleId, request.FuelTypeId, request.PartyNameId, request.PartyNameOther);
         if (error is not null) return (null, error);
 
         var log = new FuelLog
@@ -46,6 +48,8 @@ public class FuelLogService : IFuelLogService
             DriverId = request.DriverId,
             VehicleId = request.VehicleId,
             FuelTypeId = request.FuelTypeId,
+            PartyNameId = request.PartyNameId,
+            PartyNameOther = string.IsNullOrWhiteSpace(request.PartyNameOther) ? null : request.PartyNameOther.Trim(),
             Quantity = request.Quantity,
             Price = request.Price,
             Date = request.Date,
@@ -59,6 +63,7 @@ public class FuelLogService : IFuelLogService
         await _db.Entry(log).Reference(l => l.Driver).LoadAsync();
         await _db.Entry(log).Reference(l => l.Vehicle).LoadAsync();
         await _db.Entry(log).Reference(l => l.FuelType).LoadAsync();
+        if (log.PartyNameId.HasValue) await _db.Entry(log).Reference(l => l.PartyName).LoadAsync();
         await _db.Entry(log).Reference(l => l.CreatedBy).LoadAsync();
 
         return (ToDto(log), null);
@@ -70,18 +75,21 @@ public class FuelLogService : IFuelLogService
             .Include(l => l.Driver)
             .Include(l => l.Vehicle)
             .Include(l => l.FuelType)
+            .Include(l => l.PartyName)
             .Include(l => l.CreatedBy)
             .Include(l => l.UpdatedBy)
             .FirstOrDefaultAsync(l => l.Id == id);
 
         if (log is null) return (null, null);
 
-        var error = await Validate(request.DriverId, request.VehicleId, request.FuelTypeId);
+        var error = await Validate(request.DriverId, request.VehicleId, request.FuelTypeId, request.PartyNameId, request.PartyNameOther);
         if (error is not null) return (null, error);
 
         log.DriverId = request.DriverId;
         log.VehicleId = request.VehicleId;
         log.FuelTypeId = request.FuelTypeId;
+        log.PartyNameId = request.PartyNameId;
+        log.PartyNameOther = string.IsNullOrWhiteSpace(request.PartyNameOther) ? null : request.PartyNameOther.Trim();
         log.Quantity = request.Quantity;
         log.Price = request.Price;
         log.Date = request.Date;
@@ -93,6 +101,7 @@ public class FuelLogService : IFuelLogService
         await _db.Entry(log).Reference(l => l.Driver).LoadAsync();
         await _db.Entry(log).Reference(l => l.Vehicle).LoadAsync();
         await _db.Entry(log).Reference(l => l.FuelType).LoadAsync();
+        if (log.PartyNameId.HasValue) await _db.Entry(log).Reference(l => l.PartyName).LoadAsync();
         await _db.Entry(log).Reference(l => l.UpdatedBy).LoadAsync();
 
         return (ToDto(log), null);
@@ -110,7 +119,7 @@ public class FuelLogService : IFuelLogService
         return true;
     }
 
-    private async Task<string?> Validate(int driverId, int vehicleId, int fuelTypeId)
+    private async Task<string?> Validate(int driverId, int vehicleId, int fuelTypeId, int? partyNameId, string? partyNameOther)
     {
         if (!await _db.Users.AnyAsync(u => u.Id == driverId))
             return "Selected driver does not exist.";
@@ -118,7 +127,27 @@ public class FuelLogService : IFuelLogService
             return "Selected vehicle does not exist.";
         if (!await _db.Fuels.AnyAsync(f => f.Id == fuelTypeId))
             return "Selected fuel type does not exist.";
+
+        if (partyNameId.HasValue)
+        {
+            var partyName = await _db.PartyNames.FirstOrDefaultAsync(p => p.Id == partyNameId.Value);
+            if (partyName is null)
+                return "Selected party name does not exist.";
+            if (!IsPetrolPump(partyName.Type))
+                return "Selected party name is not a petrol pump.";
+        }
+        else if (string.IsNullOrWhiteSpace(partyNameOther))
+        {
+            return "Party name is required.";
+        }
+
         return null;
+    }
+
+    private static bool IsPetrolPump(string? type)
+    {
+        var normalized = string.IsNullOrWhiteSpace(type) ? "other" : type.Trim().ToLowerInvariant().Replace(" ", "_");
+        return normalized is "petrol_pump" or "petrolpump";
     }
 
     private static string UserDisplayName(User? u) =>
@@ -136,6 +165,9 @@ public class FuelLogService : IFuelLogService
         VehicleName = l.Vehicle is null ? string.Empty : $"{l.Vehicle.Name} ({l.Vehicle.NumberPlate})",
         FuelTypeId = l.FuelTypeId,
         FuelTypeName = l.FuelType?.Name ?? string.Empty,
+        PartyNameId = l.PartyNameId,
+        PartyNameName = l.PartyName?.Name,
+        PartyNameOther = l.PartyNameOther,
         Quantity = l.Quantity,
         Price = l.Price,
         Date = l.Date,

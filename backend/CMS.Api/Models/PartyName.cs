@@ -13,6 +13,12 @@ public class PartyName
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(50)]
+    public string Type { get; set; } = "other";
+
+    [MaxLength(500)]
+    public string? Address { get; set; }
+
     [Column(TypeName = "numeric(18,2)")]
     public decimal TotalBalance { get; set; } = 0m;
 

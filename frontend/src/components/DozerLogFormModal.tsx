@@ -196,7 +196,7 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
     setAddingPartyName(true);
     setError(null);
     try {
-      const created = await partyNamesApi.create({ name });
+      const created = await partyNamesApi.create({ name, type: "other", address: null });
       setPartyNames((prev) => [...prev, created]);
       setPartyNameId(created.id);
       setPartyNameInput(created.name);

@@ -251,7 +251,7 @@ export default function TransportationFormModal({ open, mode, onClose, onSaved }
     setAddingPartyName(true);
     setError(null);
     try {
-      const created = await partyNamesApi.create({ name });
+      const created = await partyNamesApi.create({ name, type: "other", address: null });
       setPartyNames((prev) => [...prev, created]);
       setPartyNameId(created.id);
       setPartyNameInput(created.name);

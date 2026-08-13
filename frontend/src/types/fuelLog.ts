@@ -4,6 +4,9 @@ export interface FuelLogListItem {
   driverName: string;
   vehicleId: number;
   vehicleName: string;
+  partyNameId?: number | null;
+  partyNameName?: string | null;
+  partyNameOther?: string | null;
   fuelTypeId: number;
   fuelTypeName: string;
   quantity: number;
@@ -18,6 +21,8 @@ export interface FuelLogListItem {
 export interface CreateFuelLogRequest {
   driverId: number;
   vehicleId: number;
+  partyNameId?: number | null;
+  partyNameOther?: string | null;
   fuelTypeId: number;
   quantity: number;
   price: number;
@@ -27,6 +32,8 @@ export interface CreateFuelLogRequest {
 export interface UpdateFuelLogRequest {
   driverId: number;
   vehicleId: number;
+  partyNameId?: number | null;
+  partyNameOther?: string | null;
   fuelTypeId: number;
   quantity: number;
   price: number;

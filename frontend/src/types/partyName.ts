@@ -1,6 +1,10 @@
+export type PartyNameType = "petrol_pump" | "other";
+
 export interface PartyNameListItem {
   id: number;
   name: string;
+  type?: PartyNameType | string | null;
+  address?: string | null;
   totalBalance?: number;
   createdAt: string;
   updatedAt?: string | null;
@@ -8,10 +12,14 @@ export interface PartyNameListItem {
 
 export interface CreatePartyNameRequest {
   name: string;
+  type: PartyNameType;
+  address?: string | null;
 }
 
 export interface UpdatePartyNameRequest {
   name: string;
+  type: PartyNameType;
+  address?: string | null;
 }
 
 export interface PartyBalanceLogListItem {

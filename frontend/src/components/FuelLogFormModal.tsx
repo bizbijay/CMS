@@ -1,10 +1,11 @@
-import { FormEvent, useEffect, useState } from "react";
-import { fuelLogsApi, usersApi, fuelsApi, fuelPricesApi, getStoredUser } from "../services/api";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { fuelLogsApi, usersApi, fuelsApi, fuelPricesApi, getStoredUser, partyNamesApi } from "../services/api";
 import NepaliCalendarPicker from "./NepaliCalendarPicker";
 import { useT } from "../hooks/useT";
 import type { FuelLogListItem } from "../types/fuelLog";
 import type { UserListItem } from "../types/users";
 import type { FuelListItem } from "../types/fuels";
+import type { PartyNameListItem } from "../types/partyName";
 
 export type FuelLogFormMode =
   | { kind: "add" }
@@ -26,17 +27,41 @@ function displayName(u: UserListItem) {
   return full || u.username;
 }
 
+const OTHER_PARTY = "other";
+
+function isPetrolPumpType(value: PartyNameListItem["type"]) {
+  const normalized = String(value ?? "").toLowerCase().replace(/\s+/g, "_");
+  return normalized === "petrol_pump" || normalized === "petrolpump";
+}
+
+async function fetchFuelLogPartyOptions() {
+  const dropdownParties = await partyNamesApi.listForDropdown();
+  if ((dropdownParties ?? []).some((item) => item.type != null)) {
+    return dropdownParties;
+  }
+
+  try {
+    const fullParties = await partyNamesApi.list();
+    return fullParties ?? dropdownParties;
+  } catch {
+    return dropdownParties;
+  }
+}
+
 export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props) {
   const t = useT();
   const isEdit = mode.kind === "edit";
 
   const [drivers, setDrivers] = useState<UserListItem[]>([]);
   const [fuelTypes, setFuelTypes] = useState<FuelListItem[]>([]);
+  const [partyNames, setPartyNames] = useState<PartyNameListItem[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [isCurrentUserDriver, setIsCurrentUserDriver] = useState(false);
   const [selfUser, setSelfUser] = useState<UserListItem | null>(null);
 
   const [driverId, setDriverId] = useState<number>(0);
+  const [partySelection, setPartySelection] = useState<string>("");
+  const [otherPartyName, setOtherPartyName] = useState("");
   const [fuelTypeId, setFuelTypeId] = useState<number>(0);
   const [quantity, setQuantity] = useState<string>("");
   const [price, setPrice] = useState<string>("");
@@ -45,6 +70,11 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
+
+  const petrolPumpParties = useMemo(
+    () => partyNames.filter((item) => isPetrolPumpType(item.type)),
+    [partyNames],
+  );
 
   async function fetchFuelPrice(typeName: string) {
     setFetchingPrice(true);
@@ -70,10 +100,13 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
   useEffect(() => {
     if (!open) return;
     setLoadingOptions(true);
-    Promise.all([usersApi.drivers(), usersApi.dozerDrivers(), fuelsApi.list()])
-      .then(([driverList, operatorList, f]) => {
+    Promise.all([usersApi.drivers(), usersApi.dozerDrivers(), fuelsApi.list(), fetchFuelLogPartyOptions()])
+      .then(([driverList, operatorList, f, parties]) => {
         setDrivers(driverList);
         setFuelTypes(f);
+        setPartyNames(parties ?? []);
+
+        const petrolOptions = (parties ?? []).filter((item) => isPetrolPumpType(item.type));
 
         const stored = getStoredUser();
         const selfInDrivers = driverList.find((u) => u.id === stored?.id);
@@ -84,12 +117,30 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
 
         if (mode.kind === "edit") {
           setDriverId(mode.log.driverId);
+          if (mode.log.partyNameId) {
+            const canSelectParty = petrolOptions.some((item) => item.id === mode.log.partyNameId);
+            if (canSelectParty) {
+              setPartySelection(String(mode.log.partyNameId));
+              setOtherPartyName("");
+            } else {
+              setPartySelection(OTHER_PARTY);
+              setOtherPartyName(mode.log.partyNameName ?? "");
+            }
+          } else if (mode.log.partyNameOther || mode.log.partyNameName) {
+            setPartySelection(OTHER_PARTY);
+            setOtherPartyName(mode.log.partyNameOther ?? mode.log.partyNameName ?? "");
+          } else {
+            setPartySelection(petrolOptions[0] ? String(petrolOptions[0].id) : OTHER_PARTY);
+            setOtherPartyName("");
+          }
           setFuelTypeId(mode.log.fuelTypeId);
           setQuantity(String(mode.log.quantity));
           setPrice(String(mode.log.price));
           setDate(mode.log.date.slice(0, 10));
         } else {
           setDriverId(selfMatch?.id ?? driverList[0]?.id ?? 0);
+          setPartySelection(petrolOptions[0] ? String(petrolOptions[0].id) : OTHER_PARTY);
+          setOtherPartyName("");
           const defaultFuel = f.find(ft => ft.name.toLowerCase() === 'diesel') ?? f[0];
           setFuelTypeId(defaultFuel?.id ?? 0);
           setQuantity("");
@@ -129,11 +180,23 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
     setError(null);
     if (!driverId) { setError(t.modal.fuelLog.errorNoDriver); return; }
     if (!assignedVehicleId) { setError(t.modal.fuelLog.errorNoVehicle); return; }
+    if (!partySelection) { setError(t.modal.fuelLog.errorNoPartyName); return; }
+    if (partySelection === OTHER_PARTY && !otherPartyName.trim()) { setError(t.modal.fuelLog.errorNoOtherPartyName); return; }
     if (!fuelTypeId) { setError(t.modal.fuelLog.errorNoFuelType); return; }
     if (!quantity || Number(quantity) <= 0) { setError(t.modal.fuelLog.errorInvalidQuantity); return; }
     if (!price || Number(price) <= 0) { setError(t.modal.fuelLog.errorInvalidPrice); return; }
 
-    const body = { driverId, vehicleId: assignedVehicleId, fuelTypeId, quantity: Number(quantity), price: Number(price), date };
+    const selectedPartyId = partySelection !== OTHER_PARTY ? Number(partySelection) : null;
+    const body = {
+      driverId,
+      vehicleId: assignedVehicleId,
+      partyNameId: Number.isFinite(selectedPartyId) && selectedPartyId ? selectedPartyId : null,
+      partyNameOther: partySelection === OTHER_PARTY ? otherPartyName.trim() : null,
+      fuelTypeId,
+      quantity: Number(quantity),
+      price: Number(price),
+      date,
+    };
     setSaving(true);
     try {
       if (mode.kind === "add") {
@@ -227,6 +290,38 @@ export default function FuelLogFormModal({ open, mode, onClose, onSaved }: Props
                 </select>
               )}
             </Field>
+
+            <Field label={t.modal.fuelLog.partyNameLabel} required>
+              <select
+                value={partySelection}
+                onChange={(e) => {
+                  setPartySelection(e.target.value);
+                  if (e.target.value !== OTHER_PARTY) {
+                    setOtherPartyName("");
+                  }
+                }}
+                required
+                className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {petrolPumpParties.map((party) => (
+                  <option key={party.id} value={String(party.id)}>{party.name}</option>
+                ))}
+                <option value={OTHER_PARTY}>{t.common.other}</option>
+              </select>
+            </Field>
+
+            {partySelection === OTHER_PARTY && (
+              <Field label={t.modal.fuelLog.otherPartyNameLabel} required>
+                <input
+                  type="text"
+                  value={otherPartyName}
+                  onChange={(e) => setOtherPartyName(e.target.value)}
+                  placeholder={t.modal.fuelLog.otherPartyNamePlaceholder}
+                  required
+                  className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </Field>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <Field label={t.modal.fuelLog.quantityLabel} required>

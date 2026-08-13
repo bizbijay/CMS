@@ -57,6 +57,8 @@ public class PartyNameService : IPartyNameService
         var item = new PartyName
         {
             Name = request.Name.Trim(),
+            Type = NormalizeType(request.Type),
+            Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim(),
             CreatedById = createdById,
             CreatedAt = DateTime.UtcNow
         };
@@ -72,6 +74,8 @@ public class PartyNameService : IPartyNameService
         if (item is null) return (null, null);
 
         item.Name = request.Name.Trim();
+        item.Type = NormalizeType(request.Type);
+        item.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
         item.UpdatedById = updatedById;
         item.UpdatedAt = DateTime.UtcNow;
 
@@ -168,10 +172,19 @@ public class PartyNameService : IPartyNameService
     {
         Id = p.Id,
         Name = p.Name,
+        Type = p.Type,
+        Address = p.Address,
         TotalBalance = p.TotalBalance,
         CreatedAt = p.CreatedAt,
         UpdatedAt = p.UpdatedAt
     };
+
+    private static string NormalizeType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type)) return "other";
+        var normalized = type.Trim().ToLowerInvariant().Replace(" ", "_");
+        return normalized is "petrol_pump" or "petrolpump" ? "petrol_pump" : "other";
+    }
 
     private static PartyBalanceLogListItemDto ToBalanceLogDto(PartyBalanceLog item) => new()
     {

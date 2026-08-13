@@ -11,6 +11,9 @@ public class FuelLogListItemDto
     public string VehicleName { get; set; } = string.Empty;
     public int FuelTypeId { get; set; }
     public string FuelTypeName { get; set; } = string.Empty;
+    public int? PartyNameId { get; set; }
+    public string? PartyNameName { get; set; }
+    public string? PartyNameOther { get; set; }
     public decimal Quantity { get; set; }
     public decimal Price { get; set; }
     public DateOnly Date { get; set; }
@@ -30,6 +33,11 @@ public class CreateFuelLogRequest
 
     [Required]
     public int FuelTypeId { get; set; }
+
+    public int? PartyNameId { get; set; }
+
+    [MaxLength(200)]
+    public string? PartyNameOther { get; set; }
 
     [Required, Range(0.01, double.MaxValue)]
     public decimal Quantity { get; set; }
@@ -51,6 +59,11 @@ public class UpdateFuelLogRequest
 
     [Required]
     public int FuelTypeId { get; set; }
+
+    public int? PartyNameId { get; set; }
+
+    [MaxLength(200)]
+    public string? PartyNameOther { get; set; }
 
     [Required, Range(0.01, double.MaxValue)]
     public decimal Quantity { get; set; }

@@ -173,6 +173,8 @@ CREATE TABLE "MaintenanceParts" (
 CREATE TABLE "PartyNames" (
     "Id"           SERIAL       PRIMARY KEY,
     "Name"         VARCHAR(200) NOT NULL,
+    "Type"         VARCHAR(50)  NOT NULL DEFAULT 'other',
+    "Address"      VARCHAR(500),
     "TotalBalance" NUMERIC(18, 2) NOT NULL DEFAULT 0,
     "CreatedAt"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     "UpdatedAt"    TIMESTAMPTZ,
@@ -381,21 +383,26 @@ CREATE TABLE "Transportations" (
 -- FuelLogs
 -- -------------------------------------------------------------
 CREATE TABLE "FuelLogs" (
-    "Id"           SERIAL          PRIMARY KEY,
-    "DriverId"     INT             NOT NULL REFERENCES "Users"("Id")    ON DELETE RESTRICT,
-    "VehicleId"    INT             NOT NULL REFERENCES "Vehicles"("Id") ON DELETE RESTRICT,
-    "FuelTypeId"   INT             NOT NULL REFERENCES "Fuels"("Id")    ON DELETE RESTRICT,
-    "Quantity"     NUMERIC(10, 2)  NOT NULL CHECK ("Quantity" > 0),
-    "Price"        NUMERIC(10, 2)  NOT NULL CHECK ("Price" > 0),
-    "Date"         DATE            NOT NULL,
-    "CreatedAt"    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    "UpdatedAt"    TIMESTAMPTZ,
-    "CreatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "UpdatedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL,
-    "IsDeleted"    BOOLEAN         NOT NULL DEFAULT FALSE,
-    "DeletedOn"    TIMESTAMPTZ,
-    "DeletedById"  INT REFERENCES "Users"("Id") ON DELETE SET NULL
+    "Id"             SERIAL          PRIMARY KEY,
+    "DriverId"       INT             NOT NULL REFERENCES "Users"("Id")    ON DELETE RESTRICT,
+    "VehicleId"      INT             NOT NULL REFERENCES "Vehicles"("Id") ON DELETE RESTRICT,
+    "FuelTypeId"     INT             NOT NULL REFERENCES "Fuels"("Id")    ON DELETE RESTRICT,
+    "PartyNameId"    INT             REFERENCES "PartyNames"("Id")        ON DELETE SET NULL,
+    "PartyNameOther" VARCHAR(200),
+    "Quantity"       NUMERIC(10, 2)  NOT NULL CHECK ("Quantity" > 0),
+    "Price"          NUMERIC(10, 2)  NOT NULL CHECK ("Price" > 0),
+    "Date"           DATE            NOT NULL,
+    "CreatedAt"      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    "UpdatedAt"      TIMESTAMPTZ,
+    "CreatedById"    INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "UpdatedById"    INT REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "IsDeleted"      BOOLEAN         NOT NULL DEFAULT FALSE,
+    "DeletedOn"      TIMESTAMPTZ,
+    "DeletedById"    INT REFERENCES "Users"("Id") ON DELETE SET NULL
 );
+
+CREATE INDEX "IX_FuelLogs_PartyNameId"
+ON "FuelLogs" ("PartyNameId");
 
 -- -------------------------------------------------------------
 -- DozerLogs
