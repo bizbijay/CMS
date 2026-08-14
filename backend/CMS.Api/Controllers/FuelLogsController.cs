@@ -22,7 +22,7 @@ public class FuelLogsController : ControllerBase
         Ok(await _service.GetAllAsync());
 
     [HttpGet("report")]
-    [Authorize(Policy = "fuel_log.view")]
+    [Authorize(Policy = "fuel_log_report.view")]
     public async Task<ActionResult<IEnumerable<FuelLogListItemDto>>> GetReport(
         [FromQuery] string? fromDate,
         [FromQuery] string? toDate,

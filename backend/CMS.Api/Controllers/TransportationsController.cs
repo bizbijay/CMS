@@ -26,7 +26,7 @@ public class TransportationsController : ControllerBase
     }
 
     [HttpGet("report")]
-    [Authorize(Policy = "transportation.view")]
+    [Authorize(Policy = "transportation_report.view")]
     public async Task<ActionResult<IEnumerable<TransportationListItemDto>>> GetReport(
         [FromQuery] string? fromDate,
         [FromQuery] string? toDate,

@@ -174,6 +174,8 @@ builder.Services.AddAuthorization(options =>
         "account_management.view",
 
         "bank_accounts.view", "bank_accounts.add", "bank_accounts.edit", "bank_accounts.delete",
+
+        "transportation_report.view", "fuel_log_report.view", "dozer_log_report.view",
     ];
 
     foreach (var perm in permissions)
@@ -412,7 +414,10 @@ using (var scope = app.Services.CreateScope())
                 ('bank_accounts.view', 'View bank accounts', NOW()),
                 ('bank_accounts.add', 'Add bank accounts', NOW()),
                 ('bank_accounts.edit', 'Edit bank accounts', NOW()),
-                ('bank_accounts.delete', 'Delete bank accounts', NOW())
+                ('bank_accounts.delete', 'Delete bank accounts', NOW()),
+                ('transportation_report.view', 'View transportation report', NOW()),
+                ('fuel_log_report.view', 'View fuel log report', NOW()),
+                ('dozer_log_report.view', 'View dozer log report', NOW())
             ON CONFLICT (""Name"") DO NOTHING;
 
             INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
@@ -429,7 +434,7 @@ using (var scope = app.Services.CreateScope())
             INSERT INTO ""RolePermissions"" (""RoleId"", ""PermissionId"")
             SELECT r.""Id"", p.""Id""
             FROM ""Roles"" r
-            JOIN ""Permissions"" p ON p.""Name"" IN ('account_management.view', 'vendor_management.view', 'party_management.view')
+            JOIN ""Permissions"" p ON p.""Name"" IN ('account_management.view', 'vendor_management.view', 'party_management.view', 'transportation_report.view', 'fuel_log_report.view', 'dozer_log_report.view')
             WHERE r.""Name"" = 'Admin'
             ON CONFLICT DO NOTHING;
         ");

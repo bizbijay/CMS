@@ -78,6 +78,10 @@ export const POLICY_MAP: Record<string, string> = {
   "extra_expenses.edit":   "extra_expenses.edit",
   "extra_expenses.delete": "extra_expenses.delete",
   "extra_expenses.verify": "extra_expenses.verify",
+
+  "transportation_report.view": "transportation_report.view",
+  "fuel_log_report.view":       "fuel_log_report.view",
+  "dozer_log_report.view":      "dozer_log_report.view",
 };
 
 export type PolicyName = keyof typeof POLICY_MAP;

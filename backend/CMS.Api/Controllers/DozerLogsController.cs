@@ -22,7 +22,7 @@ public class DozerLogsController : ControllerBase
         Ok(await _service.GetAllAsync());
 
     [HttpGet("report")]
-    [Authorize(Policy = "dozer_log.view")]
+    [Authorize(Policy = "dozer_log_report.view")]
     public async Task<ActionResult<IEnumerable<DozerLogListItemDto>>> GetReport(
         [FromQuery] string? fromDate,
         [FromQuery] string? toDate,

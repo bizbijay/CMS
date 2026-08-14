@@ -92,7 +92,7 @@ function AppRoutes() {
         <Route
           path="/reports/fuel-log"
           element={
-            <ProtectedRoute policy="fuel_log.view">
+            <ProtectedRoute policy="fuel_log_report.view">
               <FuelLogReport />
             </ProtectedRoute>
           }
@@ -100,7 +100,7 @@ function AppRoutes() {
         <Route
           path="/reports/dozer-log"
           element={
-            <ProtectedRoute policy="dozer_log.view">
+            <ProtectedRoute policy="dozer_log_report.view">
               <DozerLogReport />
             </ProtectedRoute>
           }
@@ -108,7 +108,7 @@ function AppRoutes() {
         <Route
           path="/reports/transportation"
           element={
-            <ProtectedRoute policy="transportation.view">
+            <ProtectedRoute policy="transportation_report.view">
               <TransportationReport />
             </ProtectedRoute>
           }

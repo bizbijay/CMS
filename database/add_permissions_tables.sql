@@ -160,6 +160,12 @@ INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.add',   
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.edit',        'Edit a salary entry')                        ON CONFLICT ("Name") DO NOTHING;
 INSERT INTO "Permissions" ("Name", "Description") VALUES ('salary_setup.delete',      'Delete a salary entry')                      ON CONFLICT ("Name") DO NOTHING;
 
+-- Reports
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('transportation_report.view', 'View transportation report')                 ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('fuel_log_report.view',       'View fuel log report')                       ON CONFLICT ("Name") DO NOTHING;
+INSERT INTO "Permissions" ("Name", "Description") VALUES ('dozer_log_report.view',      'View dozer log report')                      ON CONFLICT ("Name") DO NOTHING;
+
+
 -- =============================================================
 -- Seed: Admin role → assign every permission
 -- =============================================================

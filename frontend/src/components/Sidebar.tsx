@@ -42,9 +42,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   ];
 
   const reportsMenu = [
-    { to: "/reports/transportation", label: t.nav.transportationReport, icon: TransportationIcon, policy: "transportation.view" },
-    { to: "/reports/fuel-log", label: t.nav.fuelLogReport, icon: FuelLogIcon, policy: "fuel_log.view" },
-    { to: "/reports/dozer-log", label: t.nav.dozerLogReport, icon: DozerLogIcon, policy: "dozer_log.view" },
+    { to: "/reports/transportation", label: t.nav.transportationReport, icon: TransportationIcon, policy: "transportation_report.view" },
+    { to: "/reports/fuel-log", label: t.nav.fuelLogReport, icon: FuelLogIcon, policy: "fuel_log_report.view" },
+    { to: "/reports/dozer-log", label: t.nav.dozerLogReport, icon: DozerLogIcon, policy: "dozer_log_report.view" },
   ];
 
   const settingsMenu = [
