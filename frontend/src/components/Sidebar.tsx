@@ -8,6 +8,12 @@ interface Props {
   onMobileClose: () => void;
 }
 
+const reportsPaths = [
+  "/reports/fuel-log",
+  "/reports/transportation",
+  "/reports/dozer-log",
+];
+
 const settingsPaths = [
   "/vehicles", "/materials", "/vendors", "/projects",
   "/fuels", "/roles", "/permissions", "/role-permissions", "/salary-setup", "/government-office", "/maintenance-parts", "/party-names", "/bank-accounts",
@@ -35,6 +41,12 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
     { to: "/account-management", label: t.nav.accountManagement, icon: BankIcon, policy: "account_management.view" },
   ];
 
+  const reportsMenu = [
+    { to: "/reports/transportation", label: t.nav.transportationReport, icon: TransportationIcon, policy: "transportation.view" },
+    { to: "/reports/fuel-log", label: t.nav.fuelLogReport, icon: FuelLogIcon, policy: "fuel_log.view" },
+    { to: "/reports/dozer-log", label: t.nav.dozerLogReport, icon: DozerLogIcon, policy: "dozer_log.view" },
+  ];
+
   const settingsMenu = [
     { to: "/vehicles", label: t.nav.vehicles, icon: VehiclesIcon, policy: "vehicles.view" },
     { to: "/materials", label: t.nav.materials, icon: MaterialsIcon, policy: "materials.view" },
@@ -52,8 +64,11 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   ];
 
   const visibleTopMenu = topMenu.filter((m) => !m.policy || can(m.policy));
+  const visibleReportsMenu = reportsMenu.filter((m) => !m.policy || can(m.policy));
   const visibleSettingsMenu = settingsMenu.filter((m) => !m.policy || can(m.policy));
 
+  const isInReports = reportsPaths.some((p) => location.pathname === p);
+  const [reportsOpen, setReportsOpen] = useState(isInReports);
   const isInSettings = settingsPaths.some((p) => location.pathname === p);
   const [settingsOpen, setSettingsOpen] = useState(isInSettings);
   const width = collapsed ? "w-16" : "w-60";
@@ -61,9 +76,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   const navContent = (isMobile = false) => (
     <>
       <div
-        className={`flex items-center border-b border-slate-800 ${
-          collapsed && !isMobile ? "justify-center px-2" : "justify-between px-6"
-        } py-4`}
+        className={`flex items-center border-b border-slate-800 ${collapsed && !isMobile ? "justify-center px-2" : "justify-between px-6"
+          } py-4`}
       >
         <div>
           <h1 className="text-xl font-semibold tracking-wide">CMS</h1>
@@ -113,55 +127,106 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
           </NavLink>
         ))}
 
+        {/* Reports group */}
+        {visibleReportsMenu.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setReportsOpen((o) => !o)}
+              title={collapsed && !isMobile ? t.nav.reports : undefined}
+              className={[
+                "w-full flex items-center gap-3 rounded text-sm",
+                collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
+                isInReports
+                  ? "text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white",
+              ].join(" ")}
+            >
+              <ReportsIcon className="w-5 h-5 shrink-0" />
+              {(!collapsed || isMobile) && (
+                <>
+                  <span className="flex-1 text-left">{t.nav.reports}</span>
+                  <ChevronIcon direction={reportsOpen ? "down" : "right"} />
+                </>
+              )}
+            </button>
+
+            {(reportsOpen || (collapsed && !isMobile)) && (
+              <div className={collapsed && !isMobile ? "space-y-1" : "ml-3 border-l border-slate-700 pl-2 space-y-1"}>
+                {visibleReportsMenu.map(({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={isMobile ? onMobileClose : undefined}
+                    title={collapsed && !isMobile ? label : undefined}
+                    className={({ isActive }) =>
+                      [
+                        "flex items-center gap-3 rounded text-sm",
+                        collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
+                        isActive
+                          ? "bg-slate-800 text-white"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-white",
+                      ].join(" ")
+                    }
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    {(!collapsed || isMobile) && <span>{label}</span>}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
         {/* Settings group — hidden entirely when user has no access to any submenu item */}
         {visibleSettingsMenu.length > 0 && (
-        <>
-        <button
-          type="button"
-          onClick={() => setSettingsOpen((o) => !o)}
-          title={collapsed && !isMobile ? "Settings" : undefined}
-          className={[
-            "w-full flex items-center gap-3 rounded text-sm",
-            collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
-            isInSettings
-              ? "text-white"
-              : "text-slate-300 hover:bg-slate-800 hover:text-white",
-          ].join(" ")}
-        >
-          <SettingsIcon className="w-5 h-5 shrink-0" />
-          {(!collapsed || isMobile) && (
-            <>
-              <span className="flex-1 text-left">{t.nav.settings}</span>
-              <ChevronIcon direction={settingsOpen ? "down" : "right"} />
-            </>
-          )}
-        </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((o) => !o)}
+              title={collapsed && !isMobile ? "Settings" : undefined}
+              className={[
+                "w-full flex items-center gap-3 rounded text-sm",
+                collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
+                isInSettings
+                  ? "text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white",
+              ].join(" ")}
+            >
+              <SettingsIcon className="w-5 h-5 shrink-0" />
+              {(!collapsed || isMobile) && (
+                <>
+                  <span className="flex-1 text-left">{t.nav.settings}</span>
+                  <ChevronIcon direction={settingsOpen ? "down" : "right"} />
+                </>
+              )}
+            </button>
 
-        {(settingsOpen || (collapsed && !isMobile)) && (
-          <div className={collapsed && !isMobile ? "space-y-1" : "ml-3 border-l border-slate-700 pl-2 space-y-1"}>
-            {visibleSettingsMenu.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                onClick={isMobile ? onMobileClose : undefined}
-                title={collapsed && !isMobile ? label : undefined}
-                className={({ isActive }) =>
-                  [
-                    "flex items-center gap-3 rounded text-sm",
-                    collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
-                    isActive
-                      ? "bg-slate-800 text-white"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white",
-                  ].join(" ")
-                }
-              >
-                <Icon className="w-5 h-5 shrink-0" />
-                {(!collapsed || isMobile) && <span>{label}</span>}
-              </NavLink>
-            ))}
-          </div>
-        )}
-        </>
+            {(settingsOpen || (collapsed && !isMobile)) && (
+              <div className={collapsed && !isMobile ? "space-y-1" : "ml-3 border-l border-slate-700 pl-2 space-y-1"}>
+                {visibleSettingsMenu.map(({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={isMobile ? onMobileClose : undefined}
+                    title={collapsed && !isMobile ? label : undefined}
+                    className={({ isActive }) =>
+                      [
+                        "flex items-center gap-3 rounded text-sm",
+                        collapsed && !isMobile ? "justify-center px-0 py-2" : "px-3 py-2",
+                        isActive
+                          ? "bg-slate-800 text-white"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-white",
+                      ].join(" ")
+                    }
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    {(!collapsed || isMobile) && <span>{label}</span>}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </nav>
 
@@ -191,9 +256,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
 
       {/* Mobile drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-slate-900 text-slate-100 overflow-hidden transition-transform duration-200 md:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-slate-900 text-slate-100 overflow-hidden transition-transform duration-200 md:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {navContent(true)}
       </aside>
@@ -553,6 +617,17 @@ function ExtraExpensesIcon({ className }: { className?: string }) {
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function ReportsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
     </svg>
   );
 }

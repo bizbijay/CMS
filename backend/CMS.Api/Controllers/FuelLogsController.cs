@@ -21,6 +21,17 @@ public class FuelLogsController : ControllerBase
     public async Task<ActionResult<IEnumerable<FuelLogListItemDto>>> GetAll() =>
         Ok(await _service.GetAllAsync());
 
+    [HttpGet("report")]
+    [Authorize(Policy = "fuel_log.view")]
+    public async Task<ActionResult<IEnumerable<FuelLogListItemDto>>> GetReport(
+        [FromQuery] string? fromDate,
+        [FromQuery] string? toDate,
+        [FromQuery] string? driverName,
+        [FromQuery] string? vehicleName,
+        [FromQuery] string? fuelTypeName,
+        [FromQuery] string? partyName) =>
+        Ok(await _service.GetReportAsync(fromDate, toDate, driverName, vehicleName, fuelTypeName, partyName));
+
     [HttpGet("{id:int}")]
     [Authorize(Policy = "fuel_log.view")]
     public async Task<ActionResult<FuelLogListItemDto>> GetById(int id)

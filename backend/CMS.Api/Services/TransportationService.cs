@@ -33,6 +33,87 @@ public class TransportationService : ITransportationService
         return items.Select(ToDto);
     }
 
+    public async Task<IEnumerable<TransportationListItemDto>> GetReportAsync(
+        string? fromDate,
+        string? toDate,
+        string? transportedByName,
+        string? vehicleName,
+        string? materialName,
+        string? vendorName,
+        string? projectName,
+        string? partyName)
+    {
+        var query = _db.Transportations
+            .Include(t => t.TransportedBy)
+            .Include(t => t.Vehicle)
+            .Include(t => t.Material)
+            .Include(t => t.Vendor)
+            .Include(t => t.Project)
+            .Include(t => t.PartyName)
+            .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(fromDate) && DateOnly.TryParse(fromDate, out var from))
+        {
+            query = query.Where(t => t.Date >= from);
+        }
+
+        if (!string.IsNullOrWhiteSpace(toDate) && DateOnly.TryParse(toDate, out var to))
+        {
+            query = query.Where(t => t.Date <= to);
+        }
+
+        if (!string.IsNullOrWhiteSpace(transportedByName))
+        {
+            var tTrim = transportedByName.Trim();
+            query = query.Where(t =>
+                (t.TransportedBy != null && (t.TransportedBy.Username == tTrim || (t.TransportedBy.FirstName + " " + t.TransportedBy.LastName).Trim() == tTrim || t.TransportedBy.FirstName == tTrim)) ||
+                (t.TransportedByOther != null && t.TransportedByOther == tTrim));
+        }
+
+        if (!string.IsNullOrWhiteSpace(vehicleName))
+        {
+            var vTrim = vehicleName.Trim();
+            query = query.Where(t =>
+                (t.Vehicle != null && t.Vehicle.Name == vTrim) ||
+                (t.VehicleOther != null && t.VehicleOther == vTrim));
+        }
+
+        if (!string.IsNullOrWhiteSpace(materialName))
+        {
+            query = query.Where(t => t.Material != null && t.Material.Name == materialName.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(vendorName))
+        {
+            var vendorTrim = vendorName.Trim();
+            query = query.Where(t =>
+                (t.Vendor != null && t.Vendor.Name == vendorTrim) ||
+                (t.VendorOther != null && t.VendorOther == vendorTrim));
+        }
+
+        if (!string.IsNullOrWhiteSpace(projectName))
+        {
+            var pTrim = projectName.Trim();
+            query = query.Where(t =>
+                (t.Project != null && t.Project.Name == pTrim) ||
+                (t.ProjectOther != null && t.ProjectOther == pTrim));
+        }
+
+        if (!string.IsNullOrWhiteSpace(partyName))
+        {
+            query = query.Where(t => t.PartyName != null && t.PartyName.Name == partyName.Trim());
+        }
+
+        var items = await query
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        return items.Select(ToDto);
+    }
+
     public async Task<IEnumerable<TransportationListItemDto>> GetByProjectAsync(int projectId)
     {
         var items = await _db.Transportations

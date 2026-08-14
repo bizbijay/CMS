@@ -25,6 +25,19 @@ public class TransportationsController : ControllerBase
         return Ok(await _service.GetAllAsync());
     }
 
+    [HttpGet("report")]
+    [Authorize(Policy = "transportation.view")]
+    public async Task<ActionResult<IEnumerable<TransportationListItemDto>>> GetReport(
+        [FromQuery] string? fromDate,
+        [FromQuery] string? toDate,
+        [FromQuery] string? transportedByName,
+        [FromQuery] string? vehicleName,
+        [FromQuery] string? materialName,
+        [FromQuery] string? vendorName,
+        [FromQuery] string? projectName,
+        [FromQuery] string? partyName) =>
+        Ok(await _service.GetReportAsync(fromDate, toDate, transportedByName, vehicleName, materialName, vendorName, projectName, partyName));
+
     [HttpGet("{id:int}")]
     [Authorize(Policy = "transportation.view")]
     public async Task<ActionResult<TransportationListItemDto>> GetById(int id)

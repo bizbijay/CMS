@@ -21,6 +21,17 @@ public class DozerLogsController : ControllerBase
     public async Task<ActionResult<IEnumerable<DozerLogListItemDto>>> GetAll() =>
         Ok(await _service.GetAllAsync());
 
+    [HttpGet("report")]
+    [Authorize(Policy = "dozer_log.view")]
+    public async Task<ActionResult<IEnumerable<DozerLogListItemDto>>> GetReport(
+        [FromQuery] string? fromDate,
+        [FromQuery] string? toDate,
+        [FromQuery] string? driverName,
+        [FromQuery] string? vehicleName,
+        [FromQuery] string? projectName,
+        [FromQuery] string? partyName) =>
+        Ok(await _service.GetReportAsync(fromDate, toDate, driverName, vehicleName, projectName, partyName));
+
     [HttpGet("{id:int}")]
     [Authorize(Policy = "dozer_log.view")]
     public async Task<ActionResult<DozerLogListItemDto>> GetById(int id)

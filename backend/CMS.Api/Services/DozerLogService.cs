@@ -31,6 +31,68 @@ public class DozerLogService : IDozerLogService
         return items.Select(ToDto);
     }
 
+    public async Task<IEnumerable<DozerLogListItemDto>> GetReportAsync(
+        string? fromDate,
+        string? toDate,
+        string? driverName,
+        string? vehicleName,
+        string? projectName,
+        string? partyName)
+    {
+        var query = _db.DozerLogs
+            .Include(d => d.Driver)
+            .Include(d => d.Vehicle)
+            .Include(d => d.Project)
+            .Include(d => d.PartyName)
+            .Include(d => d.CreatedBy)
+            .Include(d => d.UpdatedBy)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(fromDate) && DateOnly.TryParse(fromDate, out var from))
+        {
+            query = query.Where(d => d.OperationDate >= from);
+        }
+
+        if (!string.IsNullOrWhiteSpace(toDate) && DateOnly.TryParse(toDate, out var to))
+        {
+            query = query.Where(d => d.OperationDate <= to);
+        }
+
+        if (!string.IsNullOrWhiteSpace(driverName))
+        {
+            var dTrim = driverName.Trim();
+            query = query.Where(d => d.Driver != null &&
+                (d.Driver.Username == dTrim ||
+                 (d.Driver.FirstName + " " + d.Driver.LastName).Trim() == dTrim ||
+                 d.Driver.FirstName == dTrim));
+        }
+
+        if (!string.IsNullOrWhiteSpace(vehicleName))
+        {
+            query = query.Where(d => d.Vehicle != null && d.Vehicle.Name == vehicleName.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(projectName))
+        {
+            var pTrim = projectName.Trim();
+            query = query.Where(d =>
+                (d.Project != null && d.Project.Name == pTrim) ||
+                (d.ProjectOther != null && d.ProjectOther == pTrim));
+        }
+
+        if (!string.IsNullOrWhiteSpace(partyName))
+        {
+            query = query.Where(d => d.PartyName != null && d.PartyName.Name == partyName.Trim());
+        }
+
+        var items = await query
+            .OrderByDescending(d => d.OperationDate)
+            .ThenByDescending(d => d.CreatedAt)
+            .ToListAsync();
+
+        return items.Select(ToDto);
+    }
+
     public async Task<DozerLogListItemDto?> GetByIdAsync(int id)
     {
         var item = await _db.DozerLogs

@@ -179,6 +179,24 @@ export const usersApi = {
 
 export const fuelLogsApi = {
   list: () => request<FuelLogListItem[]>("/api/fuellogs", { method: "GET" }),
+  report: (params: {
+    fromDate?: string;
+    toDate?: string;
+    driverName?: string;
+    vehicleName?: string;
+    fuelTypeName?: string;
+    partyName?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.fromDate) q.append("fromDate", params.fromDate);
+    if (params.toDate) q.append("toDate", params.toDate);
+    if (params.driverName) q.append("driverName", params.driverName);
+    if (params.vehicleName) q.append("vehicleName", params.vehicleName);
+    if (params.fuelTypeName) q.append("fuelTypeName", params.fuelTypeName);
+    if (params.partyName) q.append("partyName", params.partyName);
+    const qs = q.toString();
+    return request<FuelLogListItem[]>(`/api/fuellogs/report${qs ? `?${qs}` : ""}`, { method: "GET" });
+  },
   create: (body: CreateFuelLogRequest) =>
     request<FuelLogListItem>("/api/fuellogs", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdateFuelLogRequest) =>
@@ -239,6 +257,28 @@ export const partyNamesApi = {
 
 export const transportationsApi = {
   list: () => request<TransportationListItem[]>("/api/transportations", { method: "GET" }),
+  report: (params: {
+    fromDate?: string;
+    toDate?: string;
+    transportedByName?: string;
+    vehicleName?: string;
+    materialName?: string;
+    vendorName?: string;
+    projectName?: string;
+    partyName?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.fromDate) q.append("fromDate", params.fromDate);
+    if (params.toDate) q.append("toDate", params.toDate);
+    if (params.transportedByName) q.append("transportedByName", params.transportedByName);
+    if (params.vehicleName) q.append("vehicleName", params.vehicleName);
+    if (params.materialName) q.append("materialName", params.materialName);
+    if (params.vendorName) q.append("vendorName", params.vendorName);
+    if (params.projectName) q.append("projectName", params.projectName);
+    if (params.partyName) q.append("partyName", params.partyName);
+    const qs = q.toString();
+    return request<TransportationListItem[]>(`/api/transportations/report${qs ? `?${qs}` : ""}`, { method: "GET" });
+  },
   listByProject: (projectId: number) =>
     request<TransportationListItem[]>(`/api/transportations?projectId=${projectId}`, { method: "GET" }),
   create: (body: CreateTransportationRequest) =>
@@ -396,6 +436,24 @@ export const salarySetupApi = {
 
 export const dozerLogsApi = {
   list: () => request<DozerLogListItem[]>("/api/dozerlogs", { method: "GET" }),
+  report: (params: {
+    fromDate?: string;
+    toDate?: string;
+    driverName?: string;
+    vehicleName?: string;
+    projectName?: string;
+    partyName?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params.fromDate) q.append("fromDate", params.fromDate);
+    if (params.toDate) q.append("toDate", params.toDate);
+    if (params.driverName) q.append("driverName", params.driverName);
+    if (params.vehicleName) q.append("vehicleName", params.vehicleName);
+    if (params.projectName) q.append("projectName", params.projectName);
+    if (params.partyName) q.append("partyName", params.partyName);
+    const qs = q.toString();
+    return request<DozerLogListItem[]>(`/api/dozerlogs/report${qs ? `?${qs}` : ""}`, { method: "GET" });
+  },
   create: (body: CreateDozerLogRequest) =>
     request<DozerLogListItem>("/api/dozerlogs", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdateDozerLogRequest) =>

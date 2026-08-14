@@ -25,6 +25,68 @@ public class FuelLogService : IFuelLogService
         return logs.Select(ToDto);
     }
 
+    public async Task<IEnumerable<FuelLogListItemDto>> GetReportAsync(
+        string? fromDate,
+        string? toDate,
+        string? driverName,
+        string? vehicleName,
+        string? fuelTypeName,
+        string? partyName)
+    {
+        var query = _db.FuelLogs
+            .Include(l => l.Driver)
+            .Include(l => l.Vehicle)
+            .Include(l => l.FuelType)
+            .Include(l => l.PartyName)
+            .Include(l => l.CreatedBy)
+            .Include(l => l.UpdatedBy)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(fromDate) && DateOnly.TryParse(fromDate, out var from))
+        {
+            query = query.Where(l => l.Date >= from);
+        }
+
+        if (!string.IsNullOrWhiteSpace(toDate) && DateOnly.TryParse(toDate, out var to))
+        {
+            query = query.Where(l => l.Date <= to);
+        }
+
+        if (!string.IsNullOrWhiteSpace(driverName))
+        {
+            var driverNameTrimmed = driverName.Trim();
+            query = query.Where(l => l.Driver != null &&
+                (l.Driver.Username == driverNameTrimmed ||
+                 (l.Driver.FirstName + " " + l.Driver.LastName).Trim() == driverNameTrimmed ||
+                 l.Driver.FirstName == driverNameTrimmed));
+        }
+
+        if (!string.IsNullOrWhiteSpace(vehicleName))
+        {
+            query = query.Where(l => l.Vehicle != null && l.Vehicle.Name == vehicleName.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(fuelTypeName))
+        {
+            query = query.Where(l => l.FuelType != null && l.FuelType.Name == fuelTypeName.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(partyName))
+        {
+            var partyTrimmed = partyName.Trim();
+            query = query.Where(l =>
+                (l.PartyName != null && l.PartyName.Name == partyTrimmed) ||
+                (l.PartyNameOther != null && l.PartyNameOther == partyTrimmed));
+        }
+
+        var logs = await query
+            .OrderByDescending(l => l.Date)
+            .ThenByDescending(l => l.CreatedAt)
+            .ToListAsync();
+
+        return logs.Select(ToDto);
+    }
+
     public async Task<FuelLogListItemDto?> GetByIdAsync(int id)
     {
         var log = await _db.FuelLogs

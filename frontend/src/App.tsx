@@ -16,7 +16,10 @@ import Roles from "./pages/Roles";
 import Permissions from "./pages/Permissions";
 import RolePermissions from "./pages/RolePermissions";
 import FuelLog from "./pages/FuelLog";
+import FuelLogReport from "./pages/FuelLogReport";
 import DozerLog from "./pages/DozerLog";
+import DozerLogReport from "./pages/DozerLogReport";
+import TransportationReport from "./pages/TransportationReport";
 import ExtraExpenses from "./pages/ExtraExpenses";
 import SalarySetup from "./pages/SalarySetup";
 import MonthlySalary from "./pages/MonthlySalary";
@@ -83,6 +86,30 @@ function AppRoutes() {
           element={
             <ProtectedRoute policy="fuel_log.view">
               <FuelLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/fuel-log"
+          element={
+            <ProtectedRoute policy="fuel_log.view">
+              <FuelLogReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/dozer-log"
+          element={
+            <ProtectedRoute policy="dozer_log.view">
+              <DozerLogReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/transportation"
+          element={
+            <ProtectedRoute policy="transportation.view">
+              <TransportationReport />
             </ProtectedRoute>
           }
         />
