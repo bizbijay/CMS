@@ -18,8 +18,9 @@ public class DozerLogsController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = "dozer_log.view")]
-    public async Task<ActionResult<IEnumerable<DozerLogListItemDto>>> GetAll() =>
-        Ok(await _service.GetAllAsync());
+    public async Task<ActionResult<PagedResultDto<DozerLogListItemDto>>> GetPaged([FromQuery] DozerLogPagedRequest request) =>
+        Ok(await _service.GetPagedAsync(request));
+
 
     [HttpGet("report")]
     [Authorize(Policy = "dozer_log_report.view")]

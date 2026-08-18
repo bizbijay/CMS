@@ -111,3 +111,16 @@ public class UpdateDozerLogRequest
     [MaxLength(200)]
     public string? WorkOrderBy { get; set; }
 }
+
+public class DozerLogPagedRequest
+{
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public int? DriverId { get; set; }
+    public int? VehicleId { get; set; }
+    public string? DriverName { get; set; }
+    public string? VehicleName { get; set; }
+    public string? SortBy { get; set; } = "operationDate";
+    public bool SortDescending { get; set; } = true;
+}
+

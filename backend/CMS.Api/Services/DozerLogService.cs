@@ -31,6 +31,95 @@ public class DozerLogService : IDozerLogService
         return items.Select(ToDto);
     }
 
+    public async Task<PagedResultDto<DozerLogListItemDto>> GetPagedAsync(DozerLogPagedRequest request)
+    {
+        var query = _db.DozerLogs
+            .Include(d => d.Driver)
+            .Include(d => d.Vehicle)
+            .Include(d => d.Project)
+            .Include(d => d.PartyName)
+            .Include(d => d.CreatedBy)
+            .Include(d => d.UpdatedBy)
+            .AsQueryable();
+
+        if (request.DriverId.HasValue && request.DriverId.Value > 0)
+        {
+            query = query.Where(d => d.DriverId == request.DriverId.Value);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.DriverName))
+        {
+            var nameTrimmed = request.DriverName.Trim();
+            query = query.Where(d => d.Driver != null &&
+                (d.Driver.Username == nameTrimmed ||
+                 (d.Driver.FirstName + " " + d.Driver.LastName).Trim() == nameTrimmed ||
+                 d.Driver.FirstName == nameTrimmed));
+        }
+
+        if (request.VehicleId.HasValue && request.VehicleId.Value > 0)
+        {
+            query = query.Where(d => d.VehicleId == request.VehicleId.Value);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.VehicleName))
+        {
+            var vehicleTrimmed = request.VehicleName.Trim();
+            query = query.Where(d => d.Vehicle != null && d.Vehicle.Name == vehicleTrimmed);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var desc = request.SortDescending;
+        query = (request.SortBy?.ToLowerInvariant()) switch
+        {
+            "drivername" or "driver" or "operator" => desc
+                ? query.OrderByDescending(d => d.Driver != null ? (d.Driver.FirstName + " " + d.Driver.LastName).Trim() : "").ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.Driver != null ? (d.Driver.FirstName + " " + d.Driver.LastName).Trim() : "").ThenBy(d => d.OperationDate),
+            "vehiclename" or "vehicle" => desc
+                ? query.OrderByDescending(d => d.Vehicle != null ? d.Vehicle.Name : "").ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.Vehicle != null ? d.Vehicle.Name : "").ThenBy(d => d.OperationDate),
+            "totalmeterrun" or "meterrun" => desc
+                ? query.OrderByDescending(d => d.EndMeter - d.StartMeter).ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.EndMeter - d.StartMeter).ThenBy(d => d.OperationDate),
+            "projectname" or "project" => desc
+                ? query.OrderByDescending(d => d.Project != null ? d.Project.Name : (d.ProjectOther ?? "")).ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.Project != null ? d.Project.Name : (d.ProjectOther ?? "")).ThenBy(d => d.OperationDate),
+            "partynamename" or "partyname" or "party" => desc
+                ? query.OrderByDescending(d => d.PartyName != null ? d.PartyName.Name : "").ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.PartyName != null ? d.PartyName.Name : "").ThenBy(d => d.OperationDate),
+            "location" => desc
+                ? query.OrderByDescending(d => d.Location ?? "").ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.Location ?? "").ThenBy(d => d.OperationDate),
+            "paymenttype" => desc
+                ? query.OrderByDescending(d => d.PaymentType ?? "").ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.PaymentType ?? "").ThenBy(d => d.OperationDate),
+            "workorderby" => desc
+                ? query.OrderByDescending(d => d.WorkOrderBy ?? "").ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.WorkOrderBy ?? "").ThenBy(d => d.OperationDate),
+            "wages" => desc
+                ? query.OrderByDescending(d => d.Wages ?? 0).ThenByDescending(d => d.OperationDate)
+                : query.OrderBy(d => d.Wages ?? 0).ThenBy(d => d.OperationDate),
+            _ => desc
+                ? query.OrderByDescending(d => d.OperationDate).ThenByDescending(d => d.CreatedAt)
+                : query.OrderBy(d => d.OperationDate).ThenBy(d => d.CreatedAt)
+        };
+
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize = Math.Max(1, request.PageSize);
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResultDto<DozerLogListItemDto>
+        {
+            Items = items.Select(ToDto),
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+    }
+
+
     public async Task<IEnumerable<DozerLogListItemDto>> GetReportAsync(
         string? fromDate,
         string? toDate,

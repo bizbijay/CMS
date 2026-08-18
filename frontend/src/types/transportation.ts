@@ -72,3 +72,16 @@ export interface UpdateTransportationRequest {
   totalWages?: number | null;
   date: string;
 }
+
+export interface TransportationQueryParams {
+  pageNumber?: number;
+  pageSize?: number;
+  transportedById?: number;
+  vehicleId?: number;
+  projectId?: number;
+  transportedByName?: string;
+  vehicleName?: string;
+  sortBy?: string;
+  sortDescending?: boolean;
+}
+

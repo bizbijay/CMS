@@ -74,3 +74,15 @@ public class UpdateFuelLogRequest
     [Required]
     public DateOnly Date { get; set; }
 }
+
+public class FuelLogPagedRequest
+{
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public string? DriverName { get; set; }
+    public string? VehicleName { get; set; }
+    public int? DriverId { get; set; }
+    public string? SortBy { get; set; } = "date";
+    public bool SortDescending { get; set; } = true;
+}
+

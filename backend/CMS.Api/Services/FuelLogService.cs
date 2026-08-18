@@ -25,6 +25,85 @@ public class FuelLogService : IFuelLogService
         return logs.Select(ToDto);
     }
 
+    public async Task<PagedResultDto<FuelLogListItemDto>> GetPagedAsync(FuelLogPagedRequest request)
+    {
+        var query = _db.FuelLogs
+            .Include(l => l.Driver)
+            .Include(l => l.Vehicle)
+            .Include(l => l.FuelType)
+            .Include(l => l.PartyName)
+            .Include(l => l.CreatedBy)
+            .Include(l => l.UpdatedBy)
+            .AsQueryable();
+
+        if (request.DriverId.HasValue && request.DriverId.Value > 0)
+        {
+            query = query.Where(l => l.DriverId == request.DriverId.Value);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.DriverName))
+        {
+            var driverNameTrimmed = request.DriverName.Trim();
+            query = query.Where(l => l.Driver != null &&
+                (l.Driver.Username == driverNameTrimmed ||
+                 (l.Driver.FirstName + " " + l.Driver.LastName).Trim() == driverNameTrimmed ||
+                 l.Driver.FirstName == driverNameTrimmed));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.VehicleName))
+        {
+            var vehicleNameTrimmed = request.VehicleName.Trim();
+            query = query.Where(l => l.Vehicle != null && l.Vehicle.Name == vehicleNameTrimmed);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var desc = request.SortDescending;
+        query = (request.SortBy?.ToLowerInvariant()) switch
+        {
+            "drivername" or "driver" => desc
+                ? query.OrderByDescending(l => l.Driver != null ? (l.Driver.FirstName + " " + l.Driver.LastName).Trim() : "").ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.Driver != null ? (l.Driver.FirstName + " " + l.Driver.LastName).Trim() : "").ThenBy(l => l.Date),
+            "vehiclename" or "vehicle" => desc
+                ? query.OrderByDescending(l => l.Vehicle != null ? l.Vehicle.Name : "").ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.Vehicle != null ? l.Vehicle.Name : "").ThenBy(l => l.Date),
+            "fueltypename" or "fueltype" => desc
+                ? query.OrderByDescending(l => l.FuelType != null ? l.FuelType.Name : "").ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.FuelType != null ? l.FuelType.Name : "").ThenBy(l => l.Date),
+            "partyname" or "party" => desc
+                ? query.OrderByDescending(l => l.PartyName != null ? l.PartyName.Name : (l.PartyNameOther ?? "")).ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.PartyName != null ? l.PartyName.Name : (l.PartyNameOther ?? "")).ThenBy(l => l.Date),
+            "quantity" => desc
+                ? query.OrderByDescending(l => l.Quantity).ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.Quantity).ThenBy(l => l.Date),
+            "price" => desc
+                ? query.OrderByDescending(l => l.Price).ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.Price).ThenBy(l => l.Date),
+            "total" => desc
+                ? query.OrderByDescending(l => l.Quantity * l.Price).ThenByDescending(l => l.Date)
+                : query.OrderBy(l => l.Quantity * l.Price).ThenBy(l => l.Date),
+            _ => desc
+                ? query.OrderByDescending(l => l.Date).ThenByDescending(l => l.CreatedAt)
+                : query.OrderBy(l => l.Date).ThenBy(l => l.CreatedAt)
+        };
+
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize = Math.Max(1, request.PageSize);
+
+        var logs = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResultDto<FuelLogListItemDto>
+        {
+            Items = logs.Select(ToDto),
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+    }
+
+
     public async Task<IEnumerable<FuelLogListItemDto>> GetReportAsync(
         string? fromDate,
         string? toDate,

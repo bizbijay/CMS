@@ -18,12 +18,22 @@ public class TransportationsController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = "transportation.view")]
-    public async Task<ActionResult<IEnumerable<TransportationListItemDto>>> GetAll([FromQuery] int? projectId = null)
+    public async Task<ActionResult<PagedResultDto<TransportationListItemDto>>> GetPaged([FromQuery] TransportationPagedRequest request)
     {
-        if (projectId.HasValue)
-            return Ok(await _service.GetByProjectAsync(projectId.Value));
-        return Ok(await _service.GetAllAsync());
+        if (request.ProjectId.HasValue && request.PageNumber <= 0)
+        {
+            var byProject = await _service.GetByProjectAsync(request.ProjectId.Value);
+            return Ok(new PagedResultDto<TransportationListItemDto>
+            {
+                Items = byProject,
+                TotalCount = byProject.Count(),
+                PageNumber = 1,
+                PageSize = byProject.Count()
+            });
+        }
+        return Ok(await _service.GetPagedAsync(request));
     }
+
 
     [HttpGet("report")]
     [Authorize(Policy = "transportation_report.view")]

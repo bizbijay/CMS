@@ -125,3 +125,17 @@ public class UpdateTransportationRequest
     [Required]
     public DateOnly Date { get; set; }
 }
+
+public class TransportationPagedRequest
+{
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public int? TransportedById { get; set; }
+    public int? VehicleId { get; set; }
+    public int? ProjectId { get; set; }
+    public string? TransportedByName { get; set; }
+    public string? VehicleName { get; set; }
+    public string? SortBy { get; set; } = "date";
+    public bool SortDescending { get; set; } = true;
+}
+

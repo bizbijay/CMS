@@ -2,9 +2,9 @@ import type { Table } from "@tanstack/react-table";
 
 const PAGE_SIZES = [10, 25, 50, 100];
 
-export default function TablePagination<T>({ table }: { table: Table<T> }) {
+export default function TablePagination<T>({ table, totalCount }: { table: Table<T>; totalCount?: number }) {
   const { pageIndex, pageSize } = table.getState().pagination;
-  const total = table.getPrePaginationRowModel().rows.length;
+  const total = totalCount ?? (table.options.rowCount ?? table.getPrePaginationRowModel().rows.length);
   const from = total === 0 ? 0 : pageIndex * pageSize + 1;
   const to = Math.min((pageIndex + 1) * pageSize, total);
 

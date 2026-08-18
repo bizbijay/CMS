@@ -154,12 +154,13 @@ export default function DozerLogFormModal({ open, mode, onClose, onSaved }: Prop
 
           // Fetch the last log for this driver to use its end meter as start meter
           try {
-            const allLogs = await dozerLogsApi.list();
-            const lastLog = allLogs
-              .filter(log => log.driverId === targetDriverId)
-              .sort((a, b) => new Date(b.operationDate).getTime() - new Date(a.operationDate).getTime())
-              .at(0);
-
+            const res = await dozerLogsApi.list({
+              driverId: targetDriverId,
+              pageSize: 1,
+              sortBy: "operationDate",
+              sortDescending: true,
+            });
+            const lastLog = res.items?.[0];
             setStartMeter(lastLog ? String(lastLog.endMeter) : "0");
           } catch {
             setStartMeter("0");

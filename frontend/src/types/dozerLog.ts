@@ -52,3 +52,15 @@ export interface UpdateDozerLogRequest {
   cashAmount?: number | null;
   workOrderBy?: string | null;
 }
+
+export interface DozerLogQueryParams {
+  pageNumber?: number;
+  pageSize?: number;
+  driverId?: number;
+  vehicleId?: number;
+  driverName?: string;
+  vehicleName?: string;
+  sortBy?: string;
+  sortDescending?: boolean;
+}
+

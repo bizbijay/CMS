@@ -18,8 +18,9 @@ public class FuelLogsController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = "fuel_log.view")]
-    public async Task<ActionResult<IEnumerable<FuelLogListItemDto>>> GetAll() =>
-        Ok(await _service.GetAllAsync());
+    public async Task<ActionResult<PagedResultDto<FuelLogListItemDto>>> GetPaged([FromQuery] FuelLogPagedRequest request) =>
+        Ok(await _service.GetPagedAsync(request));
+
 
     [HttpGet("report")]
     [Authorize(Policy = "fuel_log_report.view")]

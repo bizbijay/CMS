@@ -20,9 +20,9 @@ import type { CreateFuelRequest, UpdateFuelRequest, FuelListItem } from "../type
 import type { CreateRoleRequest, UpdateRoleRequest, RoleListItem } from "../types/roles";
 import type { CreatePermissionRequest, UpdatePermissionRequest, PermissionListItem } from "../types/permissions";
 import type { RolePermissions, SetRolePermissionsRequest } from "../types/rolePermissions";
-import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem } from "../types/fuelLog";
-import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem } from "../types/transportation";
-import type { CreateDozerLogRequest, UpdateDozerLogRequest, DozerLogListItem } from "../types/dozerLog";
+import type { CreateFuelLogRequest, UpdateFuelLogRequest, FuelLogListItem, PagedResult, FuelLogQueryParams } from "../types/fuelLog";
+import type { CreateTransportationRequest, UpdateTransportationRequest, TransportationListItem, TransportationQueryParams } from "../types/transportation";
+import type { CreateDozerLogRequest, UpdateDozerLogRequest, DozerLogListItem, DozerLogQueryParams } from "../types/dozerLog";
 import type {
   AddVendorBalanceRequest,
   CreateVendorRequest,
@@ -178,7 +178,18 @@ export const usersApi = {
 };
 
 export const fuelLogsApi = {
-  list: () => request<FuelLogListItem[]>("/api/fuellogs", { method: "GET" }),
+  list: (params?: FuelLogQueryParams) => {
+    const q = new URLSearchParams();
+    if (params?.pageNumber) q.append("pageNumber", String(params.pageNumber));
+    if (params?.pageSize) q.append("pageSize", String(params.pageSize));
+    if (params?.driverName) q.append("driverName", params.driverName);
+    if (params?.vehicleName) q.append("vehicleName", params.vehicleName);
+    if (params?.driverId) q.append("driverId", String(params.driverId));
+    if (params?.sortBy) q.append("sortBy", params.sortBy);
+    if (params?.sortDescending !== undefined) q.append("sortDescending", String(params.sortDescending));
+    const qs = q.toString();
+    return request<PagedResult<FuelLogListItem>>(`/api/fuellogs${qs ? `?${qs}` : ""}`, { method: "GET" });
+  },
   report: (params: {
     fromDate?: string;
     toDate?: string;
@@ -256,7 +267,20 @@ export const partyNamesApi = {
 };
 
 export const transportationsApi = {
-  list: () => request<TransportationListItem[]>("/api/transportations", { method: "GET" }),
+  list: (params?: TransportationQueryParams) => {
+    const q = new URLSearchParams();
+    if (params?.pageNumber) q.append("pageNumber", String(params.pageNumber));
+    if (params?.pageSize) q.append("pageSize", String(params.pageSize));
+    if (params?.transportedById) q.append("transportedById", String(params.transportedById));
+    if (params?.vehicleId) q.append("vehicleId", String(params.vehicleId));
+    if (params?.projectId) q.append("projectId", String(params.projectId));
+    if (params?.transportedByName) q.append("transportedByName", params.transportedByName);
+    if (params?.vehicleName) q.append("vehicleName", params.vehicleName);
+    if (params?.sortBy) q.append("sortBy", params.sortBy);
+    if (params?.sortDescending !== undefined) q.append("sortDescending", String(params.sortDescending));
+    const qs = q.toString();
+    return request<PagedResult<TransportationListItem>>(`/api/transportations${qs ? `?${qs}` : ""}`, { method: "GET" });
+  },
   report: (params: {
     fromDate?: string;
     toDate?: string;
@@ -435,7 +459,19 @@ export const salarySetupApi = {
 };
 
 export const dozerLogsApi = {
-  list: () => request<DozerLogListItem[]>("/api/dozerlogs", { method: "GET" }),
+  list: (params?: DozerLogQueryParams) => {
+    const q = new URLSearchParams();
+    if (params?.pageNumber) q.append("pageNumber", String(params.pageNumber));
+    if (params?.pageSize) q.append("pageSize", String(params.pageSize));
+    if (params?.driverId) q.append("driverId", String(params.driverId));
+    if (params?.vehicleId) q.append("vehicleId", String(params.vehicleId));
+    if (params?.driverName) q.append("driverName", params.driverName);
+    if (params?.vehicleName) q.append("vehicleName", params.vehicleName);
+    if (params?.sortBy) q.append("sortBy", params.sortBy);
+    if (params?.sortDescending !== undefined) q.append("sortDescending", String(params.sortDescending));
+    const qs = q.toString();
+    return request<PagedResult<DozerLogListItem>>(`/api/dozerlogs${qs ? `?${qs}` : ""}`, { method: "GET" });
+  },
   report: (params: {
     fromDate?: string;
     toDate?: string;

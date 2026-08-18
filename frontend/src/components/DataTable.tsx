@@ -7,11 +7,12 @@ interface Props<T> {
   emptyMessage?: string;
   footerRow?: React.ReactNode;
   headerClassName?: string;
+  totalCount?: number;
 }
 
-export default function DataTable<T>({ table, loading, emptyMessage = "No data.", footerRow, headerClassName }: Props<T>) {
+export default function DataTable<T>({ table, loading, emptyMessage = "No data.", footerRow, headerClassName, totalCount }: Props<T>) {
   const colCount = table.getVisibleLeafColumns().length;
-  const hasRows = table.getPrePaginationRowModel().rows.length > 0;
+  const hasRows = table.getRowModel().rows.length > 0;
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -79,7 +80,7 @@ export default function DataTable<T>({ table, loading, emptyMessage = "No data."
           )}
         </table>
       </div>
-      {!loading && hasRows && <TablePagination table={table} />}
+      {!loading && hasRows && <TablePagination table={table} totalCount={totalCount} />}
     </div>
   );
 }

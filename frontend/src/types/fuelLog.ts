@@ -39,3 +39,22 @@ export interface UpdateFuelLogRequest {
   price: number;
   date: string;
 }
+
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface FuelLogQueryParams {
+  pageNumber?: number;
+  pageSize?: number;
+  driverName?: string;
+  vehicleName?: string;
+  driverId?: number;
+  sortBy?: string;
+  sortDescending?: boolean;
+}
+

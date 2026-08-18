@@ -33,6 +33,115 @@ public class TransportationService : ITransportationService
         return items.Select(ToDto);
     }
 
+    public async Task<PagedResultDto<TransportationListItemDto>> GetPagedAsync(TransportationPagedRequest request)
+    {
+        var query = _db.Transportations
+            .Include(t => t.TransportedBy)
+            .Include(t => t.Vehicle)
+            .Include(t => t.Material)
+            .Include(t => t.Vendor)
+            .Include(t => t.Project)
+            .Include(t => t.PartyName)
+            .Include(t => t.CreatedBy)
+            .Include(t => t.UpdatedBy)
+            .AsQueryable();
+
+        if (request.TransportedById.HasValue && request.TransportedById.Value > 0)
+        {
+            query = query.Where(t => t.TransportedById == request.TransportedById.Value);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.TransportedByName))
+        {
+            var nameTrimmed = request.TransportedByName.Trim();
+            query = query.Where(t =>
+                (t.TransportedBy != null &&
+                 (t.TransportedBy.Username == nameTrimmed ||
+                  (t.TransportedBy.FirstName + " " + t.TransportedBy.LastName).Trim() == nameTrimmed ||
+                  t.TransportedBy.FirstName == nameTrimmed)) ||
+                (t.TransportedByOther != null && t.TransportedByOther == nameTrimmed));
+        }
+
+        if (request.VehicleId.HasValue && request.VehicleId.Value > 0)
+        {
+            query = query.Where(t => t.VehicleId == request.VehicleId.Value);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.VehicleName))
+        {
+            var vehicleTrimmed = request.VehicleName.Trim();
+            query = query.Where(t =>
+                (t.Vehicle != null && t.Vehicle.Name == vehicleTrimmed) ||
+                (t.VehicleOther != null && t.VehicleOther == vehicleTrimmed));
+        }
+
+        if (request.ProjectId.HasValue && request.ProjectId.Value > 0)
+        {
+            query = query.Where(t => t.ProjectId == request.ProjectId.Value);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var desc = request.SortDescending;
+        query = (request.SortBy?.ToLowerInvariant()) switch
+        {
+            "transportedbyname" or "transportedby" => desc
+                ? query.OrderByDescending(t => t.TransportedBy != null ? (t.TransportedBy.FirstName + " " + t.TransportedBy.LastName).Trim() : (t.TransportedByOther ?? "")).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.TransportedBy != null ? (t.TransportedBy.FirstName + " " + t.TransportedBy.LastName).Trim() : (t.TransportedByOther ?? "")).ThenBy(t => t.Date),
+            "vehiclename" or "vehicle" => desc
+                ? query.OrderByDescending(t => t.Vehicle != null ? t.Vehicle.Name : (t.VehicleOther ?? "")).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Vehicle != null ? t.Vehicle.Name : (t.VehicleOther ?? "")).ThenBy(t => t.Date),
+            "materialname" or "material" => desc
+                ? query.OrderByDescending(t => t.Material != null ? t.Material.Name : "").ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Material != null ? t.Material.Name : "").ThenBy(t => t.Date),
+            "vendorname" or "vendor" => desc
+                ? query.OrderByDescending(t => t.Vendor != null ? t.Vendor.Name : (t.VendorOther ?? "")).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Vendor != null ? t.Vendor.Name : (t.VendorOther ?? "")).ThenBy(t => t.Date),
+            "projectname" or "project" => desc
+                ? query.OrderByDescending(t => t.Project != null ? t.Project.Name : (t.ProjectOther ?? "")).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Project != null ? t.Project.Name : (t.ProjectOther ?? "")).ThenBy(t => t.Date),
+            "partynamename" or "partyname" or "party" => desc
+                ? query.OrderByDescending(t => t.PartyName != null ? t.PartyName.Name : "").ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.PartyName != null ? t.PartyName.Name : "").ThenBy(t => t.Date),
+            "location" => desc
+                ? query.OrderByDescending(t => t.Location ?? "").ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Location ?? "").ThenBy(t => t.Date),
+            "nooftip" => desc
+                ? query.OrderByDescending(t => t.NoOfTip ?? 0).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.NoOfTip ?? 0).ThenBy(t => t.Date),
+            "materialcost" => desc
+                ? query.OrderByDescending(t => t.MaterialCost ?? 0).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.MaterialCost ?? 0).ThenBy(t => t.Date),
+            "tax" => desc
+                ? query.OrderByDescending(t => t.Tax ?? 0).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Tax ?? 0).ThenBy(t => t.Date),
+            "wages" => desc
+                ? query.OrderByDescending(t => t.Wages ?? 0).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.Wages ?? 0).ThenBy(t => t.Date),
+            "totalwages" => desc
+                ? query.OrderByDescending(t => t.TotalWages ?? (t.Wages ?? 0) * (t.NoOfTip ?? 1)).ThenByDescending(t => t.Date)
+                : query.OrderBy(t => t.TotalWages ?? (t.Wages ?? 0) * (t.NoOfTip ?? 1)).ThenBy(t => t.Date),
+            _ => desc
+                ? query.OrderByDescending(t => t.Date).ThenByDescending(t => t.CreatedAt)
+                : query.OrderBy(t => t.Date).ThenBy(t => t.CreatedAt)
+        };
+
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize = Math.Max(1, request.PageSize);
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResultDto<TransportationListItemDto>
+        {
+            Items = items.Select(ToDto),
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+    }
+
+
     public async Task<IEnumerable<TransportationListItemDto>> GetReportAsync(
         string? fromDate,
         string? toDate,
