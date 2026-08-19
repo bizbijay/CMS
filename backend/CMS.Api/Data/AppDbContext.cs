@@ -38,10 +38,22 @@ public class AppDbContext : DbContext
     public DbSet<BankAccountCreditLog> BankAccountCreditLogs => Set<BankAccountCreditLog>();
     public DbSet<BankAccountDebitLog> BankAccountDebitLogs => Set<BankAccountDebitLog>();
     public DbSet<VendorBalanceLog> VendorBalanceLogs => Set<VendorBalanceLog>();
+    public DbSet<ErrorLog> ErrorLogs => Set<ErrorLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<ErrorLog>(entity =>
+        {
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .IsRequired(false)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.CreatedAt);
+        });
 
         modelBuilder.Entity<User>(entity =>
         {

@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS "SalaryDetails"   CASCADE;
 DROP TABLE IF EXISTS "SalaryPayments"  CASCADE;
 DROP TABLE IF EXISTS "MonthlySalaries" CASCADE;
 DROP TABLE IF EXISTS "SalarySetups"    CASCADE;
+DROP TABLE IF EXISTS "ErrorLogs"       CASCADE;
 DROP TABLE IF EXISTS "DozerLogs"       CASCADE;
 DROP TABLE IF EXISTS "FuelLogs"        CASCADE;
 DROP TABLE IF EXISTS "Transportations" CASCADE;
@@ -437,6 +438,27 @@ CREATE TABLE "DozerLogs" (
         ("PartyNameId" IS NULL AND (("ProjectId" IS NOT NULL) <> ("ProjectOther" IS NOT NULL)))
     )
 );
+
+-- -------------------------------------------------------------
+-- ErrorLogs
+-- -------------------------------------------------------------
+CREATE TABLE "ErrorLogs" (
+    "Id"            SERIAL          PRIMARY KEY,
+    "Message"       TEXT            NOT NULL,
+    "ExceptionType" VARCHAR(250),
+    "StackTrace"    TEXT,
+    "Source"        VARCHAR(250),
+    "RequestPath"   VARCHAR(500),
+    "RequestMethod" VARCHAR(10),
+    "QueryString"   VARCHAR(1000),
+    "StatusCode"    INT             NOT NULL DEFAULT 500,
+    "UserAgent"     VARCHAR(500),
+    "ClientIp"      VARCHAR(50),
+    "UserId"        INT             REFERENCES "Users"("Id") ON DELETE SET NULL,
+    "CreatedAt"     TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS "IX_ErrorLogs_CreatedAt" ON "ErrorLogs" ("CreatedAt" DESC);
 
 -- -------------------------------------------------------------
 -- Permissions

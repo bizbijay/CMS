@@ -1,5 +1,6 @@
 bin/
 obj/
+_temp_build/
 *.user
 *.suo
 .vs/

@@ -1,6 +1,7 @@
 using System.Text;
 using CMS.Api.Authorization;
 using CMS.Api.Data;
+using CMS.Api.Middleware;
 using CMS.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -87,6 +88,7 @@ builder.Services.AddScoped<IVehicleMaintenancePartService, VehicleMaintenancePar
 builder.Services.AddScoped<IVehicleMaintenanceWageService, VehicleMaintenanceWageService>();
 builder.Services.AddScoped<IMaintenancePartService, MaintenancePartService>();
 builder.Services.AddScoped<IPartyNameService, PartyNameService>();
+builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("noc", c =>
@@ -401,6 +403,40 @@ using (var scope = app.Services.CreateScope())
             ) s
             WHERE s.""PartyNameId"" = p.""Id"";
 
+            CREATE TABLE IF NOT EXISTS ""ErrorLogs"" (
+                ""Id""            SERIAL          PRIMARY KEY,
+                ""Message""       TEXT            NOT NULL,
+                ""ExceptionType"" VARCHAR(250),
+                ""StackTrace""    TEXT,
+                ""Source""        VARCHAR(250),
+                ""RequestPath""   VARCHAR(500),
+                ""RequestMethod"" VARCHAR(10),
+                ""QueryString""   VARCHAR(1000),
+                ""StatusCode""    INT             NOT NULL DEFAULT 500,
+                ""UserAgent""     VARCHAR(500),
+                ""ClientIp""      VARCHAR(50),
+                ""UserId""        INT,
+                ""CreatedAt""     TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+            );
+
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = 'Users'
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_ErrorLogs_Users_UserId'
+                ) THEN
+                    ALTER TABLE ""ErrorLogs""
+                    ADD CONSTRAINT ""FK_ErrorLogs_Users_UserId""
+                    FOREIGN KEY (""UserId"") REFERENCES ""Users""(""Id"") ON DELETE SET NULL;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS ""IX_ErrorLogs_CreatedAt""
+            ON ""ErrorLogs"" (""CreatedAt"" DESC);
+
             INSERT INTO ""Permissions"" (""Name"", ""Description"", ""CreatedAt"")
             VALUES 
                 ('extra_expenses.view', 'View extra expenses', NOW()),
@@ -444,6 +480,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"[AutoMigration Warning] {ex.Message}");
     }
 }
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
