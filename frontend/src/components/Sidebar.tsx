@@ -76,30 +76,53 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
   const navContent = (isMobile = false) => (
     <>
       <div
-        className={`flex items-center border-b border-slate-800 ${collapsed && !isMobile ? "justify-center px-2" : "justify-between px-6"
-          } py-4`}
+        className={`relative flex items-center border-b border-slate-800 ${collapsed && !isMobile ? "justify-center px-1" : "justify-center px-4"
+          } py-3.5`}
       >
-        <Link to="/" onClick={isMobile ? onMobileClose : undefined} className="hover:opacity-90 transition-opacity">
-          <h1 className="text-xl font-semibold tracking-wide">MIS</h1>
-        </Link>
         {isMobile ? (
-          <button
-            type="button"
-            onClick={onMobileClose}
-            className="w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
-            aria-label="Close menu"
-          >
-            <XIcon />
-          </button>
+          <>
+            <Link to="/" onClick={onMobileClose} className="hover:opacity-95 transition-opacity flex items-center justify-center">
+              <img src="/logo.png" alt="THEKAHISAB MIS Solutions" className="h-9 w-auto max-w-[165px] object-contain mx-auto" />
+            </Link>
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="absolute right-3 w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
+              aria-label="Close menu"
+            >
+              <XIcon />
+            </button>
+          </>
+        ) : collapsed ? (
+          <div className="flex items-center justify-between w-full px-1">
+            <Link to="/" className="hover:opacity-95 transition-opacity shrink-0" title="THEKAHISAB">
+              <img src="/logo.png" alt="THEKAHISAB" className="w-7 h-7 object-contain" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setCollapsed(false)}
+              className="w-6 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800 shrink-0"
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <ChevronIcon direction="right" />
+            </button>
+          </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            className="w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <ChevronIcon direction={collapsed ? "right" : "left"} />
-          </button>
+          <>
+            <Link to="/" className="hover:opacity-95 transition-opacity flex items-center justify-center">
+              <img src="/logo.png" alt="THEKAHISAB MIS Solutions" className="h-9 w-auto max-w-[165px] object-contain mx-auto" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setCollapsed(true)}
+              className="absolute right-3 w-8 h-8 inline-flex items-center justify-center rounded text-slate-300 hover:text-white hover:bg-slate-800"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <ChevronIcon direction="left" />
+            </button>
+          </>
         )}
       </div>
 
