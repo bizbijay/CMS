@@ -80,7 +80,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
           } py-4`}
       >
         <Link to="/" onClick={isMobile ? onMobileClose : undefined} className="hover:opacity-90 transition-opacity">
-          <h1 className="text-xl font-semibold tracking-wide">CMS</h1>
+          <h1 className="text-xl font-semibold tracking-wide">MIS</h1>
         </Link>
         {isMobile ? (
           <button

@@ -46,10 +46,10 @@ export default function ProjectBreakdown() {
       const project = projects.find((p) => p.id === pid);
       setProjectName(project?.name ?? `Project #${pid}`);
       setSummary(summaries.find((s) => s.projectId === pid) ?? null);
-      setExpenses(exp);
-      setWages(wag);
-      setTransports(trans);
-      setCommissions(com);
+      setExpenses(Array.isArray(exp) ? exp : (exp as any)?.items || []);
+      setWages(Array.isArray(wag) ? wag : (wag as any)?.items || []);
+      setTransports(Array.isArray(trans) ? trans : (trans as any)?.items || []);
+      setCommissions(Array.isArray(com) ? com : (com as any)?.items || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load breakdown.");
     } finally {
@@ -83,13 +83,13 @@ export default function ProjectBreakdown() {
     );
   }
 
-  const expensesSubtotal = expenses.reduce((sum, e) => sum + (e.totalCost ?? 0), 0);
-  const wagesSubtotal = wages.reduce((sum, w) => sum + w.totalAmount, 0);
-  const transSubtotal = transports.reduce(
+  const expensesSubtotal = (expenses || []).reduce((sum, e) => sum + (e.totalCost ?? 0), 0);
+  const wagesSubtotal = (wages || []).reduce((sum, w) => sum + w.totalAmount, 0);
+  const transSubtotal = (transports || []).reduce(
     (sum, t) => sum + (t.materialCost ?? 0) + (t.tax ?? 0) + (t.wages ?? 0),
     0
   );
-  const commissionsSubtotal = commissions.reduce((sum, c) => sum + c.amount, 0);
+  const commissionsSubtotal = (commissions || []).reduce((sum, c) => sum + c.amount, 0);
   const grandTotal = summary?.grandTotal ?? expensesSubtotal + wagesSubtotal + transSubtotal + commissionsSubtotal;
 
   return (

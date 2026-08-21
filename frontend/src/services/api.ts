@@ -304,8 +304,17 @@ export const transportationsApi = {
     const qs = q.toString();
     return request<TransportationListItem[]>(`/api/transportations/report${qs ? `?${qs}` : ""}`, { method: "GET" });
   },
-  listByProject: (projectId: number) =>
-    request<TransportationListItem[]>(`/api/transportations?projectId=${projectId}`, { method: "GET" }),
+  listByProject: async (projectId: number) => {
+    const res = await request<PagedResult<TransportationListItem> | TransportationListItem[]>(
+      `/api/transportations?projectId=${projectId}`,
+      { method: "GET" }
+    );
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray((res as PagedResult<TransportationListItem>).items)) {
+      return (res as PagedResult<TransportationListItem>).items;
+    }
+    return [];
+  },
   create: (body: CreateTransportationRequest) =>
     request<TransportationListItem>("/api/transportations", { method: "POST", body: JSON.stringify(body) }),
   update: (id: number, body: UpdateTransportationRequest) =>
