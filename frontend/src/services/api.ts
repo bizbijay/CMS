@@ -157,6 +157,7 @@ export const authApi = {
 
 export const usersApi = {
   list: () => request<UserListItem[]>("/api/users", { method: "GET" }),
+  getProfile: () => request<UserListItem>("/api/users/profile", { method: "GET" }),
 
   drivers: () => request<UserListItem[]>("/api/users/drivers", { method: "GET" }),
   dozerDrivers: () => request<UserListItem[]>("/api/users/dozer-drivers", { method: "GET" }),

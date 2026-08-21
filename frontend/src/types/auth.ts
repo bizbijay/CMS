@@ -5,6 +5,8 @@ export interface UserDto {
   firstName?: string | null;
   lastName?: string | null;
   roleName?: string | null;
+  vehicleId?: number | null;
+  assignedVehicleName?: string | null;
 }
 
 export interface AuthResponse {

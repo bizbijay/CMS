@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Unauthorized from "./pages/Unauthorized";
 import Dashboard from "./pages/Dashboard";
+import DriverDashboard from "./pages/DriverDashboard";
+import OperatorDashboard from "./pages/OperatorDashboard";
 import Users from "./pages/Users";
 import Vehicles from "./pages/Vehicles";
 import Materials from "./pages/Materials";
@@ -65,6 +67,8 @@ function AppRoutes() {
         }
       >
         <Route path="/" element={<Dashboard />} />
+        <Route path="/driver-dashboard" element={<DriverDashboard />} />
+        <Route path="/operator-dashboard" element={<OperatorDashboard />} />
         <Route
           path="/users"
           element={

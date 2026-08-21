@@ -36,6 +36,15 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IEnumerable<UserListItemDto>>> GetDozerDrivers() =>
         Ok(await _users.GetDozerDriversAsync());
 
+    // GET: api/users/profile – current logged-in user profile
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<ActionResult<UserListItemDto>> GetProfile()
+    {
+        var user = await _users.GetByIdAsync(CurrentUserId);
+        return user is null ? NotFound() : Ok(user);
+    }
+
     // GET: api/users
     [HttpGet]
     [Authorize(Policy = "users.view")]

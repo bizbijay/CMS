@@ -42,7 +42,7 @@ export default function Header({ onMenuOpen }: Props) {
       >
         <HamburgerIcon />
       </button>
-      <div className="text-sm text-slate-500 hidden md:block">{t.common.welcomeBack}</div>
+      <div className="text-sm text-slate-500 hidden md:block"></div>
       <div className="flex-1 md:hidden" />
 
       {/* Avatar with hover-revealed dropdown */}

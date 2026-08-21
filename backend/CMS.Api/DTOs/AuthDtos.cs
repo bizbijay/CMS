@@ -46,6 +46,8 @@ public class UserDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? RoleName { get; set; }
+    public int? VehicleId { get; set; }
+    public string? AssignedVehicleName { get; set; }
 }
 
 public class ChangePasswordRequest

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCulture } from "../context/CultureContext";
 
@@ -79,10 +79,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: Props) {
         className={`flex items-center border-b border-slate-800 ${collapsed && !isMobile ? "justify-center px-2" : "justify-between px-6"
           } py-4`}
       >
-        <div>
+        <Link to="/" onClick={isMobile ? onMobileClose : undefined} className="hover:opacity-90 transition-opacity">
           <h1 className="text-xl font-semibold tracking-wide">CMS</h1>
-          <p className="text-xs text-slate-400">Admin console</p>
-        </div>
+        </Link>
         {isMobile ? (
           <button
             type="button"
