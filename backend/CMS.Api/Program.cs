@@ -88,6 +88,7 @@ builder.Services.AddScoped<IVehicleMaintenancePartService, VehicleMaintenancePar
 builder.Services.AddScoped<IVehicleMaintenanceWageService, VehicleMaintenanceWageService>();
 builder.Services.AddScoped<IMaintenancePartService, MaintenancePartService>();
 builder.Services.AddScoped<IPartyNameService, PartyNameService>();
+builder.Services.AddScoped<IUserColumnPreferenceService, UserColumnPreferenceService>();
 builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 
 builder.Services.AddMemoryCache();

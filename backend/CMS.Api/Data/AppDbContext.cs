@@ -39,6 +39,7 @@ public class AppDbContext : DbContext
     public DbSet<BankAccountDebitLog> BankAccountDebitLogs => Set<BankAccountDebitLog>();
     public DbSet<VendorBalanceLog> VendorBalanceLogs => Set<VendorBalanceLog>();
     public DbSet<ErrorLog> ErrorLogs => Set<ErrorLog>();
+    public DbSet<UserColumnPreference> UserColumnPreferences => Set<UserColumnPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -442,6 +443,15 @@ public class AppDbContext : DbContext
             entity.HasOne(l => l.CreatedBy).WithMany().HasForeignKey(l => l.CreatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.UpdatedBy).WithMany().HasForeignKey(l => l.UpdatedById).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(l => l.DeletedBy).WithMany().HasForeignKey(l => l.DeletedById).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<UserColumnPreference>(entity =>
+        {
+            entity.HasIndex(p => new { p.UserId, p.TableKey }).IsUnique();
+            entity.HasOne(p => p.User)
+                  .WithMany()
+                  .HasForeignKey(p => p.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

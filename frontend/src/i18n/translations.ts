@@ -782,6 +782,15 @@ const en = {
     totalMeterRun: "Total Meter Run",
     totalWages: "Total Wages",
     totalTrips: "Total Trips (Tips)",
+    columns: "Columns",
+    showHideColumns: "Show / Hide Columns",
+    selectAll: "Select All",
+    deselectAll: "Deselect All",
+    resetColumns: "Reset Columns",
+    dateAd: "Date (AD)",
+    dateBs: "Date (BS)",
+    createdBy: "Created By",
+    createdAt: "Created At",
   },
 };
 
@@ -1562,6 +1571,15 @@ const np: typeof en = {
     totalMeterRun: "जम्मा मिटर रन",
     totalWages: "जम्मा ज्याला",
     totalTrips: "जम्मा ट्रिप (टिप)",
+    columns: "स्तम्भहरू",
+    showHideColumns: "स्तम्भहरू देखाउनुहोस् / लुकाउनुहोस्",
+    selectAll: "सबै चयन गर्नुहोस्",
+    deselectAll: "सबै हटाउनुहोस्",
+    resetColumns: "पुनःसेट गर्नुहोस्",
+    dateAd: "मिति (AD)",
+    dateBs: "मिति (BS)",
+    createdBy: "सिर्जनाकर्ता",
+    createdAt: "सिर्जना मिति",
   },
 };
 

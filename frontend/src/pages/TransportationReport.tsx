@@ -1,10 +1,34 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { transportationsApi, usersApi, vehiclesApi, materialsApi, vendorsApi, projectsApi, partyNamesApi } from "../services/api";
 import { getCurrentBSDate, bsToAdIso, formatBSDate } from "../utils/nepaliDate";
 import type { TransportationListItem } from "../types/transportation";
 import NepaliCalendarPicker from "../components/NepaliCalendarPicker";
 import { useCulture } from "../context/CultureContext";
+import type { Locale } from "../i18n/translations";
+import { useUserColumnPreferences } from "../hooks/useUserColumnPreferences";
+
+const DEFAULT_VISIBLE_COLUMNS: Record<string, boolean> = {
+  sn: true,
+  dateAd: true,
+  dateBs: true,
+  transportedBy: true,
+  vehicle: true,
+  material: true,
+  vendor: true,
+  project: true,
+  location: true,
+  partyName: true,
+  noOfTip: true,
+  quantity: true,
+  perUnitCost: true,
+  materialCost: true,
+  tax: true,
+  wages: true,
+  totalWages: true,
+  createdBy: false,
+  createdAt: false,
+};
 
 interface AppliedFiltersSnapshot {
   fromDate: string;
@@ -15,6 +39,25 @@ interface AppliedFiltersSnapshot {
   vendorFilter: string;
   projectFilter: string;
   partyFilter: string;
+}
+
+interface ColumnConfig {
+  key: string;
+  label: string;
+  align?: "left" | "center" | "right";
+  excelWidth?: number;
+  getValue: (item: TransportationListItem, index: number, locale: Locale) => string | number;
+  getExcelValue: (item: TransportationListItem, index: number) => string | number;
+  getSummaryValue?: (summary: ReportSummary) => string | number | null;
+}
+
+interface ReportSummary {
+  count: number;
+  totalTips: number;
+  totalQty: number;
+  totalMaterialCost: number;
+  totalTax: number;
+  totalWages: number;
 }
 
 export default function TransportationReport() {
@@ -68,6 +111,231 @@ export default function TransportationReport() {
   const [vendorFilter, setVendorFilter] = useState<string>("");
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [partyFilter, setPartyFilter] = useState<string>("");
+
+  // Column Visibility State saved per user
+  const {
+    visibleColumns,
+    toggleColumn: toggleColumnVisibility,
+    selectAll,
+    deselectAll,
+    resetToDefault,
+    isCustomized,
+  } = useUserColumnPreferences("transportation_report", DEFAULT_VISIBLE_COLUMNS);
+
+  const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+  const columnMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close column dropdown menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) {
+        setColumnMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Define Column Definitions
+  const allColumns: ColumnConfig[] = useMemo(
+    () => [
+      {
+        key: "sn",
+        label: "S.N.",
+        align: "center",
+        excelWidth: 6,
+        getValue: (_, index) => index + 1,
+        getExcelValue: (_, index) => index + 1,
+      },
+      {
+        key: "dateAd",
+        label: t.reports.dateAd || "Date (AD)",
+        align: "left",
+        excelWidth: 14,
+        getValue: (item) => item.date || "—",
+        getExcelValue: (item) => item.date || "",
+      },
+      {
+        key: "dateBs",
+        label: t.reports.dateBs || "Date (BS)",
+        align: "left",
+        excelWidth: 16,
+        getValue: (item, _, loc) => {
+          try {
+            return formatBSDate(item.date, loc);
+          } catch {
+            return "—";
+          }
+        },
+        getExcelValue: (item) => {
+          try {
+            return formatBSDate(item.date, "en");
+          } catch {
+            return "";
+          }
+        },
+      },
+      {
+        key: "transportedBy",
+        label: t.common.transportedBy,
+        align: "left",
+        excelWidth: 20,
+        getValue: (item) => item.transportedByName || item.transportedByOther || "—",
+        getExcelValue: (item) => item.transportedByName || item.transportedByOther || "-",
+      },
+      {
+        key: "vehicle",
+        label: t.common.vehicle,
+        align: "left",
+        excelWidth: 18,
+        getValue: (item) => item.vehicleName || item.vehicleOther || "—",
+        getExcelValue: (item) => item.vehicleName || item.vehicleOther || "-",
+      },
+      {
+        key: "material",
+        label: t.common.material,
+        align: "left",
+        excelWidth: 18,
+        getValue: (item) => item.materialName || "—",
+        getExcelValue: (item) => item.materialName || "-",
+      },
+      {
+        key: "vendor",
+        label: t.common.vendor,
+        align: "left",
+        excelWidth: 20,
+        getValue: (item) => item.vendorName || item.vendorOther || "—",
+        getExcelValue: (item) => item.vendorName || item.vendorOther || "-",
+      },
+      {
+        key: "project",
+        label: t.common.project,
+        align: "left",
+        excelWidth: 22,
+        getValue: (item) => item.projectName || item.projectOther || "—",
+        getExcelValue: (item) => item.projectName || item.projectOther || "-",
+      },
+      {
+        key: "location",
+        label: t.common.location,
+        align: "left",
+        excelWidth: 18,
+        getValue: (item) => item.location || "—",
+        getExcelValue: (item) => item.location || "-",
+      },
+      {
+        key: "partyName",
+        label: t.common.partyName,
+        align: "left",
+        excelWidth: 20,
+        getValue: (item) => item.partyNameName || "—",
+        getExcelValue: (item) => item.partyNameName || "-",
+      },
+      {
+        key: "noOfTip",
+        label: t.common.noOfTip,
+        align: "center",
+        excelWidth: 12,
+        getValue: (item) => (item.noOfTip != null ? item.noOfTip : "—"),
+        getExcelValue: (item) => (item.noOfTip != null ? item.noOfTip : "-"),
+        getSummaryValue: (s) => s.totalTips,
+      },
+      {
+        key: "quantity",
+        label: t.common.quantity,
+        align: "right",
+        excelWidth: 14,
+        getValue: (item) => (item.quantity != null ? item.quantity.toFixed(2) : "—"),
+        getExcelValue: (item) => (item.quantity != null ? Number(item.quantity.toFixed(2)) : 0),
+        getSummaryValue: (s) => Number(s.totalQty.toFixed(2)),
+      },
+      {
+        key: "perUnitCost",
+        label: t.common.perUnitCost,
+        align: "right",
+        excelWidth: 18,
+        getValue: (item) => (item.perUnitCost != null ? `${t.common.currencySymbol} ${item.perUnitCost.toFixed(2)}` : "—"),
+        getExcelValue: (item) => (item.perUnitCost != null ? Number(item.perUnitCost.toFixed(2)) : 0),
+      },
+      {
+        key: "materialCost",
+        label: t.common.materialCost,
+        align: "right",
+        excelWidth: 20,
+        getValue: (item) => {
+          const cost = item.materialCost ?? (item.quantity && item.perUnitCost ? item.quantity * item.perUnitCost : null);
+          return cost != null ? `${t.common.currencySymbol} ${cost.toFixed(2)}` : "—";
+        },
+        getExcelValue: (item) => {
+          const cost = item.materialCost ?? (item.quantity && item.perUnitCost ? item.quantity * item.perUnitCost : 0);
+          return cost ? Number(cost.toFixed(2)) : 0;
+        },
+        getSummaryValue: (s) => `${t.common.currencySymbol} ${s.totalMaterialCost.toFixed(2)}`,
+      },
+      {
+        key: "tax",
+        label: t.common.tax,
+        align: "right",
+        excelWidth: 14,
+        getValue: (item) => (item.tax != null ? `${t.common.currencySymbol} ${item.tax.toFixed(2)}` : "—"),
+        getExcelValue: (item) => (item.tax != null ? Number(item.tax.toFixed(2)) : 0),
+        getSummaryValue: (s) => `${t.common.currencySymbol} ${s.totalTax.toFixed(2)}`,
+      },
+      {
+        key: "wages",
+        label: t.common.wagesNrs,
+        align: "right",
+        excelWidth: 16,
+        getValue: (item) => (item.wages != null ? `${t.common.currencySymbol} ${item.wages.toFixed(2)}` : "—"),
+        getExcelValue: (item) => (item.wages != null ? Number(item.wages.toFixed(2)) : 0),
+      },
+      {
+        key: "totalWages",
+        label: t.common.totalWages,
+        align: "right",
+        excelWidth: 20,
+        getValue: (item) => {
+          const total = item.totalWages ?? item.wages;
+          return total != null ? `${t.common.currencySymbol} ${total.toFixed(2)}` : "—";
+        },
+        getExcelValue: (item) => {
+          const total = item.totalWages ?? item.wages;
+          return total != null ? Number(total.toFixed(2)) : 0;
+        },
+        getSummaryValue: (s) => `${t.common.currencySymbol} ${s.totalWages.toFixed(2)}`,
+      },
+      {
+        key: "createdBy",
+        label: t.reports.createdBy || "Created By",
+        align: "left",
+        excelWidth: 16,
+        getValue: (item) => item.createdBy || "—",
+        getExcelValue: (item) => item.createdBy || "-",
+      },
+      {
+        key: "createdAt",
+        label: t.reports.createdAt || "Created At",
+        align: "left",
+        excelWidth: 18,
+        getValue: (item) => (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"),
+        getExcelValue: (item) => (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-"),
+      },
+    ],
+    [t]
+  );
+
+  const activeColumns = useMemo(
+    () => allColumns.filter((col) => visibleColumns[col.key] !== false),
+    [allColumns, visibleColumns]
+  );
+
+  const handleSelectAllColumns = () => {
+    selectAll(allColumns.map((col) => col.key));
+  };
+
+  const handleDeselectAllColumns = () => {
+    deselectAll(allColumns.map((col) => col.key), "sn");
+  };
 
   // Load dropdown options on initial mount
   useEffect(() => {
@@ -127,16 +395,23 @@ export default function TransportationReport() {
   }, [fromDate, toDate, transportedFilter, vehicleFilter, materialFilter, vendorFilter, projectFilter, partyFilter]);
 
   // Aggregated Summary Statistics
-  const summary = useMemo(() => {
+  const summary = useMemo<ReportSummary>(() => {
     const count = reportItems.length;
     const totalTips = reportItems.reduce((acc, curr) => acc + (curr.noOfTip || 0), 0);
     const totalQty = reportItems.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
+    const totalMaterialCost = reportItems.reduce((acc, curr) => {
+      const mc = curr.materialCost ?? (curr.quantity && curr.perUnitCost ? curr.quantity * curr.perUnitCost : 0);
+      return acc + (mc || 0);
+    }, 0);
+    const totalTax = reportItems.reduce((acc, curr) => acc + (curr.tax || 0), 0);
     const totalWages = reportItems.reduce((acc, curr) => acc + (curr.totalWages || curr.wages || 0), 0);
 
     return {
       count,
       totalTips,
       totalQty,
+      totalMaterialCost,
+      totalTax,
       totalWages,
     };
   }, [reportItems]);
@@ -191,97 +466,36 @@ export default function TransportationReport() {
       [], // Blank row
     ];
 
-    // Table Header
-    const headers = [
-      "S.N.",
-      "Date (AD)",
-      "Date (BS)",
-      "Transported By",
-      "Vehicle",
-      "Material",
-      "Vendor",
-      "Project / Location",
-      "Party Name",
-      "No. of Tips",
-      "Quantity",
-      "Per Unit Cost (NRS)",
-      "Total Wages (NRS)",
-    ];
+    // Table Headers for active visible columns
+    const headers = activeColumns.map((col) => col.label);
 
-    // Data Rows
-    const rows = reportItems.map((log, index) => {
-      const driver = log.transportedByName || log.transportedByOther || "-";
-      const vehicle = log.vehicleName || log.vehicleOther || "-";
-      const vendor = log.vendorName || log.vendorOther || "-";
-      const proj = log.projectName || log.projectOther || log.location || "-";
-      const bsDate = formatBSDate(log.date, "en");
+    // Data Rows for active visible columns
+    const rows = reportItems.map((log, index) =>
+      activeColumns.map((col) => col.getExcelValue(log, index))
+    );
 
-      return [
-        index + 1,
-        log.date,
-        bsDate,
-        driver,
-        vehicle,
-        log.materialName || "-",
-        vendor,
-        proj,
-        log.partyNameName || "-",
-        log.noOfTip ?? "-",
-        Number((log.quantity || 0).toFixed(2)),
-        Number((log.perUnitCost || 0).toFixed(2)),
-        Number((log.totalWages || log.wages || 0).toFixed(2)),
-      ];
+    // Dynamic Summary Row
+    let summaryTitleAdded = false;
+    const summaryRow = activeColumns.map((col) => {
+      if (col.getSummaryValue) {
+        const val = col.getSummaryValue(summary);
+        return typeof val === "string" ? val.replace(`${t.common.currencySymbol} `, "") : val;
+      }
+      if (!summaryTitleAdded) {
+        summaryTitleAdded = true;
+        return "Summary / Grand Total";
+      }
+      return "";
     });
-
-    // Summary Row
-    const summaryRow = [
-      "Summary / Grand Total",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      summary.totalTips,
-      Number(summary.totalQty.toFixed(2)),
-      "",
-      Number(summary.totalWages.toFixed(2)),
-    ];
 
     const worksheetData = [...metadata, headers, ...rows, [], summaryRow];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
-    worksheet["!cols"] = [
-      { wch: 6 },  // S.N.
-      { wch: 14 }, // Date AD
-      { wch: 20 }, // Date BS
-      { wch: 20 }, // Transported By
-      { wch: 18 }, // Vehicle
-      { wch: 18 }, // Material
-      { wch: 20 }, // Vendor
-      { wch: 22 }, // Project
-      { wch: 20 }, // Party Name
-      { wch: 12 }, // Tips
-      { wch: 14 }, // Quantity
-      { wch: 18 }, // Per Unit Cost
-      { wch: 20 }, // Total Wages
-    ];
+    worksheet["!cols"] = activeColumns.map((col) => ({ wch: col.excelWidth || 15 }));
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transportation Report");
     XLSX.writeFile(workbook, fileName);
-  };
-
-  const formatDateDisplay = (isoStr: string) => {
-    if (!isoStr) return "-";
-    try {
-      const bs = formatBSDate(isoStr, locale);
-      return `${isoStr} (${bs})`;
-    } catch {
-      return isoStr;
-    }
   };
 
   return (
@@ -290,7 +504,8 @@ export default function TransportationReport() {
       <style>{`
         @media print {
           @page {
-            margin: 10mm;
+            margin: 8mm;
+            size: landscape;
           }
 
           html, body, #root, div, main, .overflow-y-auto, .overflow-x-auto, .overflow-hidden {
@@ -304,7 +519,7 @@ export default function TransportationReport() {
           body {
             background: white !important;
             color: black !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
           }
 
           aside, header, nav, .print\\:hidden {
@@ -347,8 +562,8 @@ export default function TransportationReport() {
 
           th, td {
             border: 1px solid #475569 !important;
-            padding: 5px 8px !important;
-            font-size: 10px !important;
+            padding: 4px 6px !important;
+            font-size: 9px !important;
             color: #000000 !important;
             background: transparent !important;
           }
@@ -395,7 +610,81 @@ export default function TransportationReport() {
         </div>
 
         {hasSearched && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Hide/Show Columns Popover Dropdown */}
+            <div className="relative" ref={columnMenuRef}>
+              <button
+                type="button"
+                onClick={() => setColumnMenuOpen((prev) => !prev)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-sm font-medium shadow-sm transition-colors"
+              >
+                <ColumnsIcon className="w-4 h-4 text-slate-500" />
+                <span>
+                  {t.reports.columns} ({activeColumns.length}/{allColumns.length})
+                </span>
+                <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              {columnMenuOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-3 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                      {t.reports.showHideColumns}
+                    </span>
+                    <div className="flex gap-1.5 items-center">
+                      <button
+                        type="button"
+                        onClick={handleSelectAllColumns}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {t.reports.selectAll}
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={handleDeselectAllColumns}
+                        className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                      >
+                        {t.reports.deselectAll}
+                      </button>
+                      {isCustomized && (
+                        <>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={resetToDefault}
+                            className="text-xs text-amber-600 hover:text-amber-800 font-medium"
+                          >
+                            {t.reports.resetColumns}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+                    {allColumns.map((col) => {
+                      const checked = visibleColumns[col.key] !== false;
+                      return (
+                        <label
+                          key={col.key}
+                          className="flex items-center gap-2.5 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleColumnVisibility(col.key)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                          />
+                          <span>{col.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={handlePrint}
@@ -692,90 +981,87 @@ export default function TransportationReport() {
             <div className="p-12 text-center text-slate-500">
               <p className="text-sm">{t.reports.transportationNoData}</p>
             </div>
+          ) : activeColumns.length === 0 ? (
+            <div className="p-12 text-center text-slate-500">
+              <p className="text-sm">No columns selected. Please toggle on columns from the Columns menu above.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-700">
                 <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3.5 w-12 text-center">#</th>
-                    <th className="px-4 py-3.5">{t.common.date}</th>
-                    <th className="px-4 py-3.5">{t.common.transportedBy}</th>
-                    <th className="px-4 py-3.5">{t.common.vehicle}</th>
-                    <th className="px-4 py-3.5">{t.common.material}</th>
-                    <th className="px-4 py-3.5">{t.common.vendor}</th>
-                    <th className="px-4 py-3.5">{t.common.project}</th>
-                    <th className="px-4 py-3.5">{t.common.partyName}</th>
-                    <th className="px-4 py-3.5 text-center">Tips</th>
-                    <th className="px-4 py-3.5 text-right">{t.common.quantity}</th>
-                    <th className="px-4 py-3.5 text-right">{t.common.perUnitCost}</th>
-                    <th className="px-4 py-3.5 text-right">{t.common.totalWages}</th>
+                    {activeColumns.map((col) => (
+                      <th
+                        key={col.key}
+                        className={`px-4 py-3.5 ${
+                          col.align === "center"
+                            ? "text-center"
+                            : col.align === "right"
+                            ? "text-right"
+                            : "text-left"
+                        }`}
+                      >
+                        {col.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {reportItems.map((log, index) => {
-                    const driver = log.transportedByName || log.transportedByOther || "—";
-                    const vehicle = log.vehicleName || log.vehicleOther || "—";
-                    const vendor = log.vendorName || log.vendorOther || "—";
-                    const proj = log.projectName || log.projectOther || log.location || "—";
-                    const party = log.partyNameName || "—";
-
-                    return (
-                      <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-4 py-3 text-center text-slate-400 font-mono text-xs">
-                          {index + 1}
+                  {reportItems.map((log, index) => (
+                    <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                      {activeColumns.map((col) => (
+                        <td
+                          key={col.key}
+                          className={`px-4 py-3 ${
+                            col.align === "center"
+                              ? "text-center font-mono text-xs text-slate-700"
+                              : col.align === "right"
+                              ? "text-right font-mono text-slate-800"
+                              : "text-left text-slate-800 font-medium whitespace-nowrap"
+                          }`}
+                        >
+                          {col.getValue(log, index, locale)}
                         </td>
-                        <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                          {formatDateDisplay(log.date)}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-slate-800">
-                          {driver}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {vehicle}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {log.materialName || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {vendor}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {proj}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {party}
-                        </td>
-                        <td className="px-4 py-3 text-center font-mono text-slate-800">
-                          {log.noOfTip ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-slate-900">
-                          {(log.quantity || 0).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-slate-600">
-                          {t.common.currencySymbol} {(log.perUnitCost || 0).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono font-semibold text-slate-900">
-                          {t.common.currencySymbol} {(log.totalWages || log.wages || 0).toFixed(2)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
                 <tfoot className="bg-slate-100/90 border-t-2 border-slate-300 font-semibold text-slate-900">
                   <tr>
-                    <td colSpan={8} className="px-4 py-3.5 text-right uppercase text-xs tracking-wider">
-                      Total Summary
-                    </td>
-                    <td className="px-4 py-3.5 text-center font-mono">
-                      {summary.totalTips}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono">
-                      {summary.totalQty.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3.5"></td>
-                    <td className="px-4 py-3.5 text-right font-mono text-base text-emerald-700">
-                      {t.common.currencySymbol} {summary.totalWages.toFixed(2)}
-                    </td>
+                    {(() => {
+                      let titleRendered = false;
+                      return activeColumns.map((col) => {
+                        if (col.getSummaryValue) {
+                          const val = col.getSummaryValue(summary);
+                          return (
+                            <td
+                              key={col.key}
+                              className={`px-4 py-3.5 font-mono ${
+                                col.align === "center"
+                                  ? "text-center"
+                                  : col.align === "right"
+                                  ? "text-right text-emerald-700 font-bold"
+                                  : "text-left"
+                              }`}
+                            >
+                              {val ?? ""}
+                            </td>
+                          );
+                        }
+                        if (!titleRendered) {
+                          titleRendered = true;
+                          return (
+                            <td
+                              key={col.key}
+                              className="px-4 py-3.5 text-left uppercase text-xs tracking-wider text-slate-700 font-bold"
+                            >
+                              Total Summary
+                            </td>
+                          );
+                        }
+                        return <td key={col.key} className="px-4 py-3.5"></td>;
+                      });
+                    })()}
                   </tr>
                 </tfoot>
               </table>
@@ -864,6 +1150,22 @@ function CurrencyIcon({ className }: { className?: string }) {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
       <line x1="12" y1="1" x2="12" y2="23" />
       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  );
+}
+
+function ColumnsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }

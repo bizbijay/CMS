@@ -19,6 +19,10 @@ export interface DozerLogListItem {
   paymentType?: string | null;
   cashAmount?: number | null;
   workOrderBy?: string | null;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string | null;
 }
 
 export interface CreateDozerLogRequest {

@@ -639,3 +639,13 @@ export const projectCommissionsApi = {
   remove: (id: number) =>
     request<void>(`/api/project-commissions/${id}`, { method: "DELETE" }),
 };
+
+export const userColumnPreferencesApi = {
+  get: (tableKey: string) =>
+    request<Record<string, boolean>>(`/api/user-column-preferences/${encodeURIComponent(tableKey)}`, { method: "GET" }),
+  save: (tableKey: string, preferences: Record<string, boolean>) =>
+    request<{ message: string }>(`/api/user-column-preferences/${encodeURIComponent(tableKey)}`, {
+      method: "PUT",
+      body: JSON.stringify(preferences),
+    }),
+};

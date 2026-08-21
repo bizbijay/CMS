@@ -1,10 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { fuelLogsApi, usersApi, vehiclesApi, fuelsApi, partyNamesApi } from "../services/api";
 import { getCurrentBSDate, bsToAdIso, formatBSDate } from "../utils/nepaliDate";
 import type { FuelLogListItem } from "../types/fuelLog";
 import NepaliCalendarPicker from "../components/NepaliCalendarPicker";
 import { useCulture } from "../context/CultureContext";
+import type { Locale } from "../i18n/translations";
+import { useUserColumnPreferences } from "../hooks/useUserColumnPreferences";
+
+const DEFAULT_VISIBLE_COLUMNS: Record<string, boolean> = {
+  sn: true,
+  dateAd: true,
+  dateBs: true,
+  driver: true,
+  vehicle: true,
+  partyName: true,
+  fuelType: true,
+  quantity: true,
+  price: true,
+  total: true,
+  createdBy: false,
+  createdAt: false,
+};
 
 interface AppliedFiltersSnapshot {
   fromDate: string;
@@ -13,6 +30,23 @@ interface AppliedFiltersSnapshot {
   vehicleFilter: string;
   fuelTypeFilter: string;
   partyFilter: string;
+}
+
+interface ColumnConfig {
+  key: string;
+  label: string;
+  align?: "left" | "center" | "right";
+  excelWidth?: number;
+  getValue: (item: FuelLogListItem, index: number, locale: Locale) => string | number;
+  getExcelValue: (item: FuelLogListItem, index: number) => string | number;
+  getSummaryValue?: (summary: ReportSummary) => string | number | null;
+}
+
+interface ReportSummary {
+  count: number;
+  totalQty: number;
+  totalCost: number;
+  avgRate: number;
 }
 
 export default function FuelLogReport() {
@@ -47,13 +81,13 @@ export default function FuelLogReport() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dropdown Lookup Options (Loaded once on mount)
+  // Dropdown Lookup Options
   const [driverOptions, setDriverOptions] = useState<string[]>([]);
   const [vehicleOptions, setVehicleOptions] = useState<string[]>([]);
   const [fuelTypeOptions, setFuelTypeOptions] = useState<string[]>([]);
   const [partyOptions, setPartyOptions] = useState<string[]>([]);
 
-  // Filter Input Controls State (Updating inputs does NOT alter displayed report table until Search is clicked)
+  // Filter Input Controls State
   const [fromDate, setFromDate] = useState<string>(defaultDates.fromDate);
   const [toDate, setToDate] = useState<string>(defaultDates.toDate);
   const [driverFilter, setDriverFilter] = useState<string>("");
@@ -61,7 +95,168 @@ export default function FuelLogReport() {
   const [fuelTypeFilter, setFuelTypeFilter] = useState<string>("");
   const [partyFilter, setPartyFilter] = useState<string>("");
 
-  // Load dropdown options on initial mount
+  // Column Visibility State saved per user
+  const {
+    visibleColumns,
+    toggleColumn: toggleColumnVisibility,
+    selectAll,
+    deselectAll,
+    resetToDefault,
+    isCustomized,
+  } = useUserColumnPreferences("fuel_log_report", DEFAULT_VISIBLE_COLUMNS);
+
+  const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+  const columnMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close column menu on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) {
+        setColumnMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Column Definitions
+  const allColumns: ColumnConfig[] = useMemo(
+    () => [
+      {
+        key: "sn",
+        label: "S.N.",
+        align: "center",
+        excelWidth: 6,
+        getValue: (_, index) => index + 1,
+        getExcelValue: (_, index) => index + 1,
+      },
+      {
+        key: "dateAd",
+        label: t.reports.dateAd || "Date (AD)",
+        align: "left",
+        excelWidth: 14,
+        getValue: (item) => item.date || "—",
+        getExcelValue: (item) => item.date || "",
+      },
+      {
+        key: "dateBs",
+        label: t.reports.dateBs || "Date (BS)",
+        align: "left",
+        excelWidth: 16,
+        getValue: (item, _, loc) => {
+          try {
+            return formatBSDate(item.date, loc);
+          } catch {
+            return "—";
+          }
+        },
+        getExcelValue: (item) => {
+          try {
+            return formatBSDate(item.date, "en");
+          } catch {
+            return "";
+          }
+        },
+      },
+      {
+        key: "driver",
+        label: t.common.driver,
+        align: "left",
+        excelWidth: 20,
+        getValue: (item) => item.driverName || "—",
+        getExcelValue: (item) => item.driverName || "-",
+      },
+      {
+        key: "vehicle",
+        label: t.common.vehicle,
+        align: "left",
+        excelWidth: 18,
+        getValue: (item) => item.vehicleName || "—",
+        getExcelValue: (item) => item.vehicleName || "-",
+      },
+      {
+        key: "partyName",
+        label: t.common.partyName,
+        align: "left",
+        excelWidth: 22,
+        getValue: (item) => item.partyNameName || item.partyNameOther || "—",
+        getExcelValue: (item) => item.partyNameName || item.partyNameOther || "-",
+      },
+      {
+        key: "fuelType",
+        label: t.common.fuelType,
+        align: "left",
+        excelWidth: 14,
+        getValue: (item) => item.fuelTypeName || "—",
+        getExcelValue: (item) => item.fuelTypeName || "-",
+      },
+      {
+        key: "quantity",
+        label: t.common.quantityL,
+        align: "right",
+        excelWidth: 14,
+        getValue: (item) => (item.quantity != null ? item.quantity.toFixed(2) : "—"),
+        getExcelValue: (item) => (item.quantity != null ? Number(item.quantity.toFixed(2)) : 0),
+        getSummaryValue: (s) => Number(s.totalQty.toFixed(2)),
+      },
+      {
+        key: "price",
+        label: t.common.price,
+        align: "right",
+        excelWidth: 18,
+        getValue: (item) => (item.price != null ? `${t.common.currencySymbol} ${item.price.toFixed(2)}` : "—"),
+        getExcelValue: (item) => (item.price != null ? Number(item.price.toFixed(2)) : 0),
+        getSummaryValue: (s) => `Avg: ${t.common.currencySymbol} ${s.avgRate.toFixed(2)}`,
+      },
+      {
+        key: "total",
+        label: t.common.total,
+        align: "right",
+        excelWidth: 20,
+        getValue: (item) => {
+          const total = (item.quantity || 0) * (item.price || 0);
+          return `${t.common.currencySymbol} ${total.toFixed(2)}`;
+        },
+        getExcelValue: (item) => {
+          const total = (item.quantity || 0) * (item.price || 0);
+          return Number(total.toFixed(2));
+        },
+        getSummaryValue: (s) => `${t.common.currencySymbol} ${s.totalCost.toFixed(2)}`,
+      },
+      {
+        key: "createdBy",
+        label: t.reports.createdBy || "Created By",
+        align: "left",
+        excelWidth: 16,
+        getValue: (item) => item.createdBy || "—",
+        getExcelValue: (item) => item.createdBy || "-",
+      },
+      {
+        key: "createdAt",
+        label: t.reports.createdAt || "Created At",
+        align: "left",
+        excelWidth: 18,
+        getValue: (item) => (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"),
+        getExcelValue: (item) => (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-"),
+      },
+    ],
+    [t]
+  );
+
+  const activeColumns = useMemo(
+    () => allColumns.filter((col) => visibleColumns[col.key] !== false),
+    [allColumns, visibleColumns]
+  );
+
+  const handleSelectAllColumns = () => {
+    selectAll(allColumns.map((col) => col.key));
+  };
+
+  const handleDeselectAllColumns = () => {
+    deselectAll(allColumns.map((col) => col.key), "sn");
+  };
+
+  // Load dropdown options on mount
   useEffect(() => {
     Promise.all([
       usersApi.drivers().catch(() => []),
@@ -79,7 +274,7 @@ export default function FuelLogReport() {
     });
   }, []);
 
-  // Search Trigger Handler (Queries backend report API with active filter inputs)
+  // Search Handler
   const handleSearch = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -110,8 +305,8 @@ export default function FuelLogReport() {
     }
   }, [fromDate, toDate, driverFilter, vehicleFilter, fuelTypeFilter, partyFilter]);
 
-  // Aggregated Summary Statistics for current report results
-  const summary = useMemo(() => {
+  // Aggregated Summary Statistics
+  const summary = useMemo<ReportSummary>(() => {
     const count = reportItems.length;
     const totalQty = reportItems.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
     const totalCost = reportItems.reduce(
@@ -128,7 +323,7 @@ export default function FuelLogReport() {
     };
   }, [reportItems]);
 
-  // Reset all filters to default
+  // Clear Filters
   const handleClearFilters = () => {
     setFromDate(defaultDates.fromDate);
     setToDate(defaultDates.toDate);
@@ -150,7 +345,6 @@ export default function FuelLogReport() {
     const reportDate = new Date().toISOString().split("T")[0];
     const fileName = `Fuel_Log_Report_${reportDate}.xlsx`;
 
-    // Metadata Rows using applied filter snapshot
     const metadata = [
       ["CMS - Fuel Log Report"],
       [`Generated On: ${new Date().toLocaleString()}`],
@@ -169,87 +363,36 @@ export default function FuelLogReport() {
           appliedFilters.partyFilter ? `Party: ${appliedFilters.partyFilter}` : "All Parties"
         }`,
       ],
-      [], // Blank row
+      [],
     ];
 
-    // Table Header
-    const headers = [
-      "S.N.",
-      "Date (AD)",
-      "Date (BS)",
-      "Driver",
-      "Vehicle",
-      "Party / Pump Name",
-      "Fuel Type",
-      "Quantity (L)",
-      "Price / Rate (NRS)",
-      "Total Amount (NRS)",
-    ];
+    const headers = activeColumns.map((col) => col.label);
 
-    // Data Rows
-    const rows = reportItems.map((log, index) => {
-      const party = log.partyNameName || log.partyNameOther || "-";
-      const bsDate = formatBSDate(log.date, "en");
-      const totalAmount = log.quantity * log.price;
+    const rows = reportItems.map((log, index) =>
+      activeColumns.map((col) => col.getExcelValue(log, index))
+    );
 
-      return [
-        index + 1,
-        log.date,
-        bsDate,
-        log.driverName || "-",
-        log.vehicleName || "-",
-        party,
-        log.fuelTypeName || "-",
-        Number(log.quantity.toFixed(2)),
-        Number(log.price.toFixed(2)),
-        Number(totalAmount.toFixed(2)),
-      ];
+    let summaryTitleAdded = false;
+    const summaryRow = activeColumns.map((col) => {
+      if (col.getSummaryValue) {
+        const val = col.getSummaryValue(summary);
+        return typeof val === "string" ? val.replace(`${t.common.currencySymbol} `, "") : val;
+      }
+      if (!summaryTitleAdded) {
+        summaryTitleAdded = true;
+        return "Summary / Grand Total";
+      }
+      return "";
     });
-
-    // Summary Row
-    const summaryRow = [
-      "Summary / Grand Total",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      Number(summary.totalQty.toFixed(2)),
-      "",
-      Number(summary.totalCost.toFixed(2)),
-    ];
 
     const worksheetData = [...metadata, headers, ...rows, [], summaryRow];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
-    // Set Column Widths
-    worksheet["!cols"] = [
-      { wch: 6 },  // S.N.
-      { wch: 14 }, // Date AD
-      { wch: 20 }, // Date BS
-      { wch: 20 }, // Driver
-      { wch: 18 }, // Vehicle
-      { wch: 22 }, // Party
-      { wch: 14 }, // Fuel Type
-      { wch: 14 }, // Quantity
-      { wch: 18 }, // Price
-      { wch: 20 }, // Total Amount
-    ];
+    worksheet["!cols"] = activeColumns.map((col) => ({ wch: col.excelWidth || 15 }));
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Fuel Log Report");
     XLSX.writeFile(workbook, fileName);
-  };
-
-  const formatDateDisplay = (isoStr: string) => {
-    if (!isoStr) return "-";
-    try {
-      const bs = formatBSDate(isoStr, locale);
-      return `${isoStr} (${bs})`;
-    } catch {
-      return isoStr;
-    }
   };
 
   return (
@@ -258,10 +401,10 @@ export default function FuelLogReport() {
       <style>{`
         @media print {
           @page {
-            margin: 10mm;
+            margin: 8mm;
+            size: landscape;
           }
 
-          /* Force all container elements to unclip overflow and allow multi-page print */
           html, body, #root, div, main, .overflow-y-auto, .overflow-x-auto, .overflow-hidden {
             overflow: visible !important;
             height: auto !important;
@@ -273,10 +416,9 @@ export default function FuelLogReport() {
           body {
             background: white !important;
             color: black !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
           }
 
-          /* Suppress UI chrome: sidebar, header, navigation, filters, buttons */
           aside, header, nav, .print\\:hidden {
             display: none !important;
           }
@@ -289,18 +431,12 @@ export default function FuelLogReport() {
             border: 1px solid #cbd5e1 !important;
           }
 
-          .print\\:shadow-none {
-            box-shadow: none !important;
-          }
-
-          /* Printable KPI Cards Grid */
           .grid {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
             gap: 8px !important;
           }
 
-          /* Multi-Page Table Formatting */
           table {
             width: 100% !important;
             border-collapse: collapse !important;
@@ -323,8 +459,8 @@ export default function FuelLogReport() {
 
           th, td {
             border: 1px solid #475569 !important;
-            padding: 5px 8px !important;
-            font-size: 10px !important;
+            padding: 4px 6px !important;
+            font-size: 9px !important;
             color: #000000 !important;
             background: transparent !important;
           }
@@ -336,7 +472,7 @@ export default function FuelLogReport() {
         }
       `}</style>
 
-      {/* Printable Header (Visible only during print) */}
+      {/* Printable Header */}
       <div className="hidden print:block mb-6 border-b border-slate-300 pb-4">
         <div className="flex justify-between items-start">
           <div>
@@ -369,7 +505,81 @@ export default function FuelLogReport() {
         </div>
 
         {hasSearched && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Columns Dropdown Selector */}
+            <div className="relative" ref={columnMenuRef}>
+              <button
+                type="button"
+                onClick={() => setColumnMenuOpen((prev) => !prev)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-sm font-medium shadow-sm transition-colors"
+              >
+                <ColumnsIcon className="w-4 h-4 text-slate-500" />
+                <span>
+                  {t.reports.columns} ({activeColumns.length}/{allColumns.length})
+                </span>
+                <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              {columnMenuOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-3 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                      {t.reports.showHideColumns}
+                    </span>
+                    <div className="flex gap-1.5 items-center">
+                      <button
+                        type="button"
+                        onClick={handleSelectAllColumns}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {t.reports.selectAll}
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={handleDeselectAllColumns}
+                        className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                      >
+                        {t.reports.deselectAll}
+                      </button>
+                      {isCustomized && (
+                        <>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={resetToDefault}
+                            className="text-xs text-amber-600 hover:text-amber-800 font-medium"
+                          >
+                            {t.reports.resetColumns}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+                    {allColumns.map((col) => {
+                      const checked = visibleColumns[col.key] !== false;
+                      return (
+                        <label
+                          key={col.key}
+                          className="flex items-center gap-2.5 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleColumnVisibility(col.key)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                          />
+                          <span>{col.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={handlePrint}
@@ -391,7 +601,7 @@ export default function FuelLogReport() {
         )}
       </div>
 
-      {/* Filter Panel with Search Button & Calendar Selection */}
+      {/* Filter Panel */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4 print:hidden">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -409,7 +619,7 @@ export default function FuelLogReport() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {/* From Date Calendar Picker */}
+          {/* From Date */}
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">
               {t.reports.fromDate}
@@ -420,7 +630,7 @@ export default function FuelLogReport() {
             />
           </div>
 
-          {/* To Date Calendar Picker */}
+          {/* To Date */}
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">
               {t.reports.toDate}
@@ -508,7 +718,7 @@ export default function FuelLogReport() {
           </div>
         </div>
 
-        {/* Action Row with Search Button */}
+        {/* Action Row */}
         <div className="pt-2 flex justify-end">
           <button
             type="button"
@@ -526,7 +736,7 @@ export default function FuelLogReport() {
         </div>
       </div>
 
-      {/* Initial State Prompt (Before Search) */}
+      {/* Initial State Prompt */}
       {!hasSearched && !loading && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center text-slate-500 space-y-3">
           <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
@@ -541,10 +751,9 @@ export default function FuelLogReport() {
         </div>
       )}
 
-      {/* KPI Cards Summary (After Search) */}
+      {/* KPI Cards Summary */}
       {hasSearched && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Entries */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -557,7 +766,6 @@ export default function FuelLogReport() {
             <p className="text-2xl font-bold text-slate-800 mt-2">{summary.count}</p>
           </div>
 
-          {/* Total Quantity */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -575,7 +783,6 @@ export default function FuelLogReport() {
             </p>
           </div>
 
-          {/* Total Cost */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -594,7 +801,6 @@ export default function FuelLogReport() {
             </p>
           </div>
 
-          {/* Avg Cost per Liter */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -615,7 +821,7 @@ export default function FuelLogReport() {
         </div>
       )}
 
-      {/* Main Report Table Container (After Search) */}
+      {/* Report Table */}
       {hasSearched && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
@@ -638,76 +844,87 @@ export default function FuelLogReport() {
             <div className="p-12 text-center text-slate-500">
               <p className="text-sm">{t.reports.noData}</p>
             </div>
+          ) : activeColumns.length === 0 ? (
+            <div className="p-12 text-center text-slate-500">
+              <p className="text-sm">No columns selected. Please toggle on columns from the Columns menu above.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-700">
                 <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3.5 w-12 text-center">#</th>
-                    <th className="px-4 py-3.5">{t.common.date}</th>
-                    <th className="px-4 py-3.5">{t.common.driver}</th>
-                    <th className="px-4 py-3.5">{t.common.vehicle}</th>
-                    <th className="px-4 py-3.5">{t.common.partyName}</th>
-                    <th className="px-4 py-3.5">{t.common.fuelType}</th>
-                    <th className="px-4 py-3.5 text-right">{t.common.quantityL}</th>
-                    <th className="px-4 py-3.5 text-right">{t.common.price}</th>
-                    <th className="px-4 py-3.5 text-right">{t.common.total}</th>
+                    {activeColumns.map((col) => (
+                      <th
+                        key={col.key}
+                        className={`px-4 py-3.5 ${
+                          col.align === "center"
+                            ? "text-center"
+                            : col.align === "right"
+                            ? "text-right"
+                            : "text-left"
+                        }`}
+                      >
+                        {col.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {reportItems.map((log, index) => {
-                    const total = log.quantity * log.price;
-                    const party = log.partyNameName || log.partyNameOther || "—";
-
-                    return (
-                      <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-4 py-3 text-center text-slate-400 font-mono text-xs">
-                          {index + 1}
+                  {reportItems.map((log, index) => (
+                    <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                      {activeColumns.map((col) => (
+                        <td
+                          key={col.key}
+                          className={`px-4 py-3 ${
+                            col.align === "center"
+                              ? "text-center font-mono text-xs text-slate-700"
+                              : col.align === "right"
+                              ? "text-right font-mono text-slate-800"
+                              : "text-left text-slate-800 font-medium whitespace-nowrap"
+                          }`}
+                        >
+                          {col.getValue(log, index, locale)}
                         </td>
-                        <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                          {formatDateDisplay(log.date)}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-slate-800">
-                          {log.driverName || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {log.vehicleName || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {party}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                            {log.fuelTypeName}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono font-medium text-slate-900">
-                          {log.quantity.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-slate-600">
-                          {t.common.currencySymbol} {log.price.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono font-semibold text-slate-900">
-                          {t.common.currencySymbol} {total.toFixed(2)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
                 <tfoot className="bg-slate-100/90 border-t-2 border-slate-300 font-semibold text-slate-900">
                   <tr>
-                    <td colSpan={6} className="px-4 py-3.5 text-right uppercase text-xs tracking-wider">
-                      Total Summary
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono">
-                      {summary.totalQty.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono text-xs text-slate-500">
-                      Avg: {t.common.currencySymbol} {summary.avgRate.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono text-base text-emerald-700">
-                      {t.common.currencySymbol} {summary.totalCost.toFixed(2)}
-                    </td>
+                    {(() => {
+                      let titleRendered = false;
+                      return activeColumns.map((col) => {
+                        if (col.getSummaryValue) {
+                          const val = col.getSummaryValue(summary);
+                          return (
+                            <td
+                              key={col.key}
+                              className={`px-4 py-3.5 font-mono ${
+                                col.align === "center"
+                                  ? "text-center"
+                                  : col.align === "right"
+                                  ? "text-right text-emerald-700 font-bold"
+                                  : "text-left"
+                              }`}
+                            >
+                              {val ?? ""}
+                            </td>
+                          );
+                        }
+                        if (!titleRendered) {
+                          titleRendered = true;
+                          return (
+                            <td
+                              key={col.key}
+                              className="px-4 py-3.5 text-left uppercase text-xs tracking-wider text-slate-700 font-bold"
+                            >
+                              Total Summary
+                            </td>
+                          );
+                        }
+                        return <td key={col.key} className="px-4 py-3.5"></td>;
+                      });
+                    })()}
                   </tr>
                 </tfoot>
               </table>
@@ -796,6 +1013,22 @@ function ChartIcon({ className }: { className?: string }) {
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function ColumnsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
